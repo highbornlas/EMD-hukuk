@@ -12,16 +12,44 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // AUTH
 // ================================================================
 
-async function sbKayitOl(email, sifre, ad) {
+// Ana hesap kaydı: email + kullaniciAdi + sifre + ad
+async function sbKayitOl(email, sifre, ad, kullaniciAdi) {
   const { data, error } = await sb.auth.signUp({
     email, password: sifre,
-    options: { data: { ad } }
+    options: { data: { ad, kullanici_adi: kullaniciAdi } }
   });
   if (error) throw error;
+  // Trigger handle_new_user çalışınca kullanici_adi yazılır (2sn bekle)
+  if (data.user && kullaniciAdi) {
+    setTimeout(async () => {
+      await sb.from('kullanicilar')
+        .update({ kullanici_adi: kullaniciAdi, buro_email: email })
+        .eq('auth_id', data.user.id);
+    }, 2500);
+  }
   return data;
 }
 
-async function sbGirisYap(email, sifre) {
+// Giriş: 3 yol desteklenir
+// 1. Büro sahibi: email + kullaniciAdi + sifre
+// 2. Personel: buroEmail + kullaniciAdi + sifre (internal email ile)
+// 3. Fallback: sadece email + sifre (eski kayıtlar için)
+async function sbGirisYap(email, kullaniciAdi, sifre) {
+  // kullaniciAdi varsa tablo üzerinden gerçek auth emailini bul
+  if (kullaniciAdi) {
+    const { data: kul, error: kulErr } = await sb.from('kullanicilar')
+      .select('auth_email, email')
+      .eq('buro_email', email)
+      .eq('kullanici_adi', kullaniciAdi.toLowerCase())
+      .single();
+    if (kulErr || !kul) throw new Error('Kullanıcı adı veya e-posta hatalı.');
+    // auth_email: personel için internal fake email, sahip için gerçek email
+    const authEmail = kul.auth_email || email;
+    const { data, error } = await sb.auth.signInWithPassword({ email: authEmail, password: sifre });
+    if (error) throw error;
+    return data;
+  }
+  // Fallback: direkt email ile giriş
   const { data, error } = await sb.auth.signInWithPassword({ email, password: sifre });
   if (error) throw error;
   return data;

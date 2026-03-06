@@ -35,7 +35,7 @@ function deleteIcraById(id){
   state.icra=state.icra.filter(i=>i.id!==id);
   saveData();renderIcra();renderIcraCards();renderMdDavalar();updateBadges();notify('İcra silindi');
 }
-function openIcraModalForMuv(){openModal('icra-modal');setTimeout(()=>{const e=document.getElementById('i-muv');if(aktivMuvId)e.value=aktivMuvId;},50);}
+function openIcraModalForMuv(){openModal('icra-modal');setTimeout(()=>{const e=document.getElementById('i-no');if(e&&!e.value)e.value=autoNo('icra');},50);setTimeout(()=>{const e=document.getElementById('i-muv');if(aktivMuvId)e.value=aktivMuvId;},50);}
 
 function renderIcraCards(){
   const l=state.icra,aktif=l.filter(i=>i.durum!=='Kapandı').length;

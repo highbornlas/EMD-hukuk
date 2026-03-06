@@ -740,3 +740,115 @@ function ktMeslekSec(val) {
     input.value = '';
   }
 }
+
+// ================================================================
+// DERDEST DEĞİŞ — Kesinleşme tarihi zorunluluğu
+// ================================================================
+function derdestDegis(val) {
+  const wrap = document.getElementById('d-kesin-wrap');
+  if (wrap) wrap.style.display = val === 'kesinlesti' ? 'flex' : 'none';
+}
+
+// ================================================================
+// DAVA — Çoklu karşı taraf ekleme
+// ================================================================
+let _davaKarsiSayac = 1;
+function davaTarafEkle() {
+  const wrap = document.getElementById('d-karsi-wrap');
+  if (!wrap) return;
+  const idx = _davaKarsiSayac++;
+  const div = document.createElement('div');
+  div.className = 'form-row d-karsi-satir';
+  div.id = `d-karsi-satir-${idx}`;
+  div.innerHTML = `
+    <div class="form-group" style="flex:2">
+      <label>Karşı Taraf ${idx + 1} <button onclick="this.closest('.d-karsi-satir').remove()" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:12px;margin-left:6px">✕ Kaldır</button></label>
+      <div style="position:relative">
+        <input id="d-karsi-ara-${idx}" class="d-karsi-ara" placeholder="Ad ile ara veya yeni ekle..." autocomplete="off"
+          oninput="ktAra(this.id,this.dataset.liste,this.dataset.hidden,this.dataset.goster)"
+          onfocus="ktAra(this.id,this.dataset.liste,this.dataset.hidden,this.dataset.goster)"
+          data-liste="d-karsi-dd-${idx}" data-hidden="d-karsi-id-${idx}" data-goster="d-karsi-g-${idx}">
+        <div id="d-karsi-dd-${idx}" class="kt-dropdown" style="display:none"></div>
+      </div>
+      <div id="d-karsi-g-${idx}" class="kt-secili" style="display:none"></div>
+      <input type="hidden" id="d-karsi-id-${idx}">
+    </div>
+    <div class="form-group">
+      <label>Karşı Taraf Vekili</label>
+      <div style="position:relative">
+        <input id="d-karsav-ara-${idx}" class="d-karsav-ara" placeholder="Ad ile ara..." autocomplete="off"
+          oninput="vekAra(this.id,this.dataset.liste,this.dataset.hidden,this.dataset.goster)"
+          onfocus="vekAra(this.id,this.dataset.liste,this.dataset.hidden,this.dataset.goster)"
+          data-liste="d-karsav-dd-${idx}" data-hidden="d-karsav-id-${idx}" data-goster="d-karsav-g-${idx}">
+        <div id="d-karsav-dd-${idx}" class="kt-dropdown" style="display:none"></div>
+      </div>
+      <div id="d-karsav-g-${idx}" class="kt-secili" style="display:none"></div>
+      <input type="hidden" id="d-karsav-id-${idx}">
+    </div>`;
+  wrap.appendChild(div);
+}
+
+// Tüm karşı taraf ID'lerini topla
+function davaKarsiTaraflariTopla() {
+  const ids = [];
+  document.querySelectorAll('.d-karsi-satir').forEach(satir => {
+    const hidden = satir.querySelector('input[type="hidden"]');
+    if (hidden && hidden.value) ids.push(hidden.value);
+  });
+  return ids;
+}
+
+// ================================================================
+// İCRA — Müvekkil rolü değişince label güncelle
+// ================================================================
+function icraMuvRolDegis(rol) {
+  const label = document.getElementById('i-karsi-label');
+  if (label) label.textContent = rol === 'alacakli' ? 'Borçlu(lar)' : 'Alacaklı(lar)';
+}
+
+// ================================================================
+// İCRA — Durum değişince tarih alanları göster/gizle
+// ================================================================
+function icraDurumDegis(val) {
+  const durmaWrap = document.getElementById('i-durma-wrap');
+  const infazWrap = document.getElementById('i-infaz-wrap');
+  if (durmaWrap) durmaWrap.style.display = val === 'itiraz_durduruldu' ? 'flex' : 'none';
+  if (infazWrap) infazWrap.style.display = (val === 'infaz' || val === 'infaz_haricen') ? 'flex' : 'none';
+}
+
+// ================================================================
+// İCRA — Çoklu karşı taraf ekleme
+// ================================================================
+let _icraKarsiSayac = 1;
+function icraTarafEkle() {
+  const wrap = document.getElementById('i-karsi-liste-wrap');
+  if (!wrap) return;
+  const idx = _icraKarsiSayac++;
+  const div = document.createElement('div');
+  div.className = 'form-row i-karsi-satir';
+  div.innerHTML = `
+    <div class="form-group" style="flex:2">
+      <label><button onclick="this.closest('.i-karsi-satir').remove()" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:12px">✕ Kaldır</button></label>
+      <div style="position:relative">
+        <input class="i-karsi-ara" placeholder="Ad ile ara veya yeni ekle..." autocomplete="off"
+          id="i-karsi-ara-${idx}"
+          oninput="ktAra(this.id,this.dataset.liste,this.dataset.hidden,this.dataset.goster)"
+          onfocus="ktAra(this.id,this.dataset.liste,this.dataset.hidden,this.dataset.goster)"
+          data-liste="i-karsi-dd-${idx}" data-hidden="i-karsi-id-${idx}" data-goster="i-karsi-g-${idx}">
+        <div id="i-karsi-dd-${idx}" class="kt-dropdown" style="display:none"></div>
+      </div>
+      <div id="i-karsi-g-${idx}" class="kt-secili" style="display:none"></div>
+      <input type="hidden" id="i-karsi-id-${idx}">
+    </div>`;
+  wrap.appendChild(div);
+}
+
+// İcra karşı taraflarını topla
+function icraKarsiTaraflariTopla() {
+  const ids = [];
+  document.querySelectorAll('.i-karsi-satir').forEach(satir => {
+    const hidden = satir.querySelector('input[type="hidden"]');
+    if (hidden && hidden.value) ids.push(hidden.value);
+  });
+  return ids;
+}

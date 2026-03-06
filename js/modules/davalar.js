@@ -5,6 +5,8 @@
 
 function saveDava(){
   const no=document.getElementById('d-no').value.trim(),konu=document.getElementById('d-konu').value.trim(),muvId=document.getElementById('d-muv').value;
+  const derdest=document.getElementById('d-derdest').value;
+  if(derdest==='kesinlesti'&&!document.getElementById('d-kesin-tarih').value){notify('⚠️ Kesinleşme tarihi zorunlu');return;}
   if(!zorunluKontrol([
     {id:'d-no', deger:no, label:'Dosya No'},
     {id:'d-konu', deger:konu, label:'Konu'},

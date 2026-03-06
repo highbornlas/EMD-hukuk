@@ -21,7 +21,7 @@ function icraTab(t,el){
 // MODAL
 // ================================================================
 function closeModal(id){document.getElementById(id).classList.remove('open');}
-document.querySelectorAll('.modal-overlay').forEach(mo=>{mo.addEventListener('click',e=>{if(e.target===mo)mo.classList.remove('open');});});
+// Modal overlay tıklayınca kapanmaz — kullanıcı kapatma tuşu kullanmalı
 
 function populateMuvSelects(){
   ['d-muv','i-muv','b-muv','t-muv','dan-muv'].forEach(sid=>{
@@ -77,6 +77,7 @@ function renderMuvBankalar(){
 }
 
 function muvModalSifirla(){
+  const msoyad=document.getElementById('m-soyad');if(msoyad)msoyad.value='';
   ['m-ad','m-tc','m-pasaport','m-meslek','m-unvan','m-vergino','m-vergidairesi','m-mersis','m-ticaretsicil','m-yetkili-ad','m-yetkili-unvan','m-yetkili-tc','m-yetkili-tel','m-tel','m-mail','m-faks','m-web','m-adres','m-not'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   const dog=document.getElementById('m-dogum');if(dog)dog.value='';
   muvBankalar=[];renderMuvBankalar();
@@ -131,6 +132,9 @@ function muvModalDataDoldur(m){
 }
 
 function saveMuvekkil(){
+  // m-soyad varsa birleştir
+  const soyadEl=document.getElementById('m-soyad');
+  if(soyadEl&&soyadEl.value.trim()){const adEl=document.getElementById('m-ad');if(adEl)adEl.value=(adEl.value.trim()+' '+soyadEl.value.trim()).trim();}
   const d=muvModalDataOku();
   if(!zorunluKontrol([{id:'m-ad', deger:d.ad, label:'Ad / Unvan'}])) {
     notify('⚠️ Zorunlu alanları doldurun.');return;
