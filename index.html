@@ -2563,7 +2563,6 @@
 <!-- ===== MODÜLLER ===== -->
 <script src="js/modules/supabase-client.js"></script>
 <script src="js/modules/globals.js"></script>
-<script>sbAuthDinle();</script>
 <script src="js/modules/state.js"></script>
 <script src="js/modules/plan.js"></script>
 <script src="js/modules/utils.js"></script>
@@ -2751,14 +2750,17 @@
 </div>
 <script>
 window.addEventListener('load', async () => {
+  // Tüm scriptler yüklendi — şimdi auth dinlemeye başla
+  sbAuthDinle();
+  // 3 saniye içinde app açılmadıysa oturum yok demektir
   setTimeout(async () => {
     if (!currentBuroId) {
       try {
         const { data: { session } } = await sb.auth.getSession();
-        if (!session) showYukleniyor(false);
+        if (!session) { showYukleniyor(false); }
       } catch(e) { showYukleniyor(false); }
     }
-  }, 2000);
+  }, 3000);
 });
 </script>
 </body>
