@@ -1,221 +1,140 @@
 // ================================================================
-// EMD HUKUK — SUPABASE CLIENT
-// js/modules/supabase-client.js
+// EMD HUKUK — ADMIN ENTEGRASYON
+// js/modules/admin.js
 // ================================================================
 
-const SUPABASE_URL = 'https://omsahlgcuinyfvculgfj.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_iUS5jIX8NYPjdstm5U2xkg_MFXprA70';
-
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-// ================================================================
-// AUTH
-// ================================================================
-
-async function sbKayitOl(email, sifre, ad) {
-  const { data, error } = await sb.auth.signUp({
-    email, password: sifre,
-    options: { data: { ad } }
-  });
-  if (error) throw error;
-  return data;
-}
-
-async function sbGirisYap(email, sifre) {
-  const { data, error } = await sb.auth.signInWithPassword({ email, password: sifre });
-  if (error) throw error;
-  return data;
-}
-
-async function sbCikisYap() {
-  await sb.auth.signOut();
-}
-
-async function sbMevcutKullanici() {
-  const { data: { user } } = await sb.auth.getUser();
-  if (!user) return null;
-  const { data: kul } = await sb.from('kullanicilar').select('*').eq('auth_id', user.id).single();
-  return kul ? { ...kul, authUser: user } : null;
-}
-
-// Auth state değişimini dinle
-sb.auth.onAuthStateChange(async (event, session) => {
-  if (event === 'SIGNED_IN' && session) {
-    await sbVeriYukle();
-  } else if (event === 'SIGNED_OUT') {
-    currentBuroId = null;
-    currentUser = null;
-    Object.keys(state).forEach(k => { if (Array.isArray(state[k])) state[k] = []; });
-    showLanding();
-  }
-});
-
-// ================================================================
-// VERİ YÜKLEME (tüm state'i Supabase'den çek)
-// ================================================================
-
-async function sbVeriYukle() {
+async function adminSbPost(tablo, data) {
+  if (!ADMIN_SB_URL || !ADMIN_SB_KEY) return; // Yapılandırılmamış
   try {
-    showYukleniyor(true);
-
-    const kul = await sbMevcutKullanici();
-    if (!kul) { showLanding(); return; }
-
-    currentUser = { id: kul.id, ad: kul.ad, email: kul.email, rol: kul.rol };
-    currentBuroId = kul.buro_id;
-
-    // Tüm tabloları paralel olarak çek
-    const tablolar = [
-      'muvekkillar', 'davalar', 'icra', 'butce', 'etkinlikler',
-      'avanslar', 'danismanlik', 'arabuluculuk', 'ihtarnameler',
-      'todolar', 'personel', 'karsi_taraflar', 'vekillar'
-    ];
-
-    const sonuclar = await Promise.all(
-      tablolar.map(t => sb.from(t).select('id, data').eq('buro_id', currentBuroId))
-    );
-
-    // State'e yükle
-    const stateMap = {
-      'karsi_taraflar': 'karsiTaraflar',
-    };
-    tablolar.forEach((t, i) => {
-      const { data, error } = sonuclar[i];
-      if (error) { console.warn(`${t} yüklenemedi:`, error.message); return; }
-      const stateKey = stateMap[t] || t;
-      if (stateKey in state) {
-        state[stateKey] = (data || []).map(r => ({ id: r.id, ...r.data }));
-      }
+    await fetch(`${ADMIN_SB_URL}/rest/v1/${tablo}`, {
+      method: 'POST',
+      headers: {
+        'apikey': ADMIN_SB_KEY,
+        'Authorization': `Bearer ${ADMIN_SB_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify(data)
     });
-
-    // Büro bilgisini çek
-    const { data: buro } = await sb.from('burolar').select('*').eq('id', currentBuroId).single();
-    if (buro) state.plan = buro.plan || 'deneme';
-
-    // ensure arrays
-    ['davalar','icra'].forEach(k => {
-      state[k].forEach(d => ensureArrays(d, ['evraklar','notlar','harcamalar','tahsilatlar']));
-    });
-
-    showYukleniyor(false);
-    uygulamayiBaslat();
-
-  } catch (e) {
-    console.error('Veri yükleme hatası:', e);
-    showYukleniyor(false);
-    notify('❌ Bağlantı hatası: ' + e.message);
-  }
+  } catch(e) { /* sessizce geç */ }
 }
 
-// ================================================================
-// KAYDETME (upsert)
-// ================================================================
+async function adminSbUpdate(tablo, id, data) {
+  if (!ADMIN_SB_URL || !ADMIN_SB_KEY) return;
+  try {
+    await fetch(`${ADMIN_SB_URL}/rest/v1/${tablo}?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': ADMIN_SB_KEY,
+        'Authorization': `Bearer ${ADMIN_SB_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    });
+  } catch(e) { /* sessizce geç */ }
+}
 
-async function sbKaydet(tablo, kayit) {
-  if (!currentBuroId) return;
-  const stateToTable = { 'karsiTaraflar': 'karsi_taraflar' };
-  const gercekTablo = stateToTable[tablo] || tablo;
-  const { id, ...data } = kayit;
-  const { error } = await sb.from(gercekTablo).upsert({
-    id,
-    buro_id: currentBuroId,
-    data
+async function adminSbGet(tablo, filtre) {
+  if (!ADMIN_SB_URL || !ADMIN_SB_KEY) return [];
+  try {
+    const res = await fetch(`${ADMIN_SB_URL}/rest/v1/${tablo}?${filtre}&select=*`, {
+      headers: { 'apikey': ADMIN_SB_KEY, 'Authorization': `Bearer ${ADMIN_SB_KEY}` }
+    });
+    return await res.json();
+  } catch(e) { return []; }
+}
+
+// Kayıt anında admin'e bildir
+async function adminMusteriKayit(musteri) {
+  const kayit_tarihi = new Date().toISOString().slice(0,10);
+  const lis_bitis = new Date();
+  lis_bitis.setDate(lis_bitis.getDate() + 30);
+  await adminSbPost('musteriler', {
+    id: musteri.id,
+    ad_soyad: musteri.ad_soyad,
+    email: musteri.email,
+    buro_ad: musteri.buro_ad,
+    lisans_tur: 'deneme',
+    lisans_baslangic: kayit_tarihi,
+    lisans_bitis: lis_bitis.toISOString().slice(0,10),
+    durum: 'deneme',
+    toplam_giris_sayisi: 1,
+    son_giris: new Date().toISOString(),
+    kayit_tarihi: new Date().toISOString(),
   });
-  if (error) console.error(`${tablo} kayıt hatası:`, error.message);
 }
 
-async function sbSil(tablo, id) {
-  if (!currentBuroId) return;
-  const stateToTable = { 'karsiTaraflar': 'karsi_taraflar' };
-  const gercekTablo = stateToTable[tablo] || tablo;
-  const { error } = await sb.from(gercekTablo).delete().eq('id', id).eq('buro_id', currentBuroId);
-  if (error) console.error(`${tablo} silme hatası:`, error.message);
+// Giriş anında log gönder + son_giris güncelle
+async function adminGirisLog(musteri) {
+  _oturumBaslangic = Date.now();
+  _oturumLogId = uid();
+  // Kullanım logu oluştur
+  await adminSbPost('kullanim_log', {
+    id: _oturumLogId,
+    musteri_id: musteri.id,
+    email: musteri.email,
+    giris_tarihi: new Date().toISOString(),
+    dava_sayisi: state.davalar?.length || 0,
+    muvekkil_sayisi: state.muvekkillar?.length || 0,
+    icra_sayisi: state.icra?.length || 0,
+    butce_kayit_sayisi: state.butce?.length || 0,
+    uygulama_versiyon: '1.0.0',
+    platform: navigator.userAgent.includes('Electron') ? 'windows' : 'web',
+  });
+  // Son giriş zamanını güncelle
+  await adminSbUpdate('musteriler', musteri.id, {
+    son_giris: new Date().toISOString(),
+    toplam_giris_sayisi: (musteri._giris_sayisi || 1),
+  });
+}
+
+// Çıkışta oturum süresini güncelle
+async function adminCikisLog() {
+  if (!_oturumLogId || !_oturumBaslangic) return;
+  const sure = Math.round((Date.now() - _oturumBaslangic) / 60000);
+  await adminSbUpdate('kullanim_log', _oturumLogId, {
+    cikis_tarihi: new Date().toISOString(),
+    sure_dakika: sure,
+    dava_sayisi: state.davalar?.length || 0,
+    muvekkil_sayisi: state.muvekkillar?.length || 0,
+    icra_sayisi: state.icra?.length || 0,
+    butce_kayit_sayisi: state.butce?.length || 0,
+  });
+  _oturumLogId = null;
+}
+
+// Aktif duyuruları admin'den çek ve göster
+async function duyurulariYukle() {
+  try {
+    const duyurular = await adminSbGet('duyurular', 'yayinda=eq.true&order=created_at.desc&limit=3');
+    if (!duyurular || !duyurular.length) return;
+    const turIcon = { bilgi:'ℹ️', uyari:'⚠️', guncelleme:'🔄', bakim:'🔧' };
+    const turRenk = { bilgi:'var(--blue)', uyari:'var(--orange)', guncelleme:'var(--green)', bakim:'var(--red)' };
+    duyurular.forEach(d => {
+      // Daha önce okunmuş mu?
+      const okunanlar = JSON.parse(localStorage.getItem('okunan_duyurular') || '[]');
+      if (okunanlar.includes(d.id)) return;
+      // Notify benzeri duyuru göster
+      const el = document.createElement('div');
+      el.style.cssText = `position:fixed;top:70px;right:16px;background:var(--surface);border:1px solid ${turRenk[d.tur]||'var(--border)'};border-left:4px solid ${turRenk[d.tur]||'var(--gold)'};border-radius:var(--radius);padding:12px 16px;z-index:500;max-width:320px;box-shadow:0 4px 20px rgba(0,0,0,.4);animation:slideIn .3s ease`;
+      el.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div>
+            <div style="font-size:13px;font-weight:700;margin-bottom:4px">${turIcon[d.tur]||'📢'} ${d.baslik}</div>
+            <div style="font-size:12px;color:var(--text-muted)">${d.icerik.slice(0,120)}${d.icerik.length>120?'...':''}</div>
+          </div>
+          <button onclick="this.parentElement.parentElement.remove()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;padding:0;line-height:1">×</button>
+        </div>`;
+      document.body.appendChild(el);
+      // 10 saniye sonra kapat
+      setTimeout(() => el.remove(), 10000);
+      // Okundu olarak işaretle
+      okunanlar.push(d.id);
+      localStorage.setItem('okunan_duyurular', JSON.stringify(okunanlar.slice(-50)));
+    });
+  } catch(e) { /* sessizce geç */ }
 }
 
 // ================================================================
-// TOPLU KAYDETME (tüm state'i sync)
-// Mevcut saveData() fonksiyonunu override eder
+// AUTH FONKSİYONLARI — localStorage modu + Admin entegrasyon
 // ================================================================
-
-async function saveData() {
-  // Her zaman localStorage'a da yaz (offline fallback)
-  try { localStorage.setItem(SK, JSON.stringify(state)); } catch(e) {}
-
-  if (!currentBuroId) return;
-
-  // Debounce — 500ms bekle, çok sık yazmayı önle
-  clearTimeout(saveData._timer);
-  saveData._timer = setTimeout(async () => {
-    try {
-      await sbTümüSenkronize();
-    } catch(e) {
-      console.warn('Supabase sync hatası:', e.message);
-    }
-  }, 500);
-}
-
-async function sbTümüSenkronize() {
-  if (!currentBuroId) return;
-
-  const eslemeler = {
-    'muvekkillar': state.muvekkillar,
-    'davalar': state.davalar,
-    'icra': state.icra,
-    'butce': state.butce,
-    'etkinlikler': state.etkinlikler,
-    'avanslar': state.avanslar,
-    'danismanlik': state.danismanlik,
-    'arabuluculuk': state.arabuluculuk,
-    'ihtarnameler': state.ihtarnameler || [],
-    'todolar': state.todolar || [],
-    'personel': state.personel,
-    'karsi_taraflar': state.karsiTaraflar,
-    'vekillar': state.vekillar,
-  };
-
-  for (const [tablo, kayitlar] of Object.entries(eslemeler)) {
-    if (!kayitlar || !kayitlar.length) continue;
-    const satirlar = kayitlar.map(({ id, ...data }) => ({
-      id, buro_id: currentBuroId, data
-    }));
-    const { error } = await sb.from(tablo).upsert(satirlar);
-    if (error) console.warn(`${tablo} sync hatası:`, error.message);
-  }
-}
-
-// ================================================================
-// YARDIMCIlar
-// ================================================================
-
-function showYukleniyor(goster) {
-  let el = document.getElementById('sb-yukleniyor');
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'sb-yukleniyor';
-    el.innerHTML = `<div style="position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:99998;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px">
-      <div style="width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite"></div>
-      <div style="color:var(--text-muted);font-size:14px">Veriler yükleniyor...</div>
-    </div>`;
-    document.body.appendChild(el);
-  }
-  el.style.display = goster ? 'block' : 'none';
-}
-
-function showLanding() {
-  document.getElementById('app-wrapper')?.style.setProperty('display', 'none');
-  document.getElementById('landing-wrapper')?.style.setProperty('display', 'flex');
-}
-
-function uygulamayiBaslat() {
-  document.getElementById('landing-wrapper')?.style.setProperty('display', 'none');
-  document.getElementById('app-wrapper')?.style.setProperty('display', 'flex');
-  // Kullanıcı adını göster
-  const unEl = document.getElementById('header-user');
-  if (unEl && currentUser) unEl.textContent = currentUser.ad;
-  renderMuvekkillar(); renderDavalar(); renderDavaCards();
-  renderIcra(); renderIcraCards(); renderButce(); renderDanismanlik();
-  renderDashboard();
-  if (typeof renderIhtarname === 'function') renderIhtarname();
-  if (typeof renderTodo === 'function') renderTodo();
-  updateBadges();
-}
