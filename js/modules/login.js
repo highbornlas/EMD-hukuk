@@ -94,41 +94,20 @@ function gmHata(msg) {
   e.textContent = msg; e.style.display = 'block';
 }
 
-function gmGiris() {
+async function gmGiris() {
   const email = document.getElementById('gm-email').value.trim();
   const sifre = document.getElementById('gm-sifre').value;
   if (!email || !sifre) return gmHata('E-posta ve şifre gerekli.');
   const btn = document.querySelector('#gm-f-giris .gm-submit');
   btn.textContent = 'Giriş yapılıyor...'; btn.disabled = true;
   try {
-    const localData = localStorage.getItem('hukuk_buro_v3');
-    if (localData) {
-      const parsed = JSON.parse(localData);
-      if (parsed.sahipEmail && parsed.sahipEmail.toLowerCase() === email.toLowerCase() && parsed.sahipSifre === sifre) {
-        currentUser = { id: parsed.sahipId||'sahip', ad_soyad: parsed.sahipAd||'Büro Sahibi', email, rol: 'sahip', yetkiler: {}, buro_ad: parsed.buroAd||'Hukuk Bürosu', _giris_sayisi: (parsed._giris_sayisi||0)+1 };
-        Object.assign(state, parsed);
-        parsed._giris_sayisi = currentUser._giris_sayisi;
-        localStorage.setItem('hukuk_buro_v3', JSON.stringify(parsed));
-        btn.textContent = 'Giriş Yap'; btn.disabled = false;
-        gmKapat();
-        document.getElementById('landing-screen').classList.add('hidden');
-        uygulamayiBaslatLocal(); return;
-      }
-      const pKisi = (parsed.personel||[]).find(p => p.hesap && p.hesap.email && p.hesap.email.toLowerCase() === email.toLowerCase());
-      if (pKisi && pKisi.hesap.sifre === sifre) {
-        currentUser = { id: pKisi.id, ad_soyad: pKisi.ad, email: pKisi.hesap.email, rol: pKisi.rol, yetkiler: pKisi.yetkiler||{}, buro_ad: parsed.buroAd||'Hukuk Bürosu' };
-        Object.assign(state, parsed);
-        btn.textContent = 'Giriş Yap'; btn.disabled = false;
-        gmKapat();
-        document.getElementById('landing-screen').classList.add('hidden');
-        uygulamayiBaslatLocal(); return;
-      }
-    }
+    await sbGirisYap(email, sifre);
     btn.textContent = 'Giriş Yap'; btn.disabled = false;
-    gmHata('E-posta veya şifre hatalı.');
+    gmKapat();
+    // onAuthStateChange sbVeriYukle'yi tetikleyecek
   } catch(e) {
     btn.textContent = 'Giriş Yap'; btn.disabled = false;
-    gmHata('Hata: ' + e.message);
+    gmHata('E-posta veya şifre hatalı.');
   }
 }
 
@@ -136,39 +115,19 @@ async function gmKayit() {
   const ad = document.getElementById('gm-kad').value.trim();
   const email = document.getElementById('gm-kemail').value.trim();
   const sifre = document.getElementById('gm-ksifre').value;
-  const buroAd = document.getElementById('gm-kburo').value.trim();
-  if (!ad || !email || !sifre || !buroAd) return gmHata('Tüm alanları doldurun.');
+  if (!ad || !email || !sifre) return gmHata('Ad, e-posta ve şifre gerekli.');
   if (sifre.length < 6) return gmHata('Şifre en az 6 karakter olmalı.');
   const btn = document.querySelector('#gm-f-kayit .gm-submit');
   btn.textContent = 'Kayıt yapılıyor...'; btn.disabled = true;
   try {
-    const mevcutData = localStorage.getItem('hukuk_buro_v3');
-    if (mevcutData) {
-      const parsed = JSON.parse(mevcutData);
-      if (parsed.sahipEmail && parsed.sahipEmail.toLowerCase() === email.toLowerCase()) {
-        btn.textContent = 'Kayıt Ol & Başla →'; btn.disabled = false;
-        return gmHata('Bu e-posta ile zaten kayıt var. Giriş yapın.');
-      }
-    }
-    const sahipId = uid();
-    const temizState = {
-      muvekkillar:[], davalar:[], icra:[], butce:[], etkinlikler:[],
-      avanslar:[], belgeler:[], iletisimler:[], logs:[], karsiTaraflar:[],
-      vekillar:[], danismanlik:[], arabuluculuk:[], sureler:[], faturalar:[],
-      personel:[], gorevler:[], aktiviteLog:[], buroAyarlar:{},
-    };
-    const yeniData = { ...temizState, sahipId, sahipAd: ad, sahipEmail: email, sahipSifre: sifre, buroAd, olusturmaTarih: today(), _giris_sayisi: 1 };
-    localStorage.setItem('hukuk_buro_v3', JSON.stringify(yeniData));
-    Object.assign(state, temizState);
-    currentUser = { id: sahipId, ad_soyad: ad, email, rol: 'sahip', yetkiler: {}, buro_ad: buroAd, _giris_sayisi: 1 };
+    await sbKayitOl(email, sifre, ad);
     btn.textContent = 'Kayıt Ol & Başla →'; btn.disabled = false;
-    if (typeof adminMusteriKayit === 'function') adminMusteriKayit(currentUser);
-    gmKapat();
-    document.getElementById('landing-screen').classList.add('hidden');
-    uygulamayiBaslatLocal();
+    gmHata('✅ Kayıt başarılı! Giriş yapın.');
+    gmTab('giris');
   } catch(e) {
     btn.textContent = 'Kayıt Ol & Başla →'; btn.disabled = false;
-    gmHata('Hata: ' + e.message);
+    if (e.message && e.message.includes('already registered')) gmHata('Bu e-posta zaten kayıtlı. Giriş yapın.');
+    else gmHata('Hata: ' + e.message);
   }
 }
 
