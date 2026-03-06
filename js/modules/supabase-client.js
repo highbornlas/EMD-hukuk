@@ -43,15 +43,18 @@ async function sbMevcutKullanici() {
 function sbAuthDinle() {
   sb.auth.onAuthStateChange(async (event, session) => {
     if (event === 'SIGNED_IN' && session && !currentBuroId) {
+      // Sadece henüz yüklenmemişse çalış (sayfa yenilemede load event halleder)
       await sbVeriYukle();
     } else if (event === 'SIGNED_OUT') {
       currentBuroId = null;
       currentUser = null;
+      _sbYukleniyor = false;
       if (typeof state !== 'undefined') {
         Object.keys(state).forEach(k => { if (Array.isArray(state[k])) state[k] = []; });
       }
       showLanding();
     }
+    // TOKEN_REFRESHED, INITIAL_SESSION vb. — hiçbir şey yapma
   });
 }
 

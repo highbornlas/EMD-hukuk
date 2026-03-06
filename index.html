@@ -2750,17 +2750,23 @@
 </div>
 <script>
 window.addEventListener('load', async () => {
-  // Tüm scriptler yüklendi — şimdi auth dinlemeye başla
-  sbAuthDinle();
-  // 3 saniye içinde app açılmadıysa oturum yok demektir
-  setTimeout(async () => {
-    if (!currentBuroId) {
-      try {
-        const { data: { session } } = await sb.auth.getSession();
-        if (!session) { showYukleniyor(false); }
-      } catch(e) { showYukleniyor(false); }
+  // Önce oturum var mı kontrol et
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) {
+      // Oturum var — veriyi yükle
+      showYukleniyor(true);
+      await sbVeriYukle();
+    } else {
+      // Oturum yok — landing göster
+      showYukleniyor(false);
     }
-  }, 3000);
+  } catch(e) {
+    console.warn('Oturum kontrolü:', e.message);
+    showYukleniyor(false);
+  }
+  // Auth değişimlerini dinle (giriş/çıkış için)
+  sbAuthDinle();
 });
 </script>
 </body>
