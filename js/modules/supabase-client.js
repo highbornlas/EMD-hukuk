@@ -38,20 +38,18 @@ async function sbMevcutKullanici() {
   return kul ? { ...kul, authUser: user } : null;
 }
 
-// Auth state değişimini dinle — sadece ilk girişte yükle
-let _veriYuklendi = false;
+// Auth state değişimini dinle
 sb.auth.onAuthStateChange(async (event, session) => {
-  if (event === 'SIGNED_IN' && session) {
-    if (!_veriYuklendi) {
-      _veriYuklendi = true;
-      await sbVeriYukle();
-    }
+  if (event === 'SIGNED_IN' && session && !currentBuroId) {
+    // Sadece oturum henüz yüklenmemişse çalış
+    await sbVeriYukle();
   } else if (event === 'SIGNED_OUT') {
-    _veriYuklendi = false;
     currentBuroId = null;
     currentUser = null;
     Object.keys(state).forEach(k => { if (Array.isArray(state[k])) state[k] = []; });
     showLanding();
+  } else if (event === 'TOKEN_REFRESHED') {
+    // Token yenilendi — hiçbir şey yapma
   }
 });
 
@@ -196,16 +194,20 @@ async function sbTümüSenkronize() {
 
 function showYukleniyor(goster) {
   let el = document.getElementById('sb-yukleniyor');
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'sb-yukleniyor';
-    el.innerHTML = `<div style="position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:99998;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px">
-      <div style="width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite"></div>
-      <div style="color:var(--text-muted);font-size:14px">Veriler yükleniyor...</div>
-    </div>`;
-    document.body.appendChild(el);
+  if (goster) {
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'sb-yukleniyor';
+      el.innerHTML = `<div style="position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:99998;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px">
+        <div style="width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite"></div>
+        <div style="color:var(--text-muted);font-size:14px">Veriler yükleniyor...</div>
+      </div>`;
+      document.body.appendChild(el);
+    }
+    el.style.display = 'block';
+  } else {
+    if (el) el.remove(); // tamamen kaldır
   }
-  el.style.display = goster ? 'block' : 'none';
 }
 
 function showLanding() {

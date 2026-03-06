@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hukuk Bürosu Yönetim Sistemi</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link rel="stylesheet" href="css/style.css">
 <!-- Supabase devre dışı - localStorage modu -->
@@ -2531,9 +2532,8 @@
 
 </div><!-- /#app-wrapper -->
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/modules/supabase-client.js"></script>
 <!-- ===== MODÜLLER ===== -->
+<script src="js/modules/supabase-client.js"></script>
 <script src="js/modules/globals.js"></script>
 <script src="js/modules/state.js"></script>
 <script src="js/modules/plan.js"></script>
@@ -2720,5 +2720,20 @@
     </div>
   </div>
 </div>
+<script>
+// Sayfa yüklenince oturum kontrolü — onAuthStateChange ile çakışmayı önle
+window.addEventListener('load', async () => {
+  // onAuthStateChange zaten tetiklenecek, burada sadece oturum yoksa landing göster
+  setTimeout(async () => {
+    if (!currentBuroId) {
+      // 1 saniye bekle, onAuthStateChange gelmediyse landing göster
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) {
+        showYukleniyor(false);
+      }
+    }
+  }, 1000);
+});
+</script>
 </body>
 </html>
