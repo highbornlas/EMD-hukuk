@@ -629,3 +629,114 @@ function muvMeslekSec(val) {
     input.value = '';
   }
 }
+
+// ================================================================
+// MÜVEKKİL ARAMA WİDGET'I (ktAra ile aynı pattern)
+// ================================================================
+function muvAra(araId, listeId, hiddenId, gosterId) {
+  if (!state.muvekkillar) state.muvekkillar = [];
+  const q = document.getElementById(araId).value.trim().toLowerCase();
+  const liste = document.getElementById(listeId);
+  const sonuclar = q
+    ? state.muvekkillar.filter(m => (m.ad||'').toLowerCase().includes(q) || (m.tel||'').includes(q))
+    : state.muvekkillar.slice(0, 10);
+  let html = '';
+  sonuclar.forEach(m => {
+    const tip = m.tip === 'tuzel' ? '🏢 Tüzel' : '👤 Gerçek';
+    const meta = [tip, m.tel, m.email].filter(Boolean).join(' · ');
+    html += `<div class="kt-item" onmousedown="muvSec('${m.id}','${araId}','${listeId}','${hiddenId}','${gosterId}')">
+      <div><div>${m.ad}</div><div class="kt-item-meta">${meta}</div></div>
+    </div>`;
+  });
+  // Yeni müvekkil ekleme seçeneği
+  const araTxt = document.getElementById(araId).value.trim();
+  html += `<div class="kt-new" onmousedown="muvYeniAc('${araId}','${listeId}','${hiddenId}','${gosterId}')">＋ ${araTxt ? '"'+araTxt+'" adıyla' : 'Yeni'} müvekkil kayıt oluştur</div>`;
+  liste.innerHTML = html;
+  liste.style.display = 'block';
+  document.getElementById(araId).onblur = () => setTimeout(() => { liste.style.display = 'none'; }, 150);
+}
+
+function muvSec(id, araId, listeId, hiddenId, gosterId) {
+  const m = state.muvekkillar.find(x => x.id === id); if (!m) return;
+  document.getElementById(hiddenId).value = id;
+  document.getElementById(araId).value = '';
+  document.getElementById(listeId).style.display = 'none';
+  const tip = m.tip === 'tuzel' ? '🏢 Tüzel' : '👤 Gerçek';
+  const meta = [tip, m.tel, m.email].filter(Boolean).join(' · ');
+  document.getElementById(gosterId).innerHTML = `
+    <div><div class="kt-secili-ad">${m.ad}</div><div class="kt-secili-meta">${meta}</div></div>
+    <button class="kt-secili-temizle" onclick="muvTemizle('${araId}','${hiddenId}','${gosterId}')" title="Seçimi kaldır">✕</button>`;
+  document.getElementById(gosterId).style.display = 'flex';
+}
+
+function muvTemizle(araId, hiddenId, gosterId) {
+  document.getElementById(hiddenId).value = '';
+  document.getElementById(araId).value = '';
+  document.getElementById(gosterId).style.display = 'none';
+  document.getElementById(gosterId).innerHTML = '';
+}
+
+// Yeni müvekkil modalını aç, kaydedince dava modalına geri dön
+let _muvCtx = {};
+function muvYeniAc(araId, listeId, hiddenId, gosterId) {
+  _muvCtx = { araId, listeId, hiddenId, gosterId };
+  document.getElementById(listeId).style.display = 'none';
+  const q = document.getElementById(araId).value.trim();
+  // Müvekkil modalını aç ve adı doldur
+  openMuvModal();
+  setTimeout(() => {
+    const adEl = document.getElementById('m-ad');
+    if (adEl && q) adEl.value = q;
+  }, 100);
+}
+
+// Müvekkil kaydedilince widget'ı güncelle — saveMuvekkil'den sonra çağrılır
+function muvWidgetGuncelle(muvId) {
+  if (!_muvCtx.hiddenId) return;
+  const { araId, listeId, hiddenId, gosterId } = _muvCtx;
+  muvSec(muvId, araId, listeId, hiddenId, gosterId);
+  _muvCtx = {};
+}
+
+// Widget doldur (düzenleme modunda)
+function muvWidgetDoldur(muvId, araId, listeId, hiddenId, gosterId) {
+  if (!muvId) return;
+  const m = state.muvekkillar.find(x => x.id === muvId); if (!m) return;
+  document.getElementById(hiddenId).value = muvId;
+  const tip = m.tip === 'tuzel' ? '🏢 Tüzel' : '👤 Gerçek';
+  const meta = [tip, m.tel, m.email].filter(Boolean).join(' · ');
+  document.getElementById(gosterId).innerHTML = `
+    <div><div class="kt-secili-ad">${m.ad}</div><div class="kt-secili-meta">${meta}</div></div>
+    <button class="kt-secili-temizle" onclick="muvTemizle('${araId}','${hiddenId}','${gosterId}')" title="Seçimi kaldır">✕</button>`;
+  document.getElementById(gosterId).style.display = 'flex';
+}
+
+// Karşı taraf form dinamikleri
+function ktUyrukDegis(uyruk) {
+  const tcGrup = document.getElementById('kt-tc')?.closest('.form-group');
+  const pasEl = document.getElementById('kt-pasaport');
+  if (!tcGrup || !pasEl) return;
+  if (uyruk === 'yabanci') {
+    tcGrup.style.display = 'none';
+    pasEl.style.display = 'block';
+  } else {
+    tcGrup.style.display = 'block';
+    pasEl.style.display = 'none';
+  }
+}
+
+function ktMeslekSec(val) {
+  const input = document.getElementById('kt-meslek');
+  if (!input) return;
+  if (val === 'diger') {
+    input.style.display = 'block';
+    input.focus();
+    input.value = '';
+  } else if (val) {
+    input.style.display = 'none';
+    input.value = val;
+  } else {
+    input.style.display = 'none';
+    input.value = '';
+  }
+}

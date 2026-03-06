@@ -32,7 +32,8 @@ function saveDava(){
     evraklar:[],notlar:[],harcamalar:[],anlasma:{}
   };
   state.davalar.push(yeniDava);
-  ['d-no','d-konu','d-mno','d-esas-yil','d-esas-no','d-karar-yil','d-karar-no','d-hakim','d-derdest','d-icrano','d-deger','d-not','d-durusma','d-ktarih','d-kesin'].forEach(i=>{const e=document.getElementById(i);if(e)e.value='';}); document.getElementById('d-il').value=''; document.getElementById('d-adliye').innerHTML='<option value="">— Önce il seçin —</option>';
+  ['d-no','d-konu','d-mno','d-esas-yil','d-esas-no','d-karar-yil','d-karar-no','d-hakim','d-derdest','d-icrano','d-deger','d-not','d-durusma','d-ktarih','d-kesin','d-muv','d-muv-ara'].forEach(i=>{const e=document.getElementById(i);if(e)e.value='';});
+  const muvGoster=document.getElementById('d-muv-secili');if(muvGoster){muvGoster.style.display='none';muvGoster.innerHTML='';}; document.getElementById('d-il').value=''; document.getElementById('d-adliye').innerHTML='<option value="">— Önce il seçin —</option>';
   ktWidgetTemizle('d-karsi-ara','d-karsi-liste','d-karsi-id','d-karsi-goster');
   ktWidgetTemizle('d-karsav-ara','d-karsav-liste','d-karsav-id','d-karsav-goster');
   addLog(yeniDava.muvId,'Dava Eklendi',`${yeniDava.no} | ${yeniDava.konu}${yeniDava.mtur?' | '+yeniDava.mtur:''}`);
@@ -777,6 +778,8 @@ function editDavaModal(davaId){
   if(d.il) populateAdliyeSelect('d-adliye', d.il, d.adliye||'');
   else document.getElementById('d-adliye').innerHTML='<option value="">— Önce il seçin —</option>';
   const fields={'d-no':d.no,'d-konu':d.konu,'d-mno':d.mno||'','d-esas-yil':d.esasYil||d.esas||'','d-esas-no':d.esasNo||'','d-karar-yil':d.kararYil||d.karar||'','d-karar-no':d.kararNo||'','d-hakim':d.hakim||'','d-icrano':d.icrano||'','d-deger':d.deger||'','d-not':d.not||'','d-tarih':d.tarih||'','d-durusma':d.durusma||'','d-ktarih':d.ktarih||'','d-kesin':d.kesin||''};
+  // Widget doldur
+  setTimeout(()=>muvWidgetDoldur(d.muvId,'d-muv-ara','d-muv-liste','d-muv','d-muv-secili'),50);
   Object.entries(fields).forEach(([id,val])=>{const e=document.getElementById(id);if(e)e.value=val;});
   document.getElementById('d-muv').value=d.muvId;
   document.getElementById('d-mtur').value=d.mtur;

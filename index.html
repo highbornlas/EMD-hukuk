@@ -1393,7 +1393,24 @@
 <!-- Dava Modal -->
 <div class="modal-overlay" id="dav-modal"><div class="modal modal-lg">
   <div class="modal-title">Dava / Dosya Ekle</div>
-  <div class="form-row"><div class="form-group"><label>Dosya No <span style="font-size:10px;color:var(--gold);margin-left:6px">● Otomatik atanır</span></label><input id="d-no" placeholder="D-2026-001" style="background:var(--surface);color:var(--text-muted);"></div><div class="form-group"><label>Müvekkil *</label><select id="d-muv"></select></div></div>
+  <div class="form-row">
+  <div class="form-group">
+    <label>Dosya No <span style="font-size:10px;color:var(--gold);margin-left:6px">● Otomatik atanır</span></label>
+    <input id="d-no" placeholder="D-2026-001" readonly style="background:var(--surface2);color:var(--text-muted);cursor:not-allowed;">
+  </div>
+  <div class="form-group">
+    <label>Müvekkil *</label>
+    <div style="position:relative">
+      <input id="d-muv-ara" placeholder="🔍 Müvekkil ara..." autocomplete="off"
+        oninput="muvAra('d-muv-ara','d-muv-liste','d-muv','d-muv-secili')"
+        onfocus="muvAra('d-muv-ara','d-muv-liste','d-muv','d-muv-secili')"
+        style="width:100%">
+      <div id="d-muv-liste" class="kt-dropdown" style="display:none"></div>
+    </div>
+    <input type="hidden" id="d-muv">
+    <div id="d-muv-secili" class="kt-secili" style="display:none"></div>
+  </div>
+</div>
   <div class="form-group"><label>Dava Konusu *</label><input id="d-konu"></div>
   <div class="form-section-label">Mahkeme Bilgileri</div>
   <div class="form-row">
@@ -1500,9 +1517,16 @@
       <div class="form-group"><label>Doğum Tarihi</label><input type="date" id="kt-dogum"></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>Meslek</label><input id="kt-meslek" placeholder="Meslek / Unvan"></div>
       <div class="form-group"><label>Uyruk</label>
-        <select id="kt-uyruk"><option>T.C.</option><option>Yabancı Uyruklu</option></select>
+        <select id="kt-uyruk" onchange="ktUyrukDegis(this.value)"><option value="TC">T.C.</option><option value="yabanci">Yabancı Uyruklu</option></select>
+      </div>
+      <div class="form-group"><label>Pasaport No (yabancı)</label><input id="kt-pasaport" style="display:none"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Doğum Yeri</label><input id="kt-dogum-yeri" placeholder="Şehir / Ülke"></div>
+      <div class="form-group"><label>Meslek</label>
+        <select id="kt-meslek-sel" onchange="ktMeslekSec(this.value)"><option value="">— Seçin —</option><option>Avukat</option><option>Doktor</option><option>Mühendis</option><option>Mimar</option><option>Öğretmen</option><option>Esnaf</option><option>Emekli</option><option>İşçi</option><option>Memur</option><option>Serbest Meslek</option><option>Yönetici</option><option value="diger">Diğer...</option></select>
+        <input id="kt-meslek" placeholder="Meslek yazın" style="margin-top:6px;display:none">
       </div>
     </div>
   </div>
@@ -1521,6 +1545,10 @@
     <div class="form-row">
       <div class="form-group"><label>Yetkili Adı</label><input id="kt-yetkili-ad" placeholder="Yetkili / Temsilci adı"></div>
       <div class="form-group"><label>Yetkili Unvanı</label><input id="kt-yetkili-unvan" placeholder="Genel Müdür vb."></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Yetkili TC No</label><input id="kt-yetkili-tc" maxlength="11"></div>
+      <div class="form-group"><label>Yetkili Telefonu</label><input id="kt-yetkili-tel"></div>
     </div>
   </div>
   <div class="form-section-label">İletişim</div>

@@ -163,6 +163,8 @@ function saveMuvekkil(){
     closeModal('m-modal');saveData();
     if(currentBuroId) saveToSupabase('muvekkillar', yeniKayit);
     renderMuvekkillar();updateBadges();notify('✓ Müvekkil eklendi');
+    // Dava modalından açıldıysa widget'ı güncelle
+    if(typeof muvWidgetGuncelle==='function') muvWidgetGuncelle(yeniId);
   }
 }
 
