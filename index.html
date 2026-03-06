@@ -2535,6 +2535,7 @@
 <!-- ===== MODÜLLER ===== -->
 <script src="js/modules/supabase-client.js"></script>
 <script src="js/modules/globals.js"></script>
+<script>sbAuthDinle();</script>
 <script src="js/modules/state.js"></script>
 <script src="js/modules/plan.js"></script>
 <script src="js/modules/utils.js"></script>
@@ -2721,18 +2722,15 @@
   </div>
 </div>
 <script>
-// Sayfa yüklenince oturum kontrolü — onAuthStateChange ile çakışmayı önle
 window.addEventListener('load', async () => {
-  // onAuthStateChange zaten tetiklenecek, burada sadece oturum yoksa landing göster
   setTimeout(async () => {
     if (!currentBuroId) {
-      // 1 saniye bekle, onAuthStateChange gelmediyse landing göster
-      const { data: { session } } = await sb.auth.getSession();
-      if (!session) {
-        showYukleniyor(false);
-      }
+      try {
+        const { data: { session } } = await sb.auth.getSession();
+        if (!session) showYukleniyor(false);
+      } catch(e) { showYukleniyor(false); }
     }
-  }, 1000);
+  }, 2000);
 });
 </script>
 </body>

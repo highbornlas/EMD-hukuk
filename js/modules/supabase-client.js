@@ -39,19 +39,21 @@ async function sbMevcutKullanici() {
 }
 
 // Auth state değişimini dinle
-sb.auth.onAuthStateChange(async (event, session) => {
-  if (event === 'SIGNED_IN' && session && !currentBuroId) {
-    // Sadece oturum henüz yüklenmemişse çalış
-    await sbVeriYukle();
-  } else if (event === 'SIGNED_OUT') {
-    currentBuroId = null;
-    currentUser = null;
-    Object.keys(state).forEach(k => { if (Array.isArray(state[k])) state[k] = []; });
-    showLanding();
-  } else if (event === 'TOKEN_REFRESHED') {
-    // Token yenilendi — hiçbir şey yapma
-  }
-});
+// onAuthStateChange — globals yüklendikten sonra bağlan
+function sbAuthDinle() {
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_IN' && session && !currentBuroId) {
+      await sbVeriYukle();
+    } else if (event === 'SIGNED_OUT') {
+      currentBuroId = null;
+      currentUser = null;
+      if (typeof state !== 'undefined') {
+        Object.keys(state).forEach(k => { if (Array.isArray(state[k])) state[k] = []; });
+      }
+      showLanding();
+    }
+  });
+}
 
 // ================================================================
 // VERİ YÜKLEME (tüm state'i Supabase'den çek)
