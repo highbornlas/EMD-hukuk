@@ -59,12 +59,15 @@ function sbAuthDinle() {
 // VERİ YÜKLEME (tüm state'i Supabase'den çek)
 // ================================================================
 
+let _sbYukleniyor = false;
 async function sbVeriYukle() {
+  if (_sbYukleniyor) return;
+  _sbYukleniyor = true;
   try {
     showYukleniyor(true);
 
     const kul = await sbMevcutKullanici();
-    if (!kul) { showLanding(); return; }
+    if (!kul) { showYukleniyor(false); showLanding(); return; }
 
     currentUser = { id: kul.id, ad: kul.ad, email: kul.email, rol: kul.rol };
     currentBuroId = kul.buro_id;
@@ -88,7 +91,7 @@ async function sbVeriYukle() {
       const { data, error } = sonuclar[i];
       if (error) { console.warn(`${t} yüklenemedi:`, error.message); return; }
       const stateKey = stateMap[t] || t;
-      if (stateKey in state) {
+      if (typeof state !== 'undefined' && stateKey in state) {
         state[stateKey] = (data || []).map(r => ({ id: r.id, ...r.data }));
       }
     });
@@ -109,8 +112,11 @@ async function sbVeriYukle() {
   } catch (e) {
     console.error('Veri yükleme hatası:', e);
     showYukleniyor(false);
+    _sbYukleniyor = false;
     notify('❌ Bağlantı hatası: ' + e.message);
     setTimeout(uygulamayiBaslat, 100);
+  } finally {
+    _sbYukleniyor = false;
   }
 }
 
