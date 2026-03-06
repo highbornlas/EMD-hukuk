@@ -22,7 +22,15 @@ function loadData(){
 }
 
 function saveData(){
+  // Her zaman localStorage'a yaz (offline fallback)
   try{ localStorage.setItem(SK, JSON.stringify(state)); }catch(e){}
+  // Supabase'e de yaz — oturum açıksa
+  if(typeof currentBuroId !== 'undefined' && currentBuroId){
+    clearTimeout(saveData._t);
+    saveData._t = setTimeout(async () => {
+      try { await sbTümüSenkronize(); } catch(e){ console.warn('Sync:', e.message); }
+    }, 800); // 800ms debounce — çok sık yazma
+  }
 }
 
 // ================================================================

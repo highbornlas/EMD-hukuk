@@ -135,9 +135,32 @@ function yetkiMenuGuncelle() {
   Object.entries(menuMap).forEach(([menuId, yetkiId]) => { const el = document.getElementById(menuId); if(el) el.style.display = yetkiGoruntule(yetkiId) ? '' : 'none'; });
 }
 
-// Supabase stub — ana veri için devre dışı
-async function saveToSupabase(tablo, kayit) {}
-async function deleteFromSupabase(tablo, id) {}
+// Supabase kayıt fonksiyonları — gerçek implementasyon
+async function saveToSupabase(tablo, kayit) {
+  if (!currentBuroId) return;
+  try {
+    const stateToTable = { 'karsiTaraflar': 'karsi_taraflar' };
+    const gercekTablo = stateToTable[tablo] || tablo;
+    const { id, ...data } = kayit;
+    const { error } = await sb.from(gercekTablo).upsert({
+      id,
+      buro_id: currentBuroId,
+      data
+    });
+    if (error) console.warn(`saveToSupabase ${tablo}:`, error.message);
+  } catch(e) { console.warn('saveToSupabase hata:', e.message); }
+}
+
+async function deleteFromSupabase(tablo, id) {
+  if (!currentBuroId) return;
+  try {
+    const stateToTable = { 'karsiTaraflar': 'karsi_taraflar' };
+    const gercekTablo = stateToTable[tablo] || tablo;
+    const { error } = await sb.from(gercekTablo).delete().eq('id', id).eq('buro_id', currentBuroId);
+    if (error) console.warn(`deleteFromSupabase ${tablo}:`, error.message);
+  } catch(e) { console.warn('deleteFromSupabase hata:', e.message); }
+}
+
 async function loadDataFromSupabase() {}
 
 // Sayfa açılışında e-postayı doldur
