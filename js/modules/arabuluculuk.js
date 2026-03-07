@@ -4,6 +4,11 @@
 // ================================================================
 
 function renderArabuluculuk(){
+  // Sayfayı en üste kaydır
+  const sayfaEl = document.getElementById('page-arabuluculuk');
+  if (sayfaEl) sayfaEl.scrollTop = 0;
+  const mainEl = document.querySelector('.main-content');
+  if (mainEl) mainEl.scrollTop = 0;
   if(!state.arabuluculuk)state.arabuluculuk=[];
   const ara=(document.getElementById('arab-s')||{}).value||'';
   const ft=(document.getElementById('arab-ft')||{}).value||'';
