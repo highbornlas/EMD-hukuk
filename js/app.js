@@ -80,6 +80,12 @@ function init(){
   initCal();
   renderMuvekkillar();renderDavalar();renderDavaCards();renderIcra();renderIcraCards();renderButce();renderDanismanlik();renderDashboard();updateBadges();
   document.querySelector('#dav-modal .btn-gold').onclick=saveDava;
+  // Tüm sayfaları gizle, sadece anasayfa aktif
+  document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');p.style.display='none';});
+  const anaEl=document.getElementById('page-anasayfa');
+  if(anaEl){anaEl.classList.add('active');anaEl.style.display='block';}
+  const niAna=document.getElementById('ni-anasayfa');
+  if(niAna)niAna.classList.add('active');
 }
 
 function seedTestData(){
