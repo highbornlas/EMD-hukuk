@@ -314,4 +314,6 @@ function uygulamayiBaslat() {
   updateBadges();
   // Bildirim sistemi başlat
   if (typeof Bildirim !== 'undefined') Bildirim.baslat();
+  // Global auto-sync başlat
+  if (typeof LexSync !== 'undefined') LexSync.init();
 }

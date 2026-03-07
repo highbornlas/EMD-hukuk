@@ -1827,6 +1827,21 @@
       </div>
       <div style="padding:20px">
 
+        <!-- Supabase Senkronizasyon -->
+        <div style="background:rgba(0,188,212,.05);border:1px solid rgba(0,188,212,.2);border-radius:var(--radius);padding:16px;margin-bottom:18px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div>
+              <div style="font-size:13px;font-weight:700;color:var(--text)">☁️ Bulut Senkronizasyon</div>
+              <div style="font-size:11px;color:var(--text-muted)">Tüm verileri Supabase ile senkronize edin</div>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="if(typeof LexSync!=='undefined') LexSync.forcSync(); else notify('⚠️ Sync modülü yüklenemedi');" style="border-color:#00BCD4;color:#00BCD4">🔄 Zorla Senkronize Et</button>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-outline btn-sm" onclick="if(typeof LexSync!=='undefined'){ var r=LexSync.durum(); notify('📊 Sync: '+(r.aktif?'Aktif':'Pasif')+' | Hata: '+r.hataSayisi); }">📊 Durum Raporu</button>
+            <button class="btn btn-outline btn-sm" onclick="if(typeof LexSync!=='undefined'){ var d=LexSync._calcDiff(); var u=Object.keys(d.upserts).length; var dl=Object.keys(d.deletes).length; notify('📋 Bekleyen: '+u+' güncelleme, '+dl+' silme'); }">📋 Bekleyen Değişiklikler</button>
+          </div>
+        </div>
+
         <!-- İstatistik -->
         <div id="yedek-istatistik" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px"></div>
 
@@ -3514,6 +3529,7 @@
 <script src="js/modules/ayarlar.js"></script>
 <script src="js/modules/admin.js"></script>
 <script src="js/modules/auth.js"></script>
+<script src="js/modules/sync.js"></script>
 <script src="js/modules/login.js"></script>
 <script src="js/modules/ihtarname.js"></script>
 <script src="js/modules/todo.js"></script>
