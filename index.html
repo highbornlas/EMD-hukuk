@@ -59,8 +59,11 @@
     <!-- Sağ: Görsel -->
     <div class="lp-hero-visual">
       <div class="lp-hero-img-wrap">
-        <img src="images/hero-avukat.png" alt="LexBase Dashboard" class="lp-hero-img"
-             onerror="this.parentElement.style.display='none'">
+        <picture>
+          <source srcset="images/hero-avukat.webp" type="image/webp">
+          <img src="images/hero-avukat.png" alt="LexBase Dashboard" class="lp-hero-img"
+               onerror="this.parentElement.parentElement.style.display='none'" loading="lazy">
+        </picture>
         <div class="lp-hero-glow"></div>
       </div>
     </div>
@@ -3252,6 +3255,7 @@
 <script src="js/modules/state.js"></script>
 <script src="js/modules/plan.js"></script>
 <script src="js/modules/security.js"></script>
+<script src="js/modules/eventbus.js"></script>
 <script src="js/modules/utils.js"></script>
 <script src="js/modules/ui.js"></script>
 <script src="js/modules/rehber.js"></script>

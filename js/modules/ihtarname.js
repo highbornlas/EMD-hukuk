@@ -64,7 +64,7 @@ function openIhtarModal(id) {
   // Müvekkil listesini doldur
   const muvSel = document.getElementById('ihtar-muv');
   muvSel.innerHTML = '<option value="">— Müvekkil seçin —</option>';
-  state.muvekkillar.forEach(m => muvSel.innerHTML += `<option value="${m.id}">${m.ad}</option>`);
+  state.muvekkillar.forEach(m => muvSel.innerHTML += `<option value="${m.id}">${escHTML(m.ad)}</option>`);
 
   // İlgili dosya listesini doldur
   ihtarDosyaDoldur('');
@@ -114,9 +114,9 @@ function ihtarDosyaDoldur(tur) {
   if (!sel) return;
   sel.innerHTML = '<option value="">— Dosya seçin (opsiyonel) —</option>';
   if (tur === 'dava') {
-    state.davalar.forEach(d => sel.innerHTML += `<option value="${d.id}">${d.no||d.id} — ${d.konu||''}</option>`);
+    state.davalar.forEach(d => sel.innerHTML += `<option value="${d.id}">${d.no||d.id} — ${escHTML(d.konu||'')}</option>`);
   } else if (tur === 'icra') {
-    state.icra.forEach(i => sel.innerHTML += `<option value="${i.id}">${i.no||i.id} — ${i.borclu||''}</option>`);
+    state.icra.forEach(i => sel.innerHTML += `<option value="${i.id}">${i.no||i.id} — ${escHTML(i.borclu||'')}</option>`);
   }
 }
 
@@ -189,27 +189,27 @@ function openIhtarDetay(id) {
   document.getElementById('ihtar-detay-icerik').innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
       <div>
-        <h2 style="font-family:'Playfair Display',serif;font-size:20px;color:var(--text)">${ih.no||'—'}</h2>
+        <h2 style="font-family:'Playfair Display',serif;font-size:20px;color:var(--text)">${escHTML(ih.no||'—')}</h2>
         <div style="margin-top:4px;display:flex;gap:8px;flex-wrap:wrap">
           <span style="background:${yonRenk}22;color:${yonRenk};padding:3px 10px;border-radius:4px;font-size:11px;font-weight:700">${ih.yon}</span>
-          <span style="background:var(--surface2);color:var(--text-muted);padding:3px 10px;border-radius:4px;font-size:11px">${ih.tur||'İhtarname'}</span>
+          <span style="background:var(--surface2);color:var(--text-muted);padding:3px 10px;border-radius:4px;font-size:11px">${escHTML(ih.tur||'İhtarname')}</span>
           <span style="color:${durRenk};font-size:11px;font-weight:600">● ${ih.tebligDurum||'Bekliyor'}</span>
         </div>
       </div>
       <button class="btn btn-gold" onclick="openIhtarModal('${ih.id}')">✏️ Düzenle</button>
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:20px">
-      ${bilgiKutusu('Müvekkil', getMuvAd(ih.muvId))}
-      ${bilgiKutusu('Karşı Taraf', ih.karsiTaraf||'—')}
-      ${bilgiKutusu('Noterlik', ih.noterlik||'—')}
-      ${bilgiKutusu('Yevmiye No', ih.yevmiyeNo||'—')}
+      ${escHTML(bilgiKutusu('Müvekkil', getMuvAd(ih.muvId)))}
+      ${escHTML(bilgiKutusu('Karşı Taraf', ih.karsiTaraf||'—'))}
+      ${escHTML(bilgiKutusu('Noterlik', ih.noterlik||'—'))}
+      ${escHTML(bilgiKutusu('Yevmiye No', ih.yevmiyeNo||'—'))}
       ${bilgiKutusu('Düzenleme Tarihi', fmtD(ih.tarih))}
       ${bilgiKutusu('Tebliğ Durumu', `<span style="color:${durRenk};font-weight:600">${ih.tebligDurum||'Bekliyor'}</span>`)}
       ${ih.tebligTarih ? bilgiKutusu('Tebliğ Tarihi', fmtD(ih.tebligTarih)) : ''}
       ${bilgiKutusu('İlgili Dosya', ilgiliDosyaBilgi)}
     </div>
-    ${ih.konu ? `<div class="section"><div class="section-header"><div class="section-title">Konu</div></div><div class="section-body"><p style="font-size:13px;line-height:1.7">${ih.konu}</p></div></div>` : ''}
-    ${ih.icindekiler ? `<div class="section"><div class="section-header"><div class="section-title">İçindekiler / Talepler</div></div><div class="section-body"><p style="font-size:13px;line-height:1.7;white-space:pre-wrap">${ih.icindekiler}</p></div></div>` : ''}
+    ${escHTML(ih.konu ? `<div class="section"><div class="section-header"><div class="section-title">Konu</div></div><div class="section-body"><p style="font-size:13px;line-height:1.7">${escHTML(ih.konu)}</p></div></div>` : ''}
+    ${escHTML(ih.icindekiler ? `<div class="section"><div class="section-header"><div class="section-title">İçindekiler / Talepler</div></div><div class="section-body"><p style="font-size:13px;line-height:1.7;white-space:pre-wrap">${escHTML(ih.icindekiler)}</p></div></div>` : ''}
   `;
 
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));

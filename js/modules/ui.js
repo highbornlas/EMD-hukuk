@@ -39,7 +39,7 @@ function ktAra(araId,listeId,hiddenId,gosterId){
   sonuclar.forEach(k=>{
     const meta=[k.tip==='tuzel'?'🏢 Tüzel':'👤 Gerçek',k.tc,k.tel].filter(Boolean).join(' · ');
     html+=`<div class="kt-item" onmousedown="ktSec('${k.id}','${araId}','${listeId}','${hiddenId}','${gosterId}')">
-      <div><div>${k.ad}</div><div class="kt-item-meta">${meta}</div></div>
+      <div><div>${escHTML(k.ad)}</div><div class="kt-item-meta">${meta}</div></div>
     </div>`;
   });
   html+=`<div class="kt-new" onmousedown="ktYeniAc('${araId}','${listeId}','${hiddenId}','${gosterId}')">＋ "${document.getElementById(araId).value||'Yeni'}" adıyla kayıt oluştur</div>`;
@@ -57,7 +57,7 @@ function ktSec(id,araId,listeId,hiddenId,gosterId){
   document.getElementById(listeId).style.display='none';
   const meta=[k.tip==='tuzel'?'🏢 Tüzel':'👤 Gerçek',k.tc,k.tel,k.mail].filter(Boolean).join(' · ');
   document.getElementById(gosterId).innerHTML=`
-    <div><div class="kt-secili-ad">${k.ad}</div><div class="kt-secili-meta">${meta}</div></div>
+    <div><div class="kt-secili-ad">${escHTML(k.ad)}</div><div class="kt-secili-meta">${meta}</div></div>
     <button class="kt-secili-temizle" onclick="ktTemizle('${araId}','${hiddenId}','${gosterId}')" title="Seçimi kaldır">✕</button>`;
   document.getElementById(gosterId).style.display='flex';
 }
@@ -121,7 +121,7 @@ function vekAra(araId,listeId,hiddenId,gosterId){
   sonuclar.forEach(v=>{
     const meta=[v.baro,v.baroSicil?'Sicil: '+v.baroSicil:'',v.tel].filter(Boolean).join(' · ');
     html+=`<div class="kt-item" onmousedown="vekSec('${v.id}','${araId}','${listeId}','${hiddenId}','${gosterId}')">
-      <div><div>Av. ${v.ad}</div><div class="kt-item-meta">${meta}</div></div>
+      <div><div>Av. ${escHTML(v.ad)}</div><div class="kt-item-meta">${meta}</div></div>
     </div>`;
   });
   html+=`<div class="kt-new" onmousedown="vekYeniAc('${araId}','${listeId}','${hiddenId}','${gosterId}')">＋ "${document.getElementById(araId).value||'Yeni'}" adıyla vekil kaydı oluştur</div>`;
@@ -137,7 +137,7 @@ function vekSec(id,araId,listeId,hiddenId,gosterId){
   document.getElementById(listeId).style.display='none';
   const meta=[v.baro,v.baroSicil?'Sicil: '+v.baroSicil:'',v.tel,v.mail].filter(Boolean).join(' · ');
   document.getElementById(gosterId).innerHTML=`
-    <div><div class="kt-secili-ad">Av. ${v.ad}</div><div class="kt-secili-meta">${meta}</div></div>
+    <div><div class="kt-secili-ad">Av. ${escHTML(v.ad)}</div><div class="kt-secili-meta">${meta}</div></div>
     <button class="kt-secili-temizle" onclick="vekTemizle('${araId}','${hiddenId}','${gosterId}')" title="Seçimi kaldır">✕</button>`;
   document.getElementById(gosterId).style.display='flex';
 }
@@ -491,7 +491,7 @@ function ktWidgetDoldur(ktId,araId,listeId,hiddenId,gosterId){
   document.getElementById(hiddenId).value=ktId;
   const meta=[k.tip==='tuzel'?'🏢 Tüzel':'👤 Gerçek',k.tc,k.tel,k.mail].filter(Boolean).join(' · ');
   document.getElementById(gosterId).innerHTML=`
-    <div><div class="kt-secili-ad">${k.ad}</div><div class="kt-secili-meta">${meta}</div></div>
+    <div><div class="kt-secili-ad">${escHTML(k.ad)}</div><div class="kt-secili-meta">${meta}</div></div>
     <button class="kt-secili-temizle" onclick="ktTemizle('${araId}','${hiddenId}','${gosterId}')" title="Seçimi kaldır">✕</button>`;
   document.getElementById(gosterId).style.display='flex';
 }
@@ -501,7 +501,7 @@ function vekWidgetDoldur(vekId,araId,listeId,hiddenId,gosterId){
   document.getElementById(hiddenId).value=vekId;
   const meta=[v.baro,v.baroSicil?'Sicil: '+v.baroSicil:'',v.tel,v.mail].filter(Boolean).join(' · ');
   document.getElementById(gosterId).innerHTML=`
-    <div><div class="kt-secili-ad">Av. ${v.ad}</div><div class="kt-secili-meta">${meta}</div></div>
+    <div><div class="kt-secili-ad">Av. ${escHTML(v.ad)}</div><div class="kt-secili-meta">${meta}</div></div>
     <button class="kt-secili-temizle" onclick="vekTemizle('${araId}','${hiddenId}','${gosterId}')" title="Seçimi kaldır">✕</button>`;
   document.getElementById(gosterId).style.display='flex';
 }
@@ -591,7 +591,7 @@ function spotlightAra(q) {
       onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='transparent'">
       <span style="font-size:20px;width:28px;text-align:center">${s.ikon}</span>
       <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.baslik}</div>
+        <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHTML(s.baslik)}</div>
         <div style="font-size:11px;color:var(--text-muted)">${s.alt}</div>
       </div>
       <span style="font-size:10px;color:${s.renk};background:${s.renk}22;padding:2px 8px;border-radius:4px;font-weight:700;flex-shrink:0">↗</span>
@@ -648,7 +648,7 @@ function muvAra(araId, listeId, hiddenId, gosterId) {
     const tip = m.tip === 'tuzel' ? '🏢 Tüzel' : '👤 Gerçek';
     const meta = [tip, m.tel, m.email].filter(Boolean).join(' · ');
     html += `<div class="kt-item" onmousedown="muvSec('${m.id}','${araId}','${listeId}','${hiddenId}','${gosterId}')">
-      <div><div>${m.ad}</div><div class="kt-item-meta">${meta}</div></div>
+      <div><div>${escHTML(m.ad)}</div><div class="kt-item-meta">${meta}</div></div>
     </div>`;
   });
   // Yeni müvekkil ekleme seçeneği
@@ -667,7 +667,7 @@ function muvSec(id, araId, listeId, hiddenId, gosterId) {
   const tip = m.tip === 'tuzel' ? '🏢 Tüzel' : '👤 Gerçek';
   const meta = [tip, m.tel, m.email].filter(Boolean).join(' · ');
   document.getElementById(gosterId).innerHTML = `
-    <div><div class="kt-secili-ad">${m.ad}</div><div class="kt-secili-meta">${meta}</div></div>
+    <div><div class="kt-secili-ad">${escHTML(m.ad)}</div><div class="kt-secili-meta">${meta}</div></div>
     <button class="kt-secili-temizle" onclick="muvTemizle('${araId}','${hiddenId}','${gosterId}')" title="Seçimi kaldır">✕</button>`;
   document.getElementById(gosterId).style.display = 'flex';
 }
@@ -709,7 +709,7 @@ function muvWidgetDoldur(muvId, araId, listeId, hiddenId, gosterId) {
   const tip = m.tip === 'tuzel' ? '🏢 Tüzel' : '👤 Gerçek';
   const meta = [tip, m.tel, m.email].filter(Boolean).join(' · ');
   document.getElementById(gosterId).innerHTML = `
-    <div><div class="kt-secili-ad">${m.ad}</div><div class="kt-secili-meta">${meta}</div></div>
+    <div><div class="kt-secili-ad">${escHTML(m.ad)}</div><div class="kt-secili-meta">${meta}</div></div>
     <button class="kt-secili-temizle" onclick="muvTemizle('${araId}','${hiddenId}','${gosterId}')" title="Seçimi kaldır">✕</button>`;
   document.getElementById(gosterId).style.display = 'flex';
 }

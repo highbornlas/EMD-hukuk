@@ -189,4 +189,19 @@ function planKullanim() {
 // ================================================================
 // UTILS
 // ================================================================
-function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+
+/**
+ * Güvenli unique ID üreteci.
+ * crypto.randomUUID() varsa onu kullanır (modern browsers),
+ * yoksa crypto.getRandomValues ile UUID v4 üretir.
+ * Eski Date.now + Math.random yöntemi çakışma riski taşıyordu.
+ */
+function uid() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  // Fallback: crypto.getRandomValues ile UUID v4
+  return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+    (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+  );
+}

@@ -291,6 +291,8 @@ function showLanding() {
 
 function uygulamayiBaslat() {
   showYukleniyor(false); // garantili kapat
+  // Event sistemi başlat
+  if (typeof registerStandardEvents === 'function') registerStandardEvents();
   // Landing'i gizle
   const landing = document.getElementById('landing-screen');
   if (landing) landing.classList.add('hidden');
