@@ -4,12 +4,11 @@
 // ================================================================
 
 function showPage(id,el){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');p.style.display='none';});
   document.querySelectorAll('.nav-item, .top-nav-item').forEach(n=>n.classList.remove('active'));
   const pageEl = document.getElementById('page-'+id);
-  if(pageEl) pageEl.classList.add('active');
+  if(pageEl){pageEl.classList.add('active');pageEl.style.display='block';}
   if(el)el.classList.add('active');
-  // main scroll'u sıfırla — setTimeout ile DOM güncellendikten sonra
   const mainEl = document.querySelector('main');
   if(mainEl) mainEl.scrollTop = 0;
   const map={anasayfa:renderDashboard,davalar:()=>{renderDavalar();renderDavaCards();},icra:()=>{renderIcra();renderIcraCards();},danismanlik:renderDanismanlik,butce:renderButce,takvim:renderCalendar,arabuluculuk:()=>{setTimeout(()=>{renderArabuluculuk();if(mainEl)mainEl.scrollTop=0;},10);},uyap:renderUyapSayfa};
