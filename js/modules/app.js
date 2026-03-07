@@ -53,10 +53,8 @@ function init(){
   if(!state.arabuluculuk)state.arabuluculuk=[];
   if(!state.danismanlik)state.danismanlik=[];
   if(!state.danismanlik)state.danismanlik=[];
-  // Veri yoksa seed yükle — sadece oturum açılmamışsa (demo/offline mod)
-  if(state.muvekkillar.length===0 && !currentBuroId){
-    seedTestData();
-  }
+  // Veri yoksa (localStorage çalışmıyor olabilir) direkt state'e yükle
+  // Demo veri artık otomatik yüklenmiyor — Ayarlar > Demo Veri'den manuel yüklenebilir
   // Normalize
   state.davalar.forEach(d=>ensureArrays(d,['evraklar','notlar','harcamalar','tahsilatlar']));
   state.icra.forEach(i=>ensureArrays(i,['evraklar','notlar','harcamalar','tahsilatlar']));
@@ -64,6 +62,31 @@ function init(){
   initCal();
   renderMuvekkillar();renderDavalar();renderDavaCards();renderIcra();renderIcraCards();renderButce();renderDanismanlik();renderDashboard();if(typeof renderIhtarname==="function")renderIhtarname();if(typeof renderTodo==="function")renderTodo();updateBadges();
   document.querySelector('#dav-modal .btn-gold').onclick=saveDava;
+}
+
+
+function demoVeriYukle() {
+  if (state.muvekkillar.length > 0) {
+    if (!confirm('Mevcut verilerinizin üzerine demo veriler eklenecek. Devam?')) return;
+  }
+  seedTestData();
+  kaydet();
+  renderMuvekkillar(); renderDavalar(); renderDavaCards();
+  renderIcra(); renderIcraCards(); renderDashboard(); updateBadges();
+  notify('✅ Demo veriler yüklendi — 27 müvekkil, 50 dava, 28 icra dosyası');
+}
+
+function demoVeriSil() {
+  if (!confirm('Tüm demo veriler (muv01-muv27, dav01-dav50, icr01-icr28) silinecek. Devam?')) return;
+  state.muvekkillar = state.muvekkillar.filter(m => !m.id.match(/^muv\d+$/));
+  state.davalar     = state.davalar.filter(d => !d.id.match(/^dav\d+$/));
+  state.icra        = state.icra.filter(i => !i.id.match(/^icr\d+$/));
+  state.karsiTaraflar = (state.karsiTaraflar||[]).filter(k => !k.id.match(/^kt\d+$/));
+  state.vekillar    = (state.vekillar||[]).filter(v => !v.id.match(/^vek\d+$/));
+  kaydet();
+  renderMuvekkillar(); renderDavalar(); renderDavaCards();
+  renderIcra(); renderIcraCards(); renderDashboard(); updateBadges();
+  notify('🗑️ Demo veriler silindi');
 }
 
 function seedTestData(){
