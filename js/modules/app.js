@@ -53,8 +53,8 @@ function init(){
   if(!state.arabuluculuk)state.arabuluculuk=[];
   if(!state.danismanlik)state.danismanlik=[];
   if(!state.danismanlik)state.danismanlik=[];
-  // Veri yoksa (localStorage çalışmıyor olabilir) direkt state'e yükle
-  if(state.muvekkillar.length===0){
+  // Veri yoksa seed yükle — sadece oturum açılmamışsa (demo/offline mod)
+  if(state.muvekkillar.length===0 && !currentBuroId){
     seedTestData();
   }
   // Normalize
