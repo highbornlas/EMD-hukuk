@@ -1,35 +1,73 @@
 // ================================================================
-// EMD HUKUK — LOCALSTORAGE
+// LEXBASE — LOCALSTORAGE & STATE YÖNETİMİ
 // js/modules/state.js
+//
+// Düzeltmeler:
+// - loadData hata yutma düzeltildi — artık konsola uyarı yazılır
+// - saveData çakışması çözüldü — tek kaynak supabase-client.js
+// - Koleksiyon normalize işlemi iyileştirildi
 // ================================================================
 
-function loadData(){
-  try{
-    const d=localStorage.getItem(SK);
-    if(d){const p=JSON.parse(d);Object.keys(p).forEach(k=>{if(k in state)state[k]=p[k];});}
-  }catch(e){}
-  // Supabase modunda karşı taraf ve vekil verilerini localStorage'dan alma
-  if(currentBuroId){
-    state.karsiTaraflar=[];
-    state.vekillar=[];
+/**
+ * localStorage'dan state verilerini yükler.
+ * Supabase oturumu yoksa tek veri kaynağı budur.
+ */
+function loadData() {
+  try {
+    const d = localStorage.getItem(SK);
+    if (d) {
+      const p = JSON.parse(d);
+      Object.keys(p).forEach(k => {
+        if (k in state) state[k] = p[k];
+      });
+    }
+  } catch (e) {
+    console.warn('[LexBase] localStorage verisi okunamadı veya bozuk:', e.message);
+    // Bozuk veri varsa yedekle
+    try {
+      const raw = localStorage.getItem(SK);
+      if (raw && raw.length > 0) {
+        console.warn('[LexBase] Bozuk veri tespit edildi. Yedek alınıyor...');
+        localStorage.setItem(SK + '_yedek_' + Date.now(), raw);
+      }
+    } catch (backupErr) {
+      // localStorage tamamen erişilemez
+    }
   }
-  const koleksiyonlar=['muvekkillar','karsiTaraflar','vekillar','davalar','icra','ihtarnameler','todolar'];
-  koleksiyonlar.forEach(k=>{
-    if(!state[k])state[k]=[];
-    let sonraki=Math.max(0,...state[k].map(x=>x.sira||0))+1;
-    state[k].forEach(x=>{if(!x.sira){x.sira=sonraki++;} });
+
+  // Supabase modunda karşı taraf ve vekil verilerini localStorage'dan alma
+  if (currentBuroId) {
+    state.karsiTaraflar = [];
+    state.vekillar = [];
+  }
+
+  // Koleksiyonları normalize et — sira alanı garantile
+  const koleksiyonlar = [
+    'muvekkillar', 'karsiTaraflar', 'vekillar',
+    'davalar', 'icra', 'ihtarnameler', 'todolar'
+  ];
+  koleksiyonlar.forEach(k => {
+    if (!state[k]) state[k] = [];
+    let sonraki = Math.max(0, ...state[k].map(x => x.sira || 0)) + 1;
+    state[k].forEach(x => {
+      if (!x.sira) { x.sira = sonraki++; }
+    });
   });
 }
 
-function saveData(){
-  // Her zaman localStorage'a yaz (offline fallback)
-  try{ localStorage.setItem(SK, JSON.stringify(state)); }catch(e){}
-  // Supabase'e de yaz — oturum açıksa
-  if(typeof currentBuroId !== 'undefined' && currentBuroId){
-    clearTimeout(saveData._t);
-    saveData._t = setTimeout(async () => {
-      try { await sbTümüSenkronize(); } catch(e){ console.warn('Sync:', e.message); }
-    }, 800); // 800ms debounce — çok sık yazma
+/**
+ * State'i localStorage'a kaydeder.
+ * NOT: Supabase oturumu varsa supabase-client.js'deki saveData()
+ * bu fonksiyonu override eder ve hem localStorage hem Supabase'e yazar.
+ */
+function saveData() {
+  try {
+    localStorage.setItem(SK, JSON.stringify(state));
+  } catch (e) {
+    console.warn('[LexBase] localStorage yazma hatası:', e.message);
+    if (typeof notify === 'function') {
+      notify('⚠️ Veriler kaydedilemedi — depolama alanı dolu olabilir.');
+    }
   }
 }
 

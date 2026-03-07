@@ -1,6 +1,11 @@
 // ================================================================
-// EMD HUKUK — SUPABASE CLIENT
+// LEXBASE — SUPABASE CLIENT
 // js/modules/supabase-client.js
+//
+// NOT: SUPABASE_KEY bir anon (publishable) key'dir, client-side
+// kullanım için tasarlanmıştır. Güvenlik RLS (Row Level Security)
+// kuralları ile sağlanır. Supabase Dashboard'da RLS'in aktif
+// olduğundan emin olun.
 // ================================================================
 
 const SUPABASE_URL = 'https://omsahlgcuinyfvcuigfj.supabase.co';
@@ -190,12 +195,18 @@ async function sbSil(tablo, id) {
 
 // ================================================================
 // TOPLU KAYDETME (tüm state'i sync)
-// Mevcut saveData() fonksiyonunu override eder
+// Bu fonksiyon state.js'deki saveData()'ı override eder.
+// Hem localStorage'a hem Supabase'e yazar.
 // ================================================================
 
-async function saveData() {
+// Önceki (localStorage-only) saveData'yı yedekle
+const _localSaveData = typeof saveData === 'function' ? saveData : null;
+
+function saveData() {
   // Her zaman localStorage'a da yaz (offline fallback)
-  try { localStorage.setItem(SK, JSON.stringify(state)); } catch(e) {}
+  try { localStorage.setItem(SK, JSON.stringify(state)); } catch(e) {
+    console.warn('[LexBase] localStorage yazma hatası:', e.message);
+  }
 
   if (!currentBuroId) return;
 
@@ -205,7 +216,7 @@ async function saveData() {
     try {
       await sbTümüSenkronize();
     } catch(e) {
-      console.warn('Supabase sync hatası:', e.message);
+      console.warn('[LexBase] Supabase sync hatası:', e.message);
     }
   }, 500);
 }

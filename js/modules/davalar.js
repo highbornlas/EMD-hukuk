@@ -43,8 +43,9 @@ function saveDava(){
   closeModal('dav-modal');saveData();renderDavalar();renderDavaCards();renderMdDavalar();updateBadges();notify('✓ Dava eklendi');
 }
 
-function deleteDavaById(id){
-  if(!confirm('Bu davayı silmek istediğinize emin misiniz?'))return;
+async function deleteDavaById(id){
+  const onay = await silmeOnay('Dava', 'Bu davayı kalıcı olarak silmek istediğinize emin misiniz?');
+  if(!onay) return;
   const d=getDava(id);
   if(d)addLog(d.muvId,'Dava Silindi',`${d.no} | ${d.konu}`);
   state.davalar=state.davalar.filter(d=>d.id!==id);

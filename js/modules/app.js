@@ -52,7 +52,6 @@ function init(){
   if(!state.vekillar)state.vekillar=[];
   if(!state.arabuluculuk)state.arabuluculuk=[];
   if(!state.danismanlik)state.danismanlik=[];
-  if(!state.danismanlik)state.danismanlik=[];
   // Veri yoksa (localStorage çalışmıyor olabilir) direkt state'e yükle
   // Demo veri artık otomatik yüklenmiyor — Ayarlar > Demo Veri'den manuel yüklenebilir
   // Normalize

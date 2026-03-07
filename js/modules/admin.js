@@ -4,8 +4,10 @@
 // ================================================================
 
 // ── Admin Supabase Credentials ─────────────────────────────────
-// Admin paneli için AYRI Supabase projesi. SQL çalıştırıp
-// proje oluşturduktan sonra buraya URL ve anon key girin:
+// ⚠️ GÜVENLİK UYARISI: Bu anahtarlar client-side'da açıktır.
+// ÖNERİ: Admin işlemlerini Supabase Edge Function arkasına taşıyın.
+// Row Level Security (RLS) ile sadece yazma izni verin, okuma engelleyin.
+// Mevcut RLS kurallarını kontrol edin: admin tablosuna herkes yazabilir mi?
 const ADMIN_SB_URL = 'https://ewvbpfsgmjghmbnkuvpx.supabase.co';
 const ADMIN_SB_KEY = 'sb_publishable_ccz6M_f4JCnnQzr0auQD7A_-A2YGb91';
 
@@ -17,7 +19,7 @@ let _oturumLogId     = null;
 async function adminSbPost(tablo, data) {
   if (!ADMIN_SB_URL || !ADMIN_SB_KEY) return;
   try {
-    await fetch(`${ADMIN_SB_URL}/rest/v1/${tablo}`, {
+    const res = await fetch(`${ADMIN_SB_URL}/rest/v1/${tablo}`, {
       method: 'POST',
       headers: {
         'apikey': ADMIN_SB_KEY,
@@ -27,7 +29,10 @@ async function adminSbPost(tablo, data) {
       },
       body: JSON.stringify(data)
     });
-  } catch(e) {}
+    if (!res.ok) console.warn(`[Admin] POST ${tablo} hatası: ${res.status}`);
+  } catch(e) {
+    console.warn(`[Admin] POST ${tablo} ağ hatası:`, e.message);
+  }
 }
 
 async function adminSbUpdate(tablo, id, data) {
