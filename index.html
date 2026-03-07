@@ -108,676 +108,511 @@
   </section>
 
   <!-- ═══════════════════════════════════════════════════════════
-       MODÜL VİTRİNİ — Sekme + Kaydırmalı Mockup
+       STİCKY SCROLL — Sinematik Modül Anlatısı
   ════════════════════════════════════════════════════════════ -->
-  <section class="lp-showcase" id="lp-features">
-    <div class="lp-sec-hd reveal">
+  <section class="lp-sticky-section" id="lp-features">
+    <div class="lp-sec-hd reveal" style="padding:0 5vw 56px">
       <div class="lp-sec-tag">Platform Özellikleri</div>
-      <div class="lp-sec-t">Her modülü keşfedin,<br>büronuzu tanıyın</div>
-      <div class="lp-sec-s">Gerçek verilerle çalışan, büronuza özel 8 güçlü modül</div>
+      <div class="lp-sec-t">Büronuzun ihtiyacı olan<br>her şey, tek platformda</div>
+      <div class="lp-sec-s">8 güçlü modül — gerçek veri, gerçek akış</div>
     </div>
 
-    <!-- Sekme Çubuğu -->
-    <div class="lpsc-tabs" id="lpsc-tabs">
-      <button class="lpsc-tab active" onclick="lpscSwitch('muvekkil',this)">👤 Müvekkil</button>
-      <button class="lpsc-tab" onclick="lpscSwitch('dava',this)">📁 Dava</button>
-      <button class="lpsc-tab" onclick="lpscSwitch('icra',this)">⚡ İcra</button>
-      <button class="lpsc-tab" onclick="lpscSwitch('arabuluculuk',this)">🤝 Arabuluculuk</button>
-      <button class="lpsc-tab" onclick="lpscSwitch('personel',this)">👥 Personel</button>
-      <button class="lpsc-tab" onclick="lpscSwitch('gorevler',this)">✅ Görevler</button>
-      <button class="lpsc-tab" onclick="lpscSwitch('uyari',this)">🔔 Uyarı Takip</button>
-      <button class="lpsc-tab" onclick="lpscSwitch('butce',this)">💰 Bütçe & Finans</button>
-    </div>
+    <div class="lp-sticky-wrap">
 
-    <!-- İçerik Alanı -->
-    <div class="lpsc-body">
-
-      <!-- ─── MÜVEKKİL ─────────────────────────────────── -->
-      <div class="lpsc-panel active" id="lpsc-muvekkil">
-        <div class="lpsc-text">
-          <div class="lpsc-tag">Müvekkil Yönetimi</div>
-          <h3 class="lpsc-h3">Tüm müvekkilleriniz,<br>tek bir merkezde.</h3>
-          <p class="lpsc-p">Gerçek ve tüzel kişi profillerini eksiksiz tutun. TC kimlik, vergi no, MERSIS, IBAN ve iletişim bilgilerinden dava geçmişine kadar her şey elinizin altında.</p>
-          <ul class="lpsc-list">
-            <li><span class="lpsc-ck">✔</span>Gerçek & tüzel kişi ayrımı</li>
-            <li><span class="lpsc-ck">✔</span>TC, vergi no, MERSIS, IBAN yönetimi</li>
-            <li><span class="lpsc-ck">✔</span>Bağlı dava & icra dosyaları</li>
-            <li><span class="lpsc-ck">✔</span>Belge arşivi & iletişim geçmişi</li>
-            <li><span class="lpsc-ck">✔</span>WhatsApp ile anlık mesaj gönderimi</li>
-          </ul>
-        </div>
-        <div class="lpsc-carousel-wrap">
-          <div class="lpsc-carousel" id="car-muvekkil">
-
-            <!-- Ekran 1: Müvekkil Listesi -->
-            <div class="lpsc-screen">
-              <div class="lpsc-screen-bar"><div class="lpsc-dots"></div><span>LexBase — Müvekkiller</span></div>
-              <div class="lpsc-screen-body">
-                <div class="lpsc-toolbar"><span style="color:#00BCD4;font-weight:700;font-size:13px">👤 Müvekkil Listesi</span><button class="lpsc-addbtn">+ Yeni Müvekkil</button></div>
-                <div class="lpsc-search">🔍 Müvekkil ara...</div>
-                <div class="lpsc-muv-card">
-                  <div class="lpsc-avatar" style="background:linear-gradient(135deg,#00BCD4,#0097A7)">KY</div>
-                  <div class="lpsc-muv-info"><div class="lpsc-muv-name">Kadir Yılmaz</div><div class="lpsc-muv-sub">Gerçek Kişi · TC: 123••••7890</div></div>
-                  <div class="lpsc-badge green">3 Dava</div>
-                </div>
-                <div class="lpsc-muv-card">
-                  <div class="lpsc-avatar" style="background:linear-gradient(135deg,#9b59b6,#6c3483)">ZA</div>
-                  <div class="lpsc-muv-info"><div class="lpsc-muv-name">Zeynep Arslan</div><div class="lpsc-muv-sub">Gerçek Kişi · TC: 456••••2341</div></div>
-                  <div class="lpsc-badge yellow">1 Dava</div>
-                </div>
-                <div class="lpsc-muv-card">
-                  <div class="lpsc-avatar" style="background:linear-gradient(135deg,#e67e22,#ca6f1e)">AY</div>
-                  <div class="lpsc-muv-info"><div class="lpsc-muv-name">Altın Yapı İnş. A.Ş.</div><div class="lpsc-muv-sub">Tüzel Kişi · VKN: 4820••••61</div></div>
-                  <div class="lpsc-badge red">5 Dava</div>
-                </div>
-                <div class="lpsc-muv-card">
-                  <div class="lpsc-avatar" style="background:linear-gradient(135deg,#1abc9c,#148f77)">BS</div>
-                  <div class="lpsc-muv-info"><div class="lpsc-muv-name">Berrak Su Ltd. Şti.</div><div class="lpsc-muv-sub">Tüzel Kişi · VKN: 7351••••29</div></div>
-                  <div class="lpsc-badge green">2 Dava</div>
-                </div>
-                <div class="lpsc-muv-card">
-                  <div class="lpsc-avatar" style="background:linear-gradient(135deg,#e74c3c,#c0392b)">OM</div>
-                  <div class="lpsc-muv-info"><div class="lpsc-muv-name">Orhan Meriç</div><div class="lpsc-muv-sub">Gerçek Kişi · TC: 789••••5512</div></div>
-                  <div class="lpsc-badge gray">Pasif</div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Ekran 2: Müvekkil Detayı -->
-            <div class="lpsc-screen">
-              <div class="lpsc-screen-bar"><div class="lpsc-dots"></div><span>Kadir Yılmaz — Profil</span></div>
-              <div class="lpsc-screen-body">
-                <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,.07)">
-                  <div class="lpsc-avatar lg" style="background:linear-gradient(135deg,#00BCD4,#0097A7)">KY</div>
-                  <div>
-                    <div style="font-size:15px;font-weight:700;color:#fff">Kadir Yılmaz</div>
-                    <div style="font-size:11px;color:rgba(255,255,255,.4)">Gerçek Kişi · Aktif Müvekkil</div>
-                  </div>
-                  <div style="margin-left:auto;display:flex;gap:6px">
-                    <div class="lpsc-wa-btn">📱 WhatsApp</div>
-                  </div>
-                </div>
-                <div class="lpsc-info-grid">
-                  <div class="lpsc-info-item"><div class="lpsc-info-l">TC Kimlik</div><div class="lpsc-info-v">123••••7890</div></div>
-                  <div class="lpsc-info-item"><div class="lpsc-info-l">Telefon</div><div class="lpsc-info-v">0532 441 87 23</div></div>
-                  <div class="lpsc-info-item"><div class="lpsc-info-l">E-posta</div><div class="lpsc-info-v">k.yilmaz@email.com</div></div>
-                  <div class="lpsc-info-item"><div class="lpsc-info-l">IBAN</div><div class="lpsc-info-v">TR44 0001 ••• ••• 4821</div></div>
-                  <div class="lpsc-info-item"><div class="lpsc-info-l">Adres</div><div class="lpsc-info-v">Beşiktaş, İstanbul</div></div>
-                  <div class="lpsc-info-item"><div class="lpsc-info-l">Meslek</div><div class="lpsc-info-v">Serbest Ticaret</div></div>
-                </div>
-                <div style="margin-top:12px;font-size:11px;color:#00BCD4;font-weight:700;margin-bottom:8px">📁 Bağlı Dosyalar</div>
-                <div class="lpsc-linked-row"><span style="color:rgba(255,255,255,.5);font-size:11px">2024/1247 — Alacak Davası</span><span class="lpsc-badge green" style="font-size:9px">Aktif</span></div>
-                <div class="lpsc-linked-row"><span style="color:rgba(255,255,255,.5);font-size:11px">2023/0892 — İş Davası</span><span class="lpsc-badge yellow" style="font-size:9px">Temyiz</span></div>
-                <div class="lpsc-linked-row"><span style="color:rgba(255,255,255,.5);font-size:11px">2024/İ-4512 — İcra Takibi</span><span class="lpsc-badge red" style="font-size:9px">Devam</span></div>
-              </div>
-            </div>
-
-            <!-- Ekran 3: Belge Arşivi -->
-            <div class="lpsc-screen">
-              <div class="lpsc-screen-bar"><div class="lpsc-dots"></div><span>Kadir Yılmaz — Belgeler</span></div>
-              <div class="lpsc-screen-body">
-                <div class="lpsc-toolbar"><span style="color:#00BCD4;font-weight:700;font-size:12px">📂 Belge Arşivi</span><button class="lpsc-addbtn">+ Yükle</button></div>
-                <div class="lpsc-doc-row"><span class="lpsc-doc-ico">📄</span><div><div style="font-size:11px;color:#fff">Vekaletname_2024.pdf</div><div style="font-size:10px;color:rgba(255,255,255,.35)">12 Oca 2024 · 284 KB</div></div><span class="lpsc-badge gray" style="font-size:9px">PDF</span></div>
-                <div class="lpsc-doc-row"><span class="lpsc-doc-ico">📄</span><div><div style="font-size:11px;color:#fff">Dava_dilekce_1247.docx</div><div style="font-size:10px;color:rgba(255,255,255,.35)">03 Mar 2024 · 128 KB</div></div><span class="lpsc-badge" style="font-size:9px;background:rgba(0,120,212,.2);color:#5dade2">DOCX</span></div>
-                <div class="lpsc-doc-row"><span class="lpsc-doc-ico">🖼</span><div><div style="font-size:11px;color:#fff">Kimlik_fotokopisi.jpg</div><div style="font-size:10px;color:rgba(255,255,255,.35)">12 Oca 2024 · 1.2 MB</div></div><span class="lpsc-badge" style="font-size:9px;background:rgba(46,204,113,.15);color:#2ecc71">JPG</span></div>
-                <div class="lpsc-doc-row"><span class="lpsc-doc-ico">📄</span><div><div style="font-size:11px;color:#fff">Sozlesme_2023_imzali.pdf</div><div style="font-size:10px;color:rgba(255,255,255,.35)">28 Kas 2023 · 512 KB</div></div><span class="lpsc-badge gray" style="font-size:9px">PDF</span></div>
-                <div class="lpsc-doc-row"><span class="lpsc-doc-ico">📄</span><div><div style="font-size:11px;color:#fff">Icra_tebligat_4512.pdf</div><div style="font-size:10px;color:rgba(255,255,255,.35)">19 Şub 2024 · 96 KB</div></div><span class="lpsc-badge gray" style="font-size:9px">PDF</span></div>
-                <div style="margin-top:12px;padding:10px;background:rgba(37,211,102,.07);border:1px solid rgba(37,211,102,.2);border-radius:8px;display:flex;align-items:center;gap:10px">
-                  <span style="font-size:18px">📱</span>
-                  <div>
-                    <div style="font-size:11px;color:#25d366;font-weight:700">WhatsApp ile Paylaş</div>
-                    <div style="font-size:10px;color:rgba(255,255,255,.4)">Belgeyi müvekkile anında ilet</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-          </div><!-- /carousel -->
-          <div class="lpsc-nav"><button class="lpsc-arr" onclick="lpscSlide('muvekkil',-1)">‹</button><div class="lpsc-dots-nav" id="dots-muvekkil"><span class="lpsc-dot active"></span><span class="lpsc-dot"></span><span class="lpsc-dot"></span></div><button class="lpsc-arr" onclick="lpscSlide('muvekkil',1)">›</button></div>
-        </div>
-      </div>
-
-      <!-- ─── DAVA ──────────────────────────────────────── -->
-      <div class="lpsc-panel" id="lpsc-dava">
-        <div class="lpsc-text">
-          <div class="lpsc-tag">Dava Takip</div>
-          <h3 class="lpsc-h3">Davalarınız,<br>tam kontrolünüzde.</h3>
-          <p class="lpsc-p">50+ mahkeme türü desteği, aşama takibi, duruşma takvimi ve dava bazlı finansal takip. Harcamadan vekalet ücretine kadar her kuruşu kayıt altında tutun.</p>
-          <ul class="lpsc-list">
-            <li><span class="lpsc-ck">✔</span>50+ mahkeme türü & aşama takibi</li>
-            <li><span class="lpsc-ck">✔</span>Karşı taraf & karşı vekil yönetimi</li>
-            <li><span class="lpsc-ck">✔</span>Dava harcamaları (harç, bilirkişi, tebligat...)</li>
-            <li><span class="lpsc-ck">✔</span>Hakedilen & anlaşılan vekalet ücreti takibi</li>
-            <li><span class="lpsc-ck">✔</span>Duruşma tarihleri & hatırlatıcılar</li>
-          </ul>
-        </div>
-        <div class="lpsc-carousel-wrap">
-          <div class="lpsc-carousel" id="car-dava">
-
-            <!-- Ekran 1: Dava Listesi -->
-            <div class="lpsc-screen">
-              <div class="lpsc-screen-bar"><div class="lpsc-dots"></div><span>LexBase — Davalar</span></div>
-              <div class="lpsc-screen-body">
-                <div class="lpsc-toolbar"><span style="color:#00BCD4;font-weight:700;font-size:13px">📁 Aktif Davalar</span><button class="lpsc-addbtn">+ Yeni Dava</button></div>
-                <div class="lpsc-dava-row header"><span>Esas No</span><span>Müvekkil</span><span>Mahkeme</span><span>Durum</span></div>
-                <div class="lpsc-dava-row"><span style="color:#00BCD4;font-size:11px">2024/1247</span><span style="font-size:11px">Kadir Yılmaz</span><span style="font-size:10px;color:rgba(255,255,255,.5)">İst. 3. Asliye</span><span class="lpsc-badge green">Aktif</span></div>
-                <div class="lpsc-dava-row"><span style="color:#00BCD4;font-size:11px">2024/0534</span><span style="font-size:11px">Altın Yapı A.Ş.</span><span style="font-size:10px;color:rgba(255,255,255,.5)">İst. 2. Ticaret</span><span class="lpsc-badge yellow">Duruşma</span></div>
-                <div class="lpsc-dava-row"><span style="color:#00BCD4;font-size:11px">2023/0892</span><span style="font-size:11px">Kadir Yılmaz</span><span style="font-size:10px;color:rgba(255,255,255,.5)">İst. 7. İş</span><span class="lpsc-badge yellow">Temyiz</span></div>
-                <div class="lpsc-dava-row"><span style="color:#00BCD4;font-size:11px">2024/2108</span><span style="font-size:11px">Zeynep Arslan</span><span style="font-size:10px;color:rgba(255,255,255,.5)">Ank. 4. Aile</span><span class="lpsc-badge red">Acil</span></div>
-                <div class="lpsc-dava-row"><span style="color:#00BCD4;font-size:11px">2023/1834</span><span style="font-size:11px">Berrak Su Ltd.</span><span style="font-size:10px;color:rgba(255,255,255,.5)">İst. 1. İdare</span><span class="lpsc-badge gray">Kapandı</span></div>
-              </div>
-            </div>
-
-            <!-- Ekran 2: Dava Detayı -->
-            <div class="lpsc-screen">
-              <div class="lpsc-screen-bar"><div class="lpsc-dots"></div><span>2024/1247 — Dava Detayı</span></div>
-              <div class="lpsc-screen-body">
-                <div style="font-size:12px;font-weight:700;color:#00BCD4;margin-bottom:8px">📁 Alacak Davası — 2024/1247</div>
-                <div class="lpsc-info-grid">
-                  <div class="lpsc-info-item"><div class="lpsc-info-l">Mahkeme</div><div class="lpsc-info-v">İstanbul 3. Asliye Hukuk</div></div>
-                  <div class="lpsc-info-item"><div class="lpsc-info-l">Müvekkil</div><div class="lpsc-info-v">Kadir Yılmaz (Davacı)</div></div>
-                  <div class="lpsc-info-item"><div class="lpsc-info-l">Karşı Taraf</div><div class="lpsc-info-v">Meriç İnş. Ltd.</div></div>
-                  <div class="lpsc-info-item"><div class="lpsc-info-l">Karşı Vekil</div><div class="lpsc-info-v">Av. Serkan Doğan</div></div>
-                  <div class="lpsc-info-item"><div class="lpsc-info-l">Dava Değeri</div><div class="lpsc-info-v">₺142.500</div></div>
-                  <div class="lpsc-info-item"><div class="lpsc-info-l">Açılış Tarihi</div><div class="lpsc-info-v">15 Ocak 2024</div></div>
-                </div>
-                <div style="margin-top:10px;font-size:11px;color:#00BCD4;font-weight:700;margin-bottom:6px">📅 Duruşma Takvimi</div>
-                <div class="lpsc-hearing-row"><span class="lpsc-badge green" style="font-size:9px">Yapıldı</span><span style="font-size:11px">12 Mar 2024 — 1. Duruşma</span></div>
-                <div class="lpsc-hearing-row"><span class="lpsc-badge green" style="font-size:9px">Yapıldı</span><span style="font-size:11px">07 Haz 2024 — Bilirkişi</span></div>
-                <div class="lpsc-hearing-row"><span class="lpsc-badge yellow" style="font-size:9px">Bekliyor</span><span style="font-size:11px">14 Eyl 2024 — Karar</span></div>
-              </div>
-            </div>
-
-            <!-- Ekran 3: Dava Finansalları -->
-            <div class="lpsc-screen">
-              <div class="lpsc-screen-bar"><div class="lpsc-dots"></div><span>2024/1247 — Finansal Takip</span></div>
-              <div class="lpsc-screen-body">
-                <div style="font-size:12px;font-weight:700;color:#00BCD4;margin-bottom:10px">💰 Dava Finansal Özeti</div>
-                <div style="font-size:11px;color:rgba(255,255,255,.5);margin-bottom:6px;font-weight:600">DAVA HARCAMALARI</div>
-                <div class="lpsc-fin-row"><span>Mahkeme Harcı</span><span style="color:#e74c3c">₺2.400</span></div>
-                <div class="lpsc-fin-row"><span>Bilirkişi Ücreti</span><span style="color:#e74c3c">₺3.500</span></div>
-                <div class="lpsc-fin-row"><span>Tebligat Gideri</span><span style="color:#e74c3c">₺180</span></div>
-                <div class="lpsc-fin-row"><span>Keşif Masrafı</span><span style="color:#e74c3c">₺950</span></div>
-                <div class="lpsc-fin-row total"><span style="font-weight:700">Toplam Harcama</span><span style="color:#e74c3c;font-weight:700">₺7.030</span></div>
-                <div style="height:1px;background:rgba(255,255,255,.07);margin:10px 0"></div>
-                <div style="font-size:11px;color:rgba(255,255,255,.5);margin-bottom:6px;font-weight:600">VEKALET ÜCRETİ</div>
-                <div class="lpsc-fin-row"><span>Hakedilen Vekalet</span><span style="color:#2ecc71">₺25.000</span></div>
-                <div class="lpsc-fin-row"><span>Anlaşılan Vekalet</span><span style="color:#f39c12">₺18.500</span></div>
-                <div class="lpsc-fin-row"><span>Tahsil Edilen</span><span style="color:#2ecc71">₺10.000 ✓</span></div>
-                <div class="lpsc-fin-row"><span>Kalan Bakiye</span><span style="color:#f39c12">₺8.500 ⏳</span></div>
-              </div>
-            </div>
-
+      <!-- SOL: Sabit Mockup Penceresi -->
+      <div class="lp-sticky-left">
+        <div class="lp-sticky-device">
+          <div class="lp-sd-bar">
+            <div class="lp-sd-dots"></div>
+            <div class="lp-sd-url" id="lp-sd-url">LexBase — Müvekkil Yönetimi</div>
           </div>
-          <div class="lpsc-nav"><button class="lpsc-arr" onclick="lpscSlide('dava',-1)">‹</button><div class="lpsc-dots-nav" id="dots-dava"><span class="lpsc-dot active"></span><span class="lpsc-dot"></span><span class="lpsc-dot"></span></div><button class="lpsc-arr" onclick="lpscSlide('dava',1)">›</button></div>
-        </div>
-      </div>
+          <div class="lp-sd-screen">
 
-      <!-- ─── İCRA ──────────────────────────────────────── -->
-      <div class="lpsc-panel" id="lpsc-icra">
-        <div class="lpsc-text">
-          <div class="lpsc-tag">İcra Takip</div>
-          <h3 class="lpsc-h3">İcra dosyalarınızı<br>kayıpsız yönetin.</h3>
-          <p class="lpsc-p">İlamlı, ilamsız, kambiyo ve haciz takiplerinizi 8 farklı icra türü desteğiyle yönetin. Alacak ve tahsilat takibini net biçimde görün.</p>
-          <ul class="lpsc-list">
-            <li><span class="lpsc-ck">✔</span>8 farklı icra türü desteği</li>
-            <li><span class="lpsc-ck">✔</span>İcra dairesi & dosya numarası yönetimi</li>
-            <li><span class="lpsc-ck">✔</span>Alacak tutarı & tahsilat takibi</li>
-            <li><span class="lpsc-ck">✔</span>Haciz & satış aşamaları</li>
-            <li><span class="lpsc-ck">✔</span>Müvekkil & borçlu bilgileri</li>
+            <!-- Mockup 1: Müvekkil -->
+            <div class="lp-mock" id="mock-muvekkil" data-active="true">
+              <div class="lp-mock-kpi-row">
+                <div class="lp-mock-kpi" style="border-color:rgba(0,188,212,.3)">
+                  <div class="lp-mock-kpi-n" style="color:#00BCD4">47</div>
+                  <div class="lp-mock-kpi-l">Aktif Müvekkil</div>
+                </div>
+                <div class="lp-mock-kpi" style="border-color:rgba(46,204,113,.3)">
+                  <div class="lp-mock-kpi-n" style="color:#2ecc71">12</div>
+                  <div class="lp-mock-kpi-l">Bu Ay Yeni</div>
+                </div>
+                <div class="lp-mock-kpi" style="border-color:rgba(243,156,18,.3)">
+                  <div class="lp-mock-kpi-n" style="color:#f39c12">8</div>
+                  <div class="lp-mock-kpi-l">Tüzel Kişi</div>
+                </div>
+              </div>
+              <div class="lp-mock-list-head">Son Eklenen Müvekkiller</div>
+              <div class="lp-mock-muv-item">
+                <div class="lp-mock-av" style="background:linear-gradient(135deg,#00BCD4,#0097A7)">KY</div>
+                <div class="lp-mock-muv-text">
+                  <div class="lp-mock-muv-name">Kadir Yılmaz</div>
+                  <div class="lp-mock-muv-meta">Gerçek Kişi · 3 dava · Beşiktaş, İstanbul</div>
+                </div>
+                <div class="lp-mock-status green">Aktif</div>
+              </div>
+              <div class="lp-mock-muv-item">
+                <div class="lp-mock-av" style="background:linear-gradient(135deg,#e67e22,#ca6f1e)">AY</div>
+                <div class="lp-mock-muv-text">
+                  <div class="lp-mock-muv-name">Altın Yapı İnş. A.Ş.</div>
+                  <div class="lp-mock-muv-meta">Tüzel Kişi · VKN: 4820••61 · 5 dava</div>
+                </div>
+                <div class="lp-mock-status yellow">5 Dava</div>
+              </div>
+              <div class="lp-mock-muv-item">
+                <div class="lp-mock-av" style="background:linear-gradient(135deg,#9b59b6,#6c3483)">ZA</div>
+                <div class="lp-mock-muv-text">
+                  <div class="lp-mock-muv-name">Zeynep Arslan</div>
+                  <div class="lp-mock-muv-meta">Gerçek Kişi · TC: 456••2341 · Ankara</div>
+                </div>
+                <div class="lp-mock-status green">Aktif</div>
+              </div>
+              <div class="lp-mock-muv-item">
+                <div class="lp-mock-av" style="background:linear-gradient(135deg,#1abc9c,#148f77)">BS</div>
+                <div class="lp-mock-muv-text">
+                  <div class="lp-mock-muv-name">Berrak Su Ltd. Şti.</div>
+                  <div class="lp-mock-muv-meta">Tüzel Kişi · İstanbul · 2 dava</div>
+                </div>
+                <div class="lp-mock-status green">Aktif</div>
+              </div>
+              <div class="lp-mock-wa-bar">
+                <span style="color:#25D366;font-size:13px">📱</span>
+                <span style="font-size:11px;color:rgba(255,255,255,.5)">WhatsApp entegrasyonu aktif</span>
+                <span style="font-size:10px;color:#25D366;font-weight:700;margin-left:auto">Mesaj Gönder →</span>
+              </div>
+            </div>
+
+            <!-- Mockup 2: Dava -->
+            <div class="lp-mock" id="mock-dava">
+              <div class="lp-mock-kpi-row">
+                <div class="lp-mock-kpi" style="border-color:rgba(0,188,212,.3)">
+                  <div class="lp-mock-kpi-n" style="color:#00BCD4">23</div>
+                  <div class="lp-mock-kpi-l">Aktif Dava</div>
+                </div>
+                <div class="lp-mock-kpi" style="border-color:rgba(231,76,60,.3)">
+                  <div class="lp-mock-kpi-n" style="color:#e74c3c">3</div>
+                  <div class="lp-mock-kpi-l">Acil Süre</div>
+                </div>
+                <div class="lp-mock-kpi" style="border-color:rgba(46,204,113,.3)">
+                  <div class="lp-mock-kpi-n" style="color:#2ecc71">₺142K</div>
+                  <div class="lp-mock-kpi-l">Dava Değeri</div>
+                </div>
+              </div>
+              <div class="lp-mock-list-head">Güncel Davalar</div>
+              <div class="lp-mock-dava-item">
+                <div>
+                  <div class="lp-mock-dava-esas" style="color:#00BCD4">2024/1247</div>
+                  <div class="lp-mock-dava-ad">Kadir Yılmaz · İst. 3. Asliye</div>
+                </div>
+                <div class="lp-mock-status yellow">Duruşma</div>
+              </div>
+              <div class="lp-mock-dava-item">
+                <div>
+                  <div class="lp-mock-dava-esas" style="color:#00BCD4">2024/0534</div>
+                  <div class="lp-mock-dava-ad">Altın Yapı A.Ş. · İst. 2. Ticaret</div>
+                </div>
+                <div class="lp-mock-status red">Acil</div>
+              </div>
+              <div class="lp-mock-dava-item">
+                <div>
+                  <div class="lp-mock-dava-esas" style="color:#00BCD4">2024/2108</div>
+                  <div class="lp-mock-dava-ad">Zeynep Arslan · Ank. 4. Aile</div>
+                </div>
+                <div class="lp-mock-status green">Aktif</div>
+              </div>
+              <div class="lp-mock-fin-bar">
+                <div class="lp-mock-fin-item">
+                  <div class="lp-mock-fin-label">Hakedilen Vekalet</div>
+                  <div class="lp-mock-fin-val" style="color:#2ecc71">₺25.000</div>
+                </div>
+                <div class="lp-mock-fin-div"></div>
+                <div class="lp-mock-fin-item">
+                  <div class="lp-mock-fin-label">Tahsil Edilen</div>
+                  <div class="lp-mock-fin-val" style="color:#00BCD4">₺10.000</div>
+                </div>
+                <div class="lp-mock-fin-div"></div>
+                <div class="lp-mock-fin-item">
+                  <div class="lp-mock-fin-label">Dava Harcama</div>
+                  <div class="lp-mock-fin-val" style="color:#e74c3c">₺7.030</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Mockup 3: İcra -->
+            <div class="lp-mock" id="mock-icra">
+              <div class="lp-mock-kpi-row">
+                <div class="lp-mock-kpi" style="border-color:rgba(231,76,60,.3)">
+                  <div class="lp-mock-kpi-n" style="color:#e74c3c">8</div>
+                  <div class="lp-mock-kpi-l">Aktif İcra</div>
+                </div>
+                <div class="lp-mock-kpi" style="border-color:rgba(243,156,18,.3)">
+                  <div class="lp-mock-kpi-n" style="color:#f39c12">₺463K</div>
+                  <div class="lp-mock-kpi-l">Toplam Alacak</div>
+                </div>
+                <div class="lp-mock-kpi" style="border-color:rgba(46,204,113,.3)">
+                  <div class="lp-mock-kpi-n" style="color:#2ecc71">₺145K</div>
+                  <div class="lp-mock-kpi-l">Tahsil Edilen</div>
+                </div>
+              </div>
+              <div class="lp-mock-list-head">İcra Dosyaları</div>
+              <div class="lp-mock-dava-item">
+                <div>
+                  <div class="lp-mock-dava-esas" style="color:#e74c3c">2024/45123</div>
+                  <div class="lp-mock-dava-ad">Meriç İnş. Ltd. · Beşiktaş 3. İcra</div>
+                </div>
+                <div class="lp-mock-status red">Devam</div>
+              </div>
+              <div class="lp-mock-dava-item">
+                <div>
+                  <div class="lp-mock-dava-esas" style="color:#e74c3c">2024/38901</div>
+                  <div class="lp-mock-dava-ad">Selin Korkmaz · Kadıköy 1. İcra</div>
+                </div>
+                <div class="lp-mock-status yellow">Haciz</div>
+              </div>
+              <div class="lp-mock-dava-item">
+                <div>
+                  <div class="lp-mock-dava-esas" style="color:#e74c3c">2024/52781</div>
+                  <div class="lp-mock-dava-ad">Fırat Tekstil A.Ş. · Şişli 2. İcra</div>
+                </div>
+                <div class="lp-mock-status red">Devam</div>
+              </div>
+              <div class="lp-mock-progress-bar">
+                <div class="lp-mock-pb-label"><span>Tahsilat İlerlemesi</span><span style="color:#2ecc71">%31</span></div>
+                <div class="lp-mock-pb-track"><div class="lp-mock-pb-fill" style="width:31%;background:linear-gradient(90deg,#2ecc71,#27ae60)"></div></div>
+              </div>
+            </div>
+
+            <!-- Mockup 4: Arabuluculuk -->
+            <div class="lp-mock" id="mock-arabuluculuk">
+              <div class="lp-mock-kpi-row">
+                <div class="lp-mock-kpi" style="border-color:rgba(0,188,212,.3)">
+                  <div class="lp-mock-kpi-n" style="color:#00BCD4">6</div>
+                  <div class="lp-mock-kpi-l">Aktif Dosya</div>
+                </div>
+                <div class="lp-mock-kpi" style="border-color:rgba(46,204,113,.3)">
+                  <div class="lp-mock-kpi-n" style="color:#2ecc71">4</div>
+                  <div class="lp-mock-kpi-l">Anlaşma</div>
+                </div>
+                <div class="lp-mock-kpi" style="border-color:rgba(243,156,18,.3)">
+                  <div class="lp-mock-kpi-n" style="color:#f39c12">%67</div>
+                  <div class="lp-mock-kpi-l">Başarı Oranı</div>
+                </div>
+              </div>
+              <div class="lp-mock-list-head">Arabuluculuk Dosyaları</div>
+              <div class="lp-mock-muv-item">
+                <div class="lp-mock-av" style="background:linear-gradient(135deg,#1abc9c,#148f77);font-size:10px">ARA</div>
+                <div class="lp-mock-muv-text">
+                  <div class="lp-mock-muv-name">Fırat Şahin — İş Uyuşmazlığı</div>
+                  <div class="lp-mock-muv-meta">Zorunlu · Arb. Hande Çelik · ₺54.000 anlaşma</div>
+                </div>
+                <div class="lp-mock-status green">Anlaşıldı</div>
+              </div>
+              <div class="lp-mock-muv-item">
+                <div class="lp-mock-av" style="background:linear-gradient(135deg,#e67e22,#ca6f1e);font-size:10px">ARA</div>
+                <div class="lp-mock-muv-text">
+                  <div class="lp-mock-muv-name">Altın Yapı — Ticari Uyuşmazlık</div>
+                  <div class="lp-mock-muv-meta">İhtiyari · Arb. Volkan Ersoy · Devam</div>
+                </div>
+                <div class="lp-mock-status yellow">Devam</div>
+              </div>
+              <div class="lp-mock-muv-item">
+                <div class="lp-mock-av" style="background:linear-gradient(135deg,#e74c3c,#c0392b);font-size:10px">ARA</div>
+                <div class="lp-mock-muv-text">
+                  <div class="lp-mock-muv-name">Zeynep Arslan — Aile</div>
+                  <div class="lp-mock-muv-meta">Zorunlu · Arb. Nurcan Ak · Anlaşılamadı</div>
+                </div>
+                <div class="lp-mock-status red">Anlaşılamadı</div>
+              </div>
+            </div>
+
+            <!-- Mockup 5: Personel -->
+            <div class="lp-mock" id="mock-personel">
+              <div class="lp-mock-kpi-row">
+                <div class="lp-mock-kpi" style="border-color:rgba(0,188,212,.3)">
+                  <div class="lp-mock-kpi-n" style="color:#00BCD4">4</div>
+                  <div class="lp-mock-kpi-l">Personel</div>
+                </div>
+                <div class="lp-mock-kpi" style="border-color:rgba(46,204,113,.3)">
+                  <div class="lp-mock-kpi-n" style="color:#2ecc71">3</div>
+                  <div class="lp-mock-kpi-l">Avukat</div>
+                </div>
+                <div class="lp-mock-kpi" style="border-color:rgba(243,156,18,.3)">
+                  <div class="lp-mock-kpi-n" style="color:#f39c12">7</div>
+                  <div class="lp-mock-kpi-l">Yetki Seviyesi</div>
+                </div>
+              </div>
+              <div class="lp-mock-list-head">Büro Ekibi</div>
+              <div class="lp-mock-muv-item">
+                <div class="lp-mock-av" style="background:linear-gradient(135deg,#00BCD4,#0097A7)">MD</div>
+                <div class="lp-mock-muv-text">
+                  <div class="lp-mock-muv-name">Av. Mehmet Demir</div>
+                  <div class="lp-mock-muv-meta">Kıdemli Avukat · Tüm modüller · 14 dava</div>
+                </div>
+                <div class="lp-mock-status" style="background:rgba(0,188,212,.15);color:#00BCD4">Yönetici</div>
+              </div>
+              <div class="lp-mock-muv-item">
+                <div class="lp-mock-av" style="background:linear-gradient(135deg,#9b59b6,#6c3483)">SK</div>
+                <div class="lp-mock-muv-text">
+                  <div class="lp-mock-muv-name">Av. Selin Kaya</div>
+                  <div class="lp-mock-muv-meta">Avukat · Dava, Müvekkil, Takvim · 8 dava</div>
+                </div>
+                <div class="lp-mock-status yellow">Avukat</div>
+              </div>
+              <div class="lp-mock-muv-item">
+                <div class="lp-mock-av" style="background:linear-gradient(135deg,#e67e22,#ca6f1e)">NY</div>
+                <div class="lp-mock-muv-text">
+                  <div class="lp-mock-muv-name">Nilüfer Yıldız</div>
+                  <div class="lp-mock-muv-meta">Sekreter · Takvim, Müvekkil görünümü</div>
+                </div>
+                <div class="lp-mock-status" style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.5)">Sekreter</div>
+              </div>
+            </div>
+
+            <!-- Mockup 6: Görevler -->
+            <div class="lp-mock" id="mock-gorevler">
+              <div class="lp-mock-kpi-row">
+                <div class="lp-mock-kpi" style="border-color:rgba(231,76,60,.3)">
+                  <div class="lp-mock-kpi-n" style="color:#e74c3c">2</div>
+                  <div class="lp-mock-kpi-l">Acil Bugün</div>
+                </div>
+                <div class="lp-mock-kpi" style="border-color:rgba(243,156,18,.3)">
+                  <div class="lp-mock-kpi-n" style="color:#f39c12">7</div>
+                  <div class="lp-mock-kpi-l">Bu Hafta</div>
+                </div>
+                <div class="lp-mock-kpi" style="border-color:rgba(46,204,113,.3)">
+                  <div class="lp-mock-kpi-n" style="color:#2ecc71">5</div>
+                  <div class="lp-mock-kpi-l">Tamamlandı</div>
+                </div>
+              </div>
+              <div class="lp-mock-list-head">Bugünün Görevleri</div>
+              <div class="lp-mock-task" style="border-left:3px solid #e74c3c">
+                <div style="width:8px;height:8px;border-radius:50%;background:#e74c3c;flex-shrink:0;box-shadow:0 0 6px rgba(231,76,60,.5)"></div>
+                <div>
+                  <div style="font-size:12px;font-weight:600;color:#fff">Zeynep Arslan dilekçesi — son gün!</div>
+                  <div style="font-size:10px;color:rgba(255,255,255,.4)">Dava 2024/2108 · Av. Selin Kaya</div>
+                </div>
+                <span class="lp-mock-status red" style="margin-left:auto;flex-shrink:0">Acil</span>
+              </div>
+              <div class="lp-mock-task" style="border-left:3px solid #f39c12">
+                <div style="width:8px;height:8px;border-radius:50%;background:#f39c12;flex-shrink:0"></div>
+                <div>
+                  <div style="font-size:12px;font-weight:600;color:#fff">Kadir Yılmaz görüşmesi</div>
+                  <div style="font-size:10px;color:rgba(255,255,255,.4)">Dava 2024/1247 · Av. Mehmet Demir</div>
+                </div>
+                <span class="lp-mock-status yellow" style="margin-left:auto;flex-shrink:0">Normal</span>
+              </div>
+              <div class="lp-mock-task" style="border-left:3px solid #2ecc71;opacity:.5">
+                <div style="width:8px;height:8px;border-radius:50%;background:#2ecc71;flex-shrink:0"></div>
+                <div>
+                  <div style="font-size:12px;font-weight:600;color:rgba(255,255,255,.4);text-decoration:line-through">Altın Yapı sözleşme yenileme</div>
+                  <div style="font-size:10px;color:rgba(255,255,255,.3)">Av. Mehmet Demir · Tamamlandı ✓</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Mockup 7: Uyarı Takip -->
+            <div class="lp-mock" id="mock-uyari">
+              <div class="lp-mock-kpi-row">
+                <div class="lp-mock-kpi" style="border-color:rgba(231,76,60,.4);background:rgba(231,76,60,.06)">
+                  <div class="lp-mock-kpi-n" style="color:#e74c3c">2</div>
+                  <div class="lp-mock-kpi-l">Bugün Acil</div>
+                </div>
+                <div class="lp-mock-kpi" style="border-color:rgba(243,156,18,.3)">
+                  <div class="lp-mock-kpi-n" style="color:#f39c12">5</div>
+                  <div class="lp-mock-kpi-l">Bu Hafta</div>
+                </div>
+                <div class="lp-mock-kpi" style="border-color:rgba(46,204,113,.3)">
+                  <div class="lp-mock-kpi-n" style="color:#2ecc71">11</div>
+                  <div class="lp-mock-kpi-l">Bu Ay</div>
+                </div>
+              </div>
+              <div class="lp-mock-list-head" style="color:#e74c3c">🚨 Kritik Uyarılar</div>
+              <div class="lp-mock-task" style="border-left:3px solid #e74c3c;background:rgba(231,76,60,.06)">
+                <div style="width:24px;height:24px;border-radius:50%;background:rgba(231,76,60,.2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#e74c3c;flex-shrink:0">!</div>
+                <div>
+                  <div style="font-size:12px;font-weight:600;color:#fff">İtiraz Son Günü — Dava 2024/2108</div>
+                  <div style="font-size:10px;color:rgba(255,255,255,.4)">Zeynep Arslan · Bugün 17:00</div>
+                </div>
+              </div>
+              <div class="lp-mock-task" style="border-left:3px solid #f39c12;background:rgba(243,156,18,.05)">
+                <div style="width:24px;height:24px;border-radius:50%;background:rgba(243,156,18,.2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#f39c12;flex-shrink:0">3</div>
+                <div>
+                  <div style="font-size:12px;font-weight:600;color:#fff">Temyiz Son Tarihi — Dava 2023/0892</div>
+                  <div style="font-size:10px;color:rgba(255,255,255,.4)">Kadir Yılmaz · 3 gün kaldı</div>
+                </div>
+              </div>
+              <div class="lp-mock-task" style="border-left:3px solid #f39c12;background:rgba(243,156,18,.05)">
+                <div style="width:24px;height:24px;border-radius:50%;background:rgba(243,156,18,.2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#f39c12;flex-shrink:0">5</div>
+                <div>
+                  <div style="font-size:12px;font-weight:600;color:#fff">Duruşma — Dava 2024/0534</div>
+                  <div style="font-size:10px;color:rgba(255,255,255,.4)">Altın Yapı A.Ş. · 5 gün kaldı</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Mockup 8: Bütçe -->
+            <div class="lp-mock" id="mock-butce">
+              <div class="lp-mock-kpi-row">
+                <div class="lp-mock-kpi" style="border-color:rgba(46,204,113,.3)">
+                  <div class="lp-mock-kpi-n" style="color:#2ecc71">₺84.5K</div>
+                  <div class="lp-mock-kpi-l">Bu Ay Gelir</div>
+                </div>
+                <div class="lp-mock-kpi" style="border-color:rgba(231,76,60,.3)">
+                  <div class="lp-mock-kpi-n" style="color:#e74c3c">₺12.3K</div>
+                  <div class="lp-mock-kpi-l">Gider</div>
+                </div>
+                <div class="lp-mock-kpi" style="border-color:rgba(0,188,212,.3)">
+                  <div class="lp-mock-kpi-n" style="color:#00BCD4">₺72.2K</div>
+                  <div class="lp-mock-kpi-l">Net Kar</div>
+                </div>
+              </div>
+              <div class="lp-mock-list-head">Gelir Trendi — 2024</div>
+              <div style="display:flex;align-items:flex-end;gap:6px;height:64px;padding:0 4px;margin-bottom:12px">
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%">
+                  <div style="flex:1;width:100%;background:rgba(0,188,212,.25);border-radius:3px 3px 0 0;margin-top:auto;height:45%"></div>
+                  <div style="font-size:9px;color:rgba(255,255,255,.3)">Nis</div>
+                </div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%">
+                  <div style="flex:1;width:100%;background:rgba(0,188,212,.35);border-radius:3px 3px 0 0;margin-top:auto;height:58%"></div>
+                  <div style="font-size:9px;color:rgba(255,255,255,.3)">May</div>
+                </div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%">
+                  <div style="flex:1;width:100%;background:rgba(0,188,212,.45);border-radius:3px 3px 0 0;margin-top:auto;height:65%"></div>
+                  <div style="font-size:9px;color:rgba(255,255,255,.3)">Haz</div>
+                </div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%">
+                  <div style="flex:1;width:100%;background:rgba(0,188,212,.55);border-radius:3px 3px 0 0;margin-top:auto;height:74%"></div>
+                  <div style="font-size:9px;color:rgba(255,255,255,.3)">Tem</div>
+                </div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%">
+                  <div style="flex:1;width:100%;background:rgba(0,188,212,.65);border-radius:3px 3px 0 0;margin-top:auto;height:82%"></div>
+                  <div style="font-size:9px;color:rgba(255,255,255,.3)">Ağu</div>
+                </div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%">
+                  <div style="flex:1;width:100%;background:#00BCD4;border-radius:3px 3px 0 0;margin-top:auto;height:100%;box-shadow:0 0 10px rgba(0,188,212,.5)"></div>
+                  <div style="font-size:9px;color:#00BCD4;font-weight:700">Eyl</div>
+                </div>
+              </div>
+              <div class="lp-mock-fin-bar">
+                <div class="lp-mock-fin-item">
+                  <div class="lp-mock-fin-label">Vekalet Gelirleri</div>
+                  <div class="lp-mock-fin-val" style="color:#2ecc71">₺62.000</div>
+                </div>
+                <div class="lp-mock-fin-div"></div>
+                <div class="lp-mock-fin-item">
+                  <div class="lp-mock-fin-label">Bekleyen Avans</div>
+                  <div class="lp-mock-fin-val" style="color:#f39c12">₺31.000</div>
+                </div>
+              </div>
+            </div>
+
+          </div><!-- /lp-sd-screen -->
+        </div><!-- /lp-sticky-device -->
+      </div><!-- /lp-sticky-left -->
+
+      <!-- SAĞ: Kaydırılan Metin Blokları -->
+      <div class="lp-sticky-right">
+
+        <div class="lp-ss-block" data-mock="muvekkil" data-url="LexBase — Müvekkil Yönetimi">
+          <div class="lp-ss-num">01</div>
+          <div class="lp-ss-tag">En Önemli Modül</div>
+          <h3 class="lp-ss-h3">Tüm müvekkilleriniz,<br>tek bir merkezde.</h3>
+          <p class="lp-ss-p">Gerçek ve tüzel kişi profillerini eksiksiz tutun. TC kimlik, vergi no, MERSIS, IBAN ve iletişim bilgilerinden dava geçmişine, belgelerden WhatsApp yazışmalarına kadar her şey elinizin altında.</p>
+          <ul class="lp-ss-list">
+            <li><span class="lp-ss-ck">✔</span>Gerçek & tüzel kişi profilleri, tam bilgi yönetimi</li>
+            <li><span class="lp-ss-ck">✔</span>Bağlı dava, icra ve arabuluculuk dosyaları</li>
+            <li><span class="lp-ss-ck">✔</span>Belge arşivi & WhatsApp entegrasyonu</li>
           </ul>
         </div>
-        <div class="lpsc-carousel-wrap">
-          <div class="lpsc-carousel" id="car-icra">
 
-            <!-- Ekran 1: İcra Listesi -->
-            <div class="lpsc-screen">
-              <div class="lpsc-screen-bar"><div class="lpsc-dots"></div><span>LexBase — İcra Takip</span></div>
-              <div class="lpsc-screen-body">
-                <div class="lpsc-toolbar"><span style="color:#00BCD4;font-weight:700;font-size:13px">⚡ İcra Dosyaları</span><button class="lpsc-addbtn">+ Yeni Dosya</button></div>
-                <div class="lpsc-dava-row header"><span>Dosya No</span><span>Borçlu</span><span>Alacak</span><span>Durum</span></div>
-                <div class="lpsc-dava-row"><span style="color:#00BCD4;font-size:11px">2024/45123</span><span style="font-size:11px">Meriç İnş. Ltd.</span><span style="color:#2ecc71;font-size:11px">₺142.500</span><span class="lpsc-badge red">Devam</span></div>
-                <div class="lpsc-dava-row"><span style="color:#00BCD4;font-size:11px">2024/38901</span><span style="font-size:11px">Selin Korkmaz</span><span style="color:#2ecc71;font-size:11px">₺38.000</span><span class="lpsc-badge yellow">Haciz</span></div>
-                <div class="lpsc-dava-row"><span style="color:#00BCD4;font-size:11px">2023/91204</span><span style="font-size:11px">Doruk Oto San.</span><span style="color:#2ecc71;font-size:11px">₺67.200</span><span class="lpsc-badge green">Kapandı</span></div>
-                <div class="lpsc-dava-row"><span style="color:#00BCD4;font-size:11px">2024/52781</span><span style="font-size:11px">Fırat Tekstil A.Ş.</span><span style="color:#2ecc71;font-size:11px">₺215.000</span><span class="lpsc-badge red">Devam</span></div>
-              </div>
-            </div>
-
-            <!-- Ekran 2: İcra Detayı -->
-            <div class="lpsc-screen">
-              <div class="lpsc-screen-bar"><div class="lpsc-dots"></div><span>2024/45123 — İcra Detayı</span></div>
-              <div class="lpsc-screen-body">
-                <div style="font-size:12px;font-weight:700;color:#00BCD4;margin-bottom:8px">⚡ İlamlı İcra — 2024/45123</div>
-                <div class="lpsc-info-grid">
-                  <div class="lpsc-info-item"><div class="lpsc-info-l">İcra Dairesi</div><div class="lpsc-info-v">Beşiktaş 3. İcra</div></div>
-                  <div class="lpsc-info-item"><div class="lpsc-info-l">Alacaklı</div><div class="lpsc-info-v">Kadir Yılmaz</div></div>
-                  <div class="lpsc-info-item"><div class="lpsc-info-l">Borçlu</div><div class="lpsc-info-v">Meriç İnş. Ltd.</div></div>
-                  <div class="lpsc-info-item"><div class="lpsc-info-l">Asıl Alacak</div><div class="lpsc-info-v">₺142.500</div></div>
-                  <div class="lpsc-info-item"><div class="lpsc-info-l">Tahsil Edilen</div><div class="lpsc-info-v" style="color:#2ecc71">₺45.000</div></div>
-                  <div class="lpsc-info-item"><div class="lpsc-info-l">Kalan</div><div class="lpsc-info-v" style="color:#e74c3c">₺97.500</div></div>
-                </div>
-                <div style="margin-top:10px;font-size:11px;color:#00BCD4;font-weight:700;margin-bottom:6px">📋 Aşamalar</div>
-                <div class="lpsc-hearing-row"><span class="lpsc-badge green" style="font-size:9px">✓</span><span style="font-size:11px">Ödeme emri gönderildi — 20 Şub 2024</span></div>
-                <div class="lpsc-hearing-row"><span class="lpsc-badge green" style="font-size:9px">✓</span><span style="font-size:11px">Maaş haczi uygulandı — 15 Mar 2024</span></div>
-                <div class="lpsc-hearing-row"><span class="lpsc-badge yellow" style="font-size:9px">⏳</span><span style="font-size:11px">Taşınmaz haciz — Devam ediyor</span></div>
-              </div>
-            </div>
-
-          </div>
-          <div class="lpsc-nav"><button class="lpsc-arr" onclick="lpscSlide('icra',-1)">‹</button><div class="lpsc-dots-nav" id="dots-icra"><span class="lpsc-dot active"></span><span class="lpsc-dot"></span></div><button class="lpsc-arr" onclick="lpscSlide('icra',1)">›</button></div>
-        </div>
-      </div>
-
-      <!-- ─── ARABULUCULUK ──────────────────────────────── -->
-      <div class="lpsc-panel" id="lpsc-arabuluculuk">
-        <div class="lpsc-text">
-          <div class="lpsc-tag">Arabuluculuk</div>
-          <h3 class="lpsc-h3">Arabuluculuk süreçleri,<br>düzenli ve izlenebilir.</h3>
-          <p class="lpsc-p">Zorunlu ve ihtiyari arabuluculuk dosyalarınızı ayrı ayrı takip edin. Arabulucu bilgilerini, toplantı tarihlerini ve sonuçları kayıt altında tutun.</p>
-          <ul class="lpsc-list">
-            <li><span class="lpsc-ck">✔</span>Zorunlu & ihtiyari arabuluculuk ayrımı</li>
-            <li><span class="lpsc-ck">✔</span>Arabulucu bilgileri & sicil numarası</li>
-            <li><span class="lpsc-ck">✔</span>Toplantı tarihleri & tutanaklar</li>
-            <li><span class="lpsc-ck">✔</span>Anlaşma/anlaşamama sonucu takibi</li>
-            <li><span class="lpsc-ck">✔</span>Arabuluculuk ücret yönetimi</li>
+        <div class="lp-ss-block" data-mock="dava" data-url="LexBase — Dava Takip & Finans">
+          <div class="lp-ss-num">02</div>
+          <div class="lp-ss-tag">Dava Yönetimi</div>
+          <h3 class="lp-ss-h3">Davalarınız ve her<br>kuruş, kontrol altında.</h3>
+          <p class="lp-ss-p">50+ mahkeme türü, aşama takibi ve duruşma takviminin yanı sıra dava bazlı finansal takip. Harçtan bilirkişi ücretine, hakedilen vekalet ücretinden tahsilata — tüm finansal akış şeffaf.</p>
+          <ul class="lp-ss-list">
+            <li><span class="lp-ss-ck">✔</span>50+ mahkeme türü, karşı taraf & vekil yönetimi</li>
+            <li><span class="lp-ss-ck">✔</span>Dava harcamaları: harç, bilirkişi, tebligat takibi</li>
+            <li><span class="lp-ss-ck">✔</span>Hakedilen & anlaşılan vekalet ücreti takibi</li>
           </ul>
         </div>
-        <div class="lpsc-carousel-wrap">
-          <div class="lpsc-carousel" id="car-arabuluculuk">
 
-            <!-- Ekran 1: Arabuluculuk Listesi -->
-            <div class="lpsc-screen">
-              <div class="lpsc-screen-bar"><div class="lpsc-dots"></div><span>LexBase — Arabuluculuk</span></div>
-              <div class="lpsc-screen-body">
-                <div class="lpsc-toolbar"><span style="color:#00BCD4;font-weight:700;font-size:13px">🤝 Dosyalar</span><button class="lpsc-addbtn">+ Yeni Dosya</button></div>
-                <div class="lpsc-muv-card">
-                  <div class="lpsc-avatar" style="background:linear-gradient(135deg,#1abc9c,#148f77);font-size:11px">ARA</div>
-                  <div class="lpsc-muv-info"><div class="lpsc-muv-name">Fırat Şahin — İş Uyuşmazlığı</div><div class="lpsc-muv-sub">Zorunlu · Arb: Arb. Hande Çelik · Sicil: 0482</div></div>
-                  <div class="lpsc-badge green">Anlaşıldı</div>
-                </div>
-                <div class="lpsc-muv-card">
-                  <div class="lpsc-avatar" style="background:linear-gradient(135deg,#e67e22,#ca6f1e);font-size:11px">ARA</div>
-                  <div class="lpsc-muv-info"><div class="lpsc-muv-name">Altın Yapı — Ticari Uyuşmazlık</div><div class="lpsc-muv-sub">İhtiyari · Arb: Arb. Volkan Ersoy · Sicil: 1134</div></div>
-                  <div class="lpsc-badge yellow">Devam</div>
-                </div>
-                <div class="lpsc-muv-card">
-                  <div class="lpsc-avatar" style="background:linear-gradient(135deg,#e74c3c,#c0392b);font-size:11px">ARA</div>
-                  <div class="lpsc-muv-info"><div class="lpsc-muv-name">Zeynep Arslan — Boşanma Öncesi</div><div class="lpsc-muv-sub">Zorunlu · Arb: Arb. Nurcan Ak · Sicil: 0317</div></div>
-                  <div class="lpsc-badge red">Anlaşılamadı</div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Ekran 2: Arabuluculuk Detayı -->
-            <div class="lpsc-screen">
-              <div class="lpsc-screen-bar"><div class="lpsc-dots"></div><span>Fırat Şahin — Arabuluculuk Detayı</span></div>
-              <div class="lpsc-screen-body">
-                <div style="font-size:12px;font-weight:700;color:#2ecc71;margin-bottom:8px">✅ Anlaşma Sağlandı</div>
-                <div class="lpsc-info-grid">
-                  <div class="lpsc-info-item"><div class="lpsc-info-l">Tür</div><div class="lpsc-info-v">Zorunlu Arabuluculuk</div></div>
-                  <div class="lpsc-info-item"><div class="lpsc-info-l">Arabulucu</div><div class="lpsc-info-v">Arb. Hande Çelik</div></div>
-                  <div class="lpsc-info-item"><div class="lpsc-info-l">Sicil No</div><div class="lpsc-info-v">0482-ANK</div></div>
-                  <div class="lpsc-info-item"><div class="lpsc-info-l">Anlaşma Tutarı</div><div class="lpsc-info-v" style="color:#2ecc71">₺54.000</div></div>
-                  <div class="lpsc-info-item"><div class="lpsc-info-l">Arb. Ücreti</div><div class="lpsc-info-v">₺3.200</div></div>
-                </div>
-                <div style="margin-top:10px;font-size:11px;color:#00BCD4;font-weight:700;margin-bottom:6px">📅 Toplantılar</div>
-                <div class="lpsc-hearing-row"><span class="lpsc-badge green" style="font-size:9px">✓</span><span style="font-size:11px">1. Toplantı — 18 Mar 2024</span></div>
-                <div class="lpsc-hearing-row"><span class="lpsc-badge green" style="font-size:9px">✓</span><span style="font-size:11px">2. Toplantı — 02 Nis 2024 · Anlaşma</span></div>
-                <div style="margin-top:10px;padding:8px;background:rgba(46,204,113,.08);border:1px solid rgba(46,204,113,.2);border-radius:6px;font-size:11px;color:#2ecc71">✅ Anlaşma tutanağı imzalandı</div>
-              </div>
-            </div>
-
-          </div>
-          <div class="lpsc-nav"><button class="lpsc-arr" onclick="lpscSlide('arabuluculuk',-1)">‹</button><div class="lpsc-dots-nav" id="dots-arabuluculuk"><span class="lpsc-dot active"></span><span class="lpsc-dot"></span></div><button class="lpsc-arr" onclick="lpscSlide('arabuluculuk',1)">›</button></div>
-        </div>
-      </div>
-
-      <!-- ─── PERSONEL ───────────────────────────────────── -->
-      <div class="lpsc-panel" id="lpsc-personel">
-        <div class="lpsc-text">
-          <div class="lpsc-tag">Personel Yönetimi</div>
-          <h3 class="lpsc-h3">Ekibinizi yönetin,<br>yetkileri belirleyin.</h3>
-          <p class="lpsc-p">Büro çalışanlarına rol ve yetki atayın. Kimin neye erişebileceğini belirleyin, görev atamalarını takip edin, aktivite geçmişini görün.</p>
-          <ul class="lpsc-list">
-            <li><span class="lpsc-ck">✔</span>Avukat, stajyer, sekreter rol ayrımı</li>
-            <li><span class="lpsc-ck">✔</span>Modül bazlı yetki yönetimi</li>
-            <li><span class="lpsc-ck">✔</span>Personel bazlı görev takibi</li>
-            <li><span class="lpsc-ck">✔</span>Giriş-çıkış aktivite logları</li>
-            <li><span class="lpsc-ck">✔</span>Çoklu kullanıcı eş zamanlı giriş</li>
+        <div class="lp-ss-block" data-mock="icra" data-url="LexBase — İcra Takip">
+          <div class="lp-ss-num">03</div>
+          <div class="lp-ss-tag">İcra Takibi</div>
+          <h3 class="lp-ss-h3">İcra dosyalarınızı<br>kayıpsız yönetin.</h3>
+          <p class="lp-ss-p">İlamlı, ilamsız, kambiyo ve haciz takiplerinizi 8 farklı icra türü desteğiyle yönetin. Alacak, tahsilat ve aşama takibini net biçimde görün.</p>
+          <ul class="lp-ss-list">
+            <li><span class="lp-ss-ck">✔</span>8 icra türü: ilamlı, ilamsız, kambiyo, haciz...</li>
+            <li><span class="lp-ss-ck">✔</span>İcra dairesi, dosya no & aşama takibi</li>
+            <li><span class="lp-ss-ck">✔</span>Alacak, tahsilat & kalan bakiye takibi</li>
           </ul>
         </div>
-        <div class="lpsc-carousel-wrap">
-          <div class="lpsc-carousel" id="car-personel">
 
-            <!-- Ekran 1: Personel Kartları -->
-            <div class="lpsc-screen">
-              <div class="lpsc-screen-bar"><div class="lpsc-dots"></div><span>LexBase — Personel</span></div>
-              <div class="lpsc-screen-body">
-                <div class="lpsc-toolbar"><span style="color:#00BCD4;font-weight:700;font-size:13px">👥 Büro Ekibi</span><button class="lpsc-addbtn">+ Personel Ekle</button></div>
-                <div class="lpsc-muv-card" style="align-items:flex-start;flex-direction:column;gap:8px">
-                  <div style="display:flex;align-items:center;gap:10px;width:100%">
-                    <div class="lpsc-avatar" style="background:linear-gradient(135deg,#00BCD4,#0097A7)">MD</div>
-                    <div class="lpsc-muv-info"><div class="lpsc-muv-name">Av. Mehmet Demir</div><div class="lpsc-muv-sub">Kıdemli Avukat · 14 aktif dava</div></div>
-                    <div class="lpsc-badge green">Yönetici</div>
-                  </div>
-                  <div style="display:flex;gap:4px;flex-wrap:wrap;padding-left:46px">
-                    <span style="font-size:9px;padding:2px 6px;background:rgba(0,188,212,.1);border-radius:4px;color:#00BCD4">Tüm Modüller</span>
-                  </div>
-                </div>
-                <div class="lpsc-muv-card" style="align-items:flex-start;flex-direction:column;gap:8px">
-                  <div style="display:flex;align-items:center;gap:10px;width:100%">
-                    <div class="lpsc-avatar" style="background:linear-gradient(135deg,#9b59b6,#6c3483)">SK</div>
-                    <div class="lpsc-muv-info"><div class="lpsc-muv-name">Av. Selin Kaya</div><div class="lpsc-muv-sub">Avukat · 8 aktif dava</div></div>
-                    <div class="lpsc-badge yellow">Avukat</div>
-                  </div>
-                  <div style="display:flex;gap:4px;flex-wrap:wrap;padding-left:46px">
-                    <span style="font-size:9px;padding:2px 6px;background:rgba(155,89,182,.1);border-radius:4px;color:#9b59b6">Müvekkil</span>
-                    <span style="font-size:9px;padding:2px 6px;background:rgba(155,89,182,.1);border-radius:4px;color:#9b59b6">Dava</span>
-                    <span style="font-size:9px;padding:2px 6px;background:rgba(155,89,182,.1);border-radius:4px;color:#9b59b6">Takvim</span>
-                  </div>
-                </div>
-                <div class="lpsc-muv-card" style="align-items:flex-start;flex-direction:column;gap:8px">
-                  <div style="display:flex;align-items:center;gap:10px;width:100%">
-                    <div class="lpsc-avatar" style="background:linear-gradient(135deg,#e67e22,#ca6f1e)">NY</div>
-                    <div class="lpsc-muv-info"><div class="lpsc-muv-name">Nilüfer Yıldız</div><div class="lpsc-muv-sub">Sekreter · Dosya yönetimi</div></div>
-                    <div class="lpsc-badge gray">Sekreter</div>
-                  </div>
-                  <div style="display:flex;gap:4px;flex-wrap:wrap;padding-left:46px">
-                    <span style="font-size:9px;padding:2px 6px;background:rgba(230,126,34,.1);border-radius:4px;color:#e67e22">Takvim</span>
-                    <span style="font-size:9px;padding:2px 6px;background:rgba(230,126,34,.1);border-radius:4px;color:#e67e22">Müvekkil</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Ekran 2: Görev Atamaları -->
-            <div class="lpsc-screen">
-              <div class="lpsc-screen-bar"><div class="lpsc-dots"></div><span>Personel — Görev Takibi</span></div>
-              <div class="lpsc-screen-body">
-                <div style="font-size:12px;font-weight:700;color:#00BCD4;margin-bottom:10px">📋 Atanan Görevler</div>
-                <div class="lpsc-fin-row" style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)">
-                  <div>
-                    <div style="font-size:11px;font-weight:600;color:#fff">Dava dilekçesi hazırla</div>
-                    <div style="font-size:10px;color:rgba(255,255,255,.4)">Av. Selin Kaya · Vade: 20 Eyl 2024</div>
-                  </div>
-                  <span class="lpsc-badge red">Acil</span>
-                </div>
-                <div class="lpsc-fin-row" style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)">
-                  <div>
-                    <div style="font-size:11px;font-weight:600;color:#fff">Müvekkil toplantısı ayarla</div>
-                    <div style="font-size:10px;color:rgba(255,255,255,.4)">Nilüfer Yıldız · Vade: 22 Eyl 2024</div>
-                  </div>
-                  <span class="lpsc-badge yellow">Normal</span>
-                </div>
-                <div class="lpsc-fin-row" style="padding:8px 0">
-                  <div>
-                    <div style="font-size:11px;font-weight:600;color:#fff">İcra dosyası inceleme</div>
-                    <div style="font-size:10px;color:rgba(255,255,255,.4)">Av. Mehmet Demir · Vade: 25 Eyl 2024</div>
-                  </div>
-                  <span class="lpsc-badge gray">Bekliyor</span>
-                </div>
-              </div>
-            </div>
-
-          </div>
-          <div class="lpsc-nav"><button class="lpsc-arr" onclick="lpscSlide('personel',-1)">‹</button><div class="lpsc-dots-nav" id="dots-personel"><span class="lpsc-dot active"></span><span class="lpsc-dot"></span></div><button class="lpsc-arr" onclick="lpscSlide('personel',1)">›</button></div>
-        </div>
-      </div>
-
-      <!-- ─── GÖREVLER ──────────────────────────────────── -->
-      <div class="lpsc-panel" id="lpsc-gorevler">
-        <div class="lpsc-text">
-          <div class="lpsc-tag">Görev Yönetimi</div>
-          <h3 class="lpsc-h3">Yapılacaklar listeniz,<br>öncelikli ve düzenli.</h3>
-          <p class="lpsc-p">Büro görevlerini öncelik ve son tarihe göre listeleyin. Kime atandığını, hangi davaya ait olduğunu ve tamamlanma durumunu anlık takip edin.</p>
-          <ul class="lpsc-list">
-            <li><span class="lpsc-ck">✔</span>Acil / Normal / Düşük öncelik ayrımı</li>
-            <li><span class="lpsc-ck">✔</span>Dava & müvekkil bazlı görev atama</li>
-            <li><span class="lpsc-ck">✔</span>Son tarih & hatırlatıcı sistemi</li>
-            <li><span class="lpsc-ck">✔</span>Tamamlanan & bekleyen ayrımı</li>
-            <li><span class="lpsc-ck">✔</span>Personel bazlı filtreleme</li>
+        <div class="lp-ss-block" data-mock="arabuluculuk" data-url="LexBase — Arabuluculuk">
+          <div class="lp-ss-num">04</div>
+          <div class="lp-ss-tag">Arabuluculuk</div>
+          <h3 class="lp-ss-h3">Arabuluculuk süreçleri<br>düzenli ve izlenebilir.</h3>
+          <p class="lp-ss-p">Zorunlu ve ihtiyari arabuluculuk dosyalarınızı ayrı ayrı takip edin. Arabulucu sicil bilgileri, toplantı tarihleri ve anlaşma sonuçlarını kayıt altında tutun.</p>
+          <ul class="lp-ss-list">
+            <li><span class="lp-ss-ck">✔</span>Zorunlu & ihtiyari arabuluculuk ayrımı</li>
+            <li><span class="lp-ss-ck">✔</span>Arabulucu bilgileri, sicil no & toplantı takibi</li>
+            <li><span class="lp-ss-ck">✔</span>Anlaşma tutarı & arabuluculuk ücreti yönetimi</li>
           </ul>
         </div>
-        <div class="lpsc-carousel-wrap">
-          <div class="lpsc-carousel" id="car-gorevler">
 
-            <!-- Ekran 1: Görev Listesi -->
-            <div class="lpsc-screen">
-              <div class="lpsc-screen-bar"><div class="lpsc-dots"></div><span>LexBase — Görevler</span></div>
-              <div class="lpsc-screen-body">
-                <div class="lpsc-toolbar"><span style="color:#00BCD4;font-weight:700;font-size:13px">✅ Görev Listesi</span><button class="lpsc-addbtn">+ Yeni Görev</button></div>
-                <div style="font-size:10px;color:rgba(255,255,255,.4);margin-bottom:8px;font-weight:600">BUGÜN · 4 GÖREV</div>
-                <div class="lpsc-task-row red"><div class="lpsc-task-prio red-dot"></div><div><div style="font-size:12px;font-weight:600;color:#fff">Zeynep Arslan dilekçesi — son gün!</div><div style="font-size:10px;color:rgba(255,255,255,.4)">Dava: 2024/2108 · Av. Selin Kaya</div></div><span class="lpsc-badge red">Acil</span></div>
-                <div class="lpsc-task-row yellow"><div class="lpsc-task-prio yellow-dot"></div><div><div style="font-size:12px;font-weight:600;color:#fff">Kadir Yılmaz ile görüşme</div><div style="font-size:10px;color:rgba(255,255,255,.4)">Dava: 2024/1247 · Av. Mehmet Demir</div></div><span class="lpsc-badge yellow">Normal</span></div>
-                <div class="lpsc-task-row"><div class="lpsc-task-prio gray-dot"></div><div><div style="font-size:12px;font-weight:600;color:#fff">İcra 2024/38901 belge hazırlığı</div><div style="font-size:10px;color:rgba(255,255,255,.4)">Av. Selin Kaya · 3 gün kaldı</div></div><span class="lpsc-badge gray">Normal</span></div>
-                <div style="margin-top:10px;font-size:10px;color:rgba(255,255,255,.4);font-weight:600">TAMAMLANDI · 2 GÖREV</div>
-                <div class="lpsc-task-row done"><div class="lpsc-task-prio" style="background:#2ecc71;opacity:.4"></div><div><div style="font-size:12px;font-weight:600;color:rgba(255,255,255,.35);text-decoration:line-through">Altın Yapı sözleşme yenileme</div></div><span style="font-size:10px;color:#2ecc71">✓ Tamam</span></div>
-              </div>
-            </div>
-
-            <!-- Ekran 2: Bekleyen / Filtreli -->
-            <div class="lpsc-screen">
-              <div class="lpsc-screen-bar"><div class="lpsc-dots"></div><span>Görevler — Bu Hafta</span></div>
-              <div class="lpsc-screen-body">
-                <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
-                  <span style="font-size:10px;padding:4px 10px;border-radius:20px;background:#00BCD4;color:#0D1117;font-weight:700">Tümü</span>
-                  <span style="font-size:10px;padding:4px 10px;border-radius:20px;background:rgba(231,76,60,.15);color:#e74c3c">Acil (2)</span>
-                  <span style="font-size:10px;padding:4px 10px;border-radius:20px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.5)">Normal (5)</span>
-                  <span style="font-size:10px;padding:4px 10px;border-radius:20px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.5)">Tamamlandı (3)</span>
-                </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-                  <div style="padding:10px;background:rgba(231,76,60,.08);border:1px solid rgba(231,76,60,.2);border-radius:8px">
-                    <div style="font-size:9px;color:#e74c3c;font-weight:700;margin-bottom:4px">ACİL · BUGÜN</div>
-                    <div style="font-size:11px;color:#fff">Zeynep dilekçesi</div>
-                    <div style="font-size:10px;color:rgba(255,255,255,.4)">Av. S. Kaya</div>
-                  </div>
-                  <div style="padding:10px;background:rgba(243,156,18,.08);border:1px solid rgba(243,156,18,.2);border-radius:8px">
-                    <div style="font-size:9px;color:#f39c12;font-weight:700;margin-bottom:4px">NORMAL · 2 GÜN</div>
-                    <div style="font-size:11px;color:#fff">Kadir görüşmesi</div>
-                    <div style="font-size:10px;color:rgba(255,255,255,.4)">Av. M. Demir</div>
-                  </div>
-                  <div style="padding:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:8px">
-                    <div style="font-size:9px;color:rgba(255,255,255,.35);font-weight:700;margin-bottom:4px">NORMAL · 3 GÜN</div>
-                    <div style="font-size:11px;color:#fff">İcra belge hazırlık</div>
-                    <div style="font-size:10px;color:rgba(255,255,255,.4)">Av. S. Kaya</div>
-                  </div>
-                  <div style="padding:10px;background:rgba(46,204,113,.06);border:1px solid rgba(46,204,113,.15);border-radius:8px">
-                    <div style="font-size:9px;color:#2ecc71;font-weight:700;margin-bottom:4px">✓ TAMAMLANDI</div>
-                    <div style="font-size:11px;color:rgba(255,255,255,.4);text-decoration:line-through">A. Yapı sözleşme</div>
-                    <div style="font-size:10px;color:rgba(255,255,255,.3)">Av. M. Demir</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-          </div>
-          <div class="lpsc-nav"><button class="lpsc-arr" onclick="lpscSlide('gorevler',-1)">‹</button><div class="lpsc-dots-nav" id="dots-gorevler"><span class="lpsc-dot active"></span><span class="lpsc-dot"></span></div><button class="lpsc-arr" onclick="lpscSlide('gorevler',1)">›</button></div>
-        </div>
-      </div>
-
-      <!-- ─── UYARI TAKİP ───────────────────────────────── -->
-      <div class="lpsc-panel" id="lpsc-uyari">
-        <div class="lpsc-text">
-          <div class="lpsc-tag">Uyarı & Son Gün Takibi</div>
-          <h3 class="lpsc-h3">Hiçbir kritik süre<br>gözden kaçmasın.</h3>
-          <p class="lpsc-p">Dava süreleri, itiraz son günleri, temyiz tarihleri ve icra ödeme emirleri — hepsi renk kodlu uyarılarla dashboard'da sizi bekliyor.</p>
-          <ul class="lpsc-list">
-            <li><span class="lpsc-ck">✔</span>Kırmızı: Bugün & Acil son günler</li>
-            <li><span class="lpsc-ck">✔</span>Sarı: Bu hafta içindeki süreler</li>
-            <li><span class="lpsc-ck">✔</span>Yeşil: Bu ay içindeki gelecek tarihler</li>
-            <li><span class="lpsc-ck">✔</span>Dava, icra, görev bazlı filtreleme</li>
-            <li><span class="lpsc-ck">✔</span>Takvim görünümü entegrasyonu</li>
+        <div class="lp-ss-block" data-mock="personel" data-url="LexBase — Personel Yönetimi">
+          <div class="lp-ss-num">05</div>
+          <div class="lp-ss-tag">Personel & Ekip</div>
+          <h3 class="lp-ss-h3">Ekibinizi yönetin,<br>yetkileri belirleyin.</h3>
+          <p class="lp-ss-p">Avukat, stajyer ve sekreter için farklı yetki seviyeleri tanımlayın. Kimin hangi modüle erişeceğini belirleyin, görev atamalarını ve aktivite geçmişini takip edin.</p>
+          <ul class="lp-ss-list">
+            <li><span class="lp-ss-ck">✔</span>Avukat, stajyer, sekreter rol ayrımı</li>
+            <li><span class="lp-ss-ck">✔</span>Modül bazlı yetki & erişim kontrolü</li>
+            <li><span class="lp-ss-ck">✔</span>Görev ataması & aktivite logları</li>
           </ul>
         </div>
-        <div class="lpsc-carousel-wrap">
-          <div class="lpsc-carousel" id="car-uyari">
 
-            <!-- Ekran 1: Kritik Uyarılar -->
-            <div class="lpsc-screen">
-              <div class="lpsc-screen-bar"><div class="lpsc-dots"></div><span>LexBase — Uyarı Merkezi</span></div>
-              <div class="lpsc-screen-body">
-                <div class="lpsc-toolbar"><span style="color:#e74c3c;font-weight:700;font-size:13px">🔔 Kritik Uyarılar</span></div>
-                <div style="font-size:10px;color:#e74c3c;font-weight:700;margin-bottom:6px">🚨 BUGÜN — ACİL (2)</div>
-                <div class="lpsc-alert-row red">
-                  <div class="lpsc-alert-ico red">!</div>
-                  <div><div style="font-size:12px;font-weight:600;color:#fff">İtiraz Son Günü — Dava 2024/2108</div><div style="font-size:10px;color:rgba(255,255,255,.5)">Zeynep Arslan · İst. 4. Aile · Bugün 17:00</div></div>
-                </div>
-                <div class="lpsc-alert-row red">
-                  <div class="lpsc-alert-ico red">!</div>
-                  <div><div style="font-size:12px;font-weight:600;color:#fff">Ödeme Emri Süresi — İcra 2024/45123</div><div style="font-size:10px;color:rgba(255,255,255,.5)">Meriç İnş. · Beşiktaş 3. İcra · Bugün</div></div>
-                </div>
-                <div style="font-size:10px;color:#f39c12;font-weight:700;margin:10px 0 6px">⚠ BU HAFTA (3)</div>
-                <div class="lpsc-alert-row yellow">
-                  <div class="lpsc-alert-ico yellow">3</div>
-                  <div><div style="font-size:12px;font-weight:600;color:#fff">Temyiz Son Tarihi — Dava 2023/0892</div><div style="font-size:10px;color:rgba(255,255,255,.5)">Kadir Yılmaz · 3 gün kaldı</div></div>
-                </div>
-                <div class="lpsc-alert-row yellow">
-                  <div class="lpsc-alert-ico yellow">5</div>
-                  <div><div style="font-size:12px;font-weight:600;color:#fff">Duruşma — Dava 2024/0534</div><div style="font-size:10px;color:rgba(255,255,255,.5)">Altın Yapı A.Ş. · 5 gün kaldı</div></div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Ekran 2: Bu Ay Görünümü -->
-            <div class="lpsc-screen">
-              <div class="lpsc-screen-bar"><div class="lpsc-dots"></div><span>Uyarılar — Bu Ay</span></div>
-              <div class="lpsc-screen-body">
-                <div style="font-size:12px;font-weight:700;color:#00BCD4;margin-bottom:10px">📅 Eylül 2024 — Genel Bakış</div>
-                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
-                  <div style="background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.25);border-radius:8px;padding:10px;text-align:center">
-                    <div style="font-size:22px;font-weight:800;color:#e74c3c">2</div>
-                    <div style="font-size:9px;color:rgba(255,255,255,.4)">Bugün/Acil</div>
-                  </div>
-                  <div style="background:rgba(243,156,18,.1);border:1px solid rgba(243,156,18,.25);border-radius:8px;padding:10px;text-align:center">
-                    <div style="font-size:22px;font-weight:800;color:#f39c12">5</div>
-                    <div style="font-size:9px;color:rgba(255,255,255,.4)">Bu Hafta</div>
-                  </div>
-                  <div style="background:rgba(46,204,113,.08);border:1px solid rgba(46,204,113,.2);border-radius:8px;padding:10px;text-align:center">
-                    <div style="font-size:22px;font-weight:800;color:#2ecc71">11</div>
-                    <div style="font-size:9px;color:rgba(255,255,255,.4)">Bu Ay</div>
-                  </div>
-                </div>
-                <div class="lpsc-alert-row" style="border-left-color:#2ecc71">
-                  <div class="lpsc-alert-ico" style="background:rgba(46,204,113,.15);color:#2ecc71">14</div>
-                  <div><div style="font-size:11px;color:#fff">Karar Duruşması — 2024/1247</div><div style="font-size:10px;color:rgba(255,255,255,.4)">Kadir Yılmaz · 14 gün kaldı</div></div>
-                </div>
-                <div class="lpsc-alert-row" style="border-left-color:#2ecc71">
-                  <div class="lpsc-alert-ico" style="background:rgba(46,204,113,.15);color:#2ecc71">21</div>
-                  <div><div style="font-size:11px;color:#fff">Ara. Toplantı — Altın Yapı</div><div style="font-size:10px;color:rgba(255,255,255,.4)">Arabulucu: Arb. V. Ersoy · 21 gün</div></div>
-                </div>
-              </div>
-            </div>
-
-          </div>
-          <div class="lpsc-nav"><button class="lpsc-arr" onclick="lpscSlide('uyari',-1)">‹</button><div class="lpsc-dots-nav" id="dots-uyari"><span class="lpsc-dot active"></span><span class="lpsc-dot"></span></div><button class="lpsc-arr" onclick="lpscSlide('uyari',1)">›</button></div>
-        </div>
-      </div>
-
-      <!-- ─── BÜTÇE & FİNANS ───────────────────────────── -->
-      <div class="lpsc-panel" id="lpsc-butce">
-        <div class="lpsc-text">
-          <div class="lpsc-tag">Bütçe & Finans</div>
-          <h3 class="lpsc-h3">Büronuzun mali tablosu,<br>anlık ve net.</h3>
-          <p class="lpsc-p">Gelir, gider, avans ve vekalet ücretlerini kategoriye göre takip edin. Aylık ve yıllık raporlarla büronuzun karlılığını anlık görün.</p>
-          <ul class="lpsc-list">
-            <li><span class="lpsc-ck">✔</span>Gelir & gider kategorileri</li>
-            <li><span class="lpsc-ck">✔</span>Müvekkil avans yönetimi</li>
-            <li><span class="lpsc-ck">✔</span>Vekalet ücreti takibi (dava bazlı)</li>
-            <li><span class="lpsc-ck">✔</span>Aylık & yıllık trend raporları</li>
-            <li><span class="lpsc-ck">✔</span>Fatura & makbuz oluşturma</li>
+        <div class="lp-ss-block" data-mock="gorevler" data-url="LexBase — Görev Yönetimi">
+          <div class="lp-ss-num">06</div>
+          <div class="lp-ss-tag">Görev Yönetimi</div>
+          <h3 class="lp-ss-h3">Yapılacaklar listeniz<br>öncelikli ve düzenli.</h3>
+          <p class="lp-ss-p">Büro görevlerini öncelik ve son tarihe göre listeleyin. Hangi davaya ait, kime atanmış ve ne zaman teslim — her görevi anlık takip edin.</p>
+          <ul class="lp-ss-list">
+            <li><span class="lp-ss-ck">✔</span>Acil / Normal öncelik renk kodları</li>
+            <li><span class="lp-ss-ck">✔</span>Dava & müvekkil bazlı görev atama</li>
+            <li><span class="lp-ss-ck">✔</span>Son tarih hatırlatıcıları & tamamlanma takibi</li>
           </ul>
         </div>
-        <div class="lpsc-carousel-wrap">
-          <div class="lpsc-carousel" id="car-butce">
 
-            <!-- Ekran 1: KPI Kartları -->
-            <div class="lpsc-screen">
-              <div class="lpsc-screen-bar"><div class="lpsc-dots"></div><span>LexBase — Bütçe Paneli</span></div>
-              <div class="lpsc-screen-body">
-                <div style="font-size:12px;font-weight:700;color:#00BCD4;margin-bottom:10px">💰 Eylül 2024 Özeti</div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
-                  <div style="background:rgba(46,204,113,.08);border:1px solid rgba(46,204,113,.2);border-radius:10px;padding:12px">
-                    <div style="font-size:9px;color:rgba(255,255,255,.4);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Toplam Gelir</div>
-                    <div style="font-size:18px;font-weight:800;color:#2ecc71">₺84.500</div>
-                    <div style="font-size:9px;color:#2ecc71">▲ %12 geçen ay</div>
-                  </div>
-                  <div style="background:rgba(231,76,60,.08);border:1px solid rgba(231,76,60,.2);border-radius:10px;padding:12px">
-                    <div style="font-size:9px;color:rgba(255,255,255,.4);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Toplam Gider</div>
-                    <div style="font-size:18px;font-weight:800;color:#e74c3c">₺12.300</div>
-                    <div style="font-size:9px;color:rgba(255,255,255,.35)">Kira, personel, ofis</div>
-                  </div>
-                  <div style="background:rgba(0,188,212,.08);border:1px solid rgba(0,188,212,.2);border-radius:10px;padding:12px">
-                    <div style="font-size:9px;color:rgba(255,255,255,.4);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Net Kar</div>
-                    <div style="font-size:18px;font-weight:800;color:#00BCD4">₺72.200</div>
-                    <div style="font-size:9px;color:#00BCD4">%85 marj</div>
-                  </div>
-                  <div style="background:rgba(243,156,18,.08);border:1px solid rgba(243,156,18,.2);border-radius:10px;padding:12px">
-                    <div style="font-size:9px;color:rgba(255,255,255,.4);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Bekleyen Tahsilat</div>
-                    <div style="font-size:18px;font-weight:800;color:#f39c12">₺31.000</div>
-                    <div style="font-size:9px;color:rgba(255,255,255,.35)">4 müvekkil</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Ekran 2: Trend Grafiği -->
-            <div class="lpsc-screen">
-              <div class="lpsc-screen-bar"><div class="lpsc-dots"></div><span>Bütçe — 6 Aylık Trend</span></div>
-              <div class="lpsc-screen-body">
-                <div style="font-size:12px;font-weight:700;color:#00BCD4;margin-bottom:12px">📈 Gelir Trendi — 2024</div>
-                <div style="display:flex;align-items:flex-end;gap:8px;height:80px;margin-bottom:6px">
-                  <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
-                    <div style="flex:1;width:100%;background:rgba(0,188,212,.3);border-radius:3px 3px 0 0;min-height:40%"></div>
-                    <div style="font-size:9px;color:rgba(255,255,255,.35)">Nis</div>
-                  </div>
-                  <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
-                    <div style="flex:1;width:100%;background:rgba(0,188,212,.4);border-radius:3px 3px 0 0;height:55%"></div>
-                    <div style="font-size:9px;color:rgba(255,255,255,.35)">May</div>
-                  </div>
-                  <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
-                    <div style="flex:1;width:100%;background:rgba(0,188,212,.45);border-radius:3px 3px 0 0;height:68%"></div>
-                    <div style="font-size:9px;color:rgba(255,255,255,.35)">Haz</div>
-                  </div>
-                  <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
-                    <div style="flex:1;width:100%;background:rgba(0,188,212,.5);border-radius:3px 3px 0 0;height:72%"></div>
-                    <div style="font-size:9px;color:rgba(255,255,255,.35)">Tem</div>
-                  </div>
-                  <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
-                    <div style="flex:1;width:100%;background:rgba(0,188,212,.6);border-radius:3px 3px 0 0;height:80%"></div>
-                    <div style="font-size:9px;color:rgba(255,255,255,.35)">Ağu</div>
-                  </div>
-                  <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
-                    <div style="flex:1;width:100%;background:#00BCD4;border-radius:3px 3px 0 0;height:100%;box-shadow:0 0 8px rgba(0,188,212,.5)"></div>
-                    <div style="font-size:9px;color:#00BCD4;font-weight:700">Eyl</div>
-                  </div>
-                </div>
-                <div style="font-size:11px;color:rgba(255,255,255,.5);margin-bottom:8px;font-weight:600">GELİR DAĞILIMI</div>
-                <div class="lpsc-fin-row"><span>Vekalet Ücretleri</span><span style="color:#2ecc71">₺62.000</span></div>
-                <div class="lpsc-fin-row"><span>Danışmanlık Gelirleri</span><span style="color:#2ecc71">₺14.500</span></div>
-                <div class="lpsc-fin-row"><span>Arabuluculuk Ücretleri</span><span style="color:#2ecc71">₺8.000</span></div>
-              </div>
-            </div>
-
-            <!-- Ekran 3: Avans Listesi -->
-            <div class="lpsc-screen">
-              <div class="lpsc-screen-bar"><div class="lpsc-dots"></div><span>Bütçe — Avans Takibi</span></div>
-              <div class="lpsc-screen-body">
-                <div class="lpsc-toolbar"><span style="color:#00BCD4;font-weight:700;font-size:12px">💼 Müvekkil Avansları</span><button class="lpsc-addbtn">+ Avans Ekle</button></div>
-                <div class="lpsc-dava-row header"><span>Müvekkil</span><span>Avans</span><span>Kalan</span><span>Durum</span></div>
-                <div class="lpsc-dava-row"><span style="font-size:11px">Kadir Yılmaz</span><span style="font-size:11px;color:#2ecc71">₺15.000</span><span style="font-size:11px;color:#f39c12">₺8.500</span><span class="lpsc-badge yellow">Devam</span></div>
-                <div class="lpsc-dava-row"><span style="font-size:11px">Altın Yapı A.Ş.</span><span style="font-size:11px;color:#2ecc71">₺30.000</span><span style="font-size:11px;color:#2ecc71">₺30.000</span><span class="lpsc-badge green">Tam</span></div>
-                <div class="lpsc-dava-row"><span style="font-size:11px">Zeynep Arslan</span><span style="font-size:11px;color:#2ecc71">₺5.000</span><span style="font-size:11px;color:#e74c3c">₺0</span><span class="lpsc-badge red">Bitti</span></div>
-                <div class="lpsc-dava-row"><span style="font-size:11px">Berrak Su Ltd.</span><span style="font-size:11px;color:#2ecc71">₺12.000</span><span style="font-size:11px;color:#f39c12">₺4.200</span><span class="lpsc-badge yellow">Devam</span></div>
-                <div class="lpsc-fin-row total" style="margin-top:10px"><span style="font-weight:700">Toplam Avans</span><span style="color:#2ecc71;font-weight:700">₺62.000</span></div>
-              </div>
-            </div>
-
-          </div>
-          <div class="lpsc-nav"><button class="lpsc-arr" onclick="lpscSlide('butce',-1)">‹</button><div class="lpsc-dots-nav" id="dots-butce"><span class="lpsc-dot active"></span><span class="lpsc-dot"></span><span class="lpsc-dot"></span></div><button class="lpsc-arr" onclick="lpscSlide('butce',1)">›</button></div>
+        <div class="lp-ss-block" data-mock="uyari" data-url="LexBase — Uyarı & Son Gün Takibi">
+          <div class="lp-ss-num">07</div>
+          <div class="lp-ss-tag">Uyarı Sistemi</div>
+          <h3 class="lp-ss-h3">Hiçbir kritik süre<br>gözden kaçmasın.</h3>
+          <p class="lp-ss-p">İtiraz son günleri, temyiz tarihleri, duruşmalar ve icra süreleri — hepsi renk kodlu uyarılarla önünüzde. Kırmızı bugün, sarı bu hafta, yeşil bu ay.</p>
+          <ul class="lp-ss-list">
+            <li><span class="lp-ss-ck">✔</span>Kırmızı / Sarı / Yeşil renk kodlu öncelik sistemi</li>
+            <li><span class="lp-ss-ck">✔</span>Dava, icra, görev bazlı süre takibi</li>
+            <li><span class="lp-ss-ck">✔</span>Dashboard entegre kritik uyarı merkezi</li>
+          </ul>
         </div>
-      </div>
 
-    </div><!-- /lpsc-body -->
+        <div class="lp-ss-block" data-mock="butce" data-url="LexBase — Bütçe & Finans">
+          <div class="lp-ss-num">08</div>
+          <div class="lp-ss-tag">Bütçe & Finans</div>
+          <h3 class="lp-ss-h3">Büronuzun mali tablosu<br>anlık ve net.</h3>
+          <p class="lp-ss-p">Gelir, gider, avans ve vekalet ücretlerini kategoriye göre takip edin. Aylık ve yıllık trend raporlarıyla büronuzun karlılığını anlık görün, kararlarınızı veriyle alın.</p>
+          <ul class="lp-ss-list">
+            <li><span class="lp-ss-ck">✔</span>Gelir & gider kategorileri, aylık/yıllık rapor</li>
+            <li><span class="lp-ss-ck">✔</span>Müvekkil avans yönetimi & vekalet ücreti takibi</li>
+            <li><span class="lp-ss-ck">✔</span>Fatura & makbuz oluşturma</li>
+          </ul>
+        </div>
+
+      </div><!-- /lp-sticky-right -->
+    </div><!-- /lp-sticky-wrap -->
   </section>
 
   <section class="lp-how" id="lp-how">
@@ -3602,53 +3437,51 @@ window.addEventListener('load', async () => {
 </script>
 
 <script>
-/* ── Showcase: Sekme Geçişi ── */
-const lpscState = {};
+/* ── Sticky Scroll: IntersectionObserver ile Mockup Geçişi ── */
+document.addEventListener('DOMContentLoaded', function () {
 
-function lpscSwitch(id, btn) {
-  // Tüm panelleri kapat
-  document.querySelectorAll('.lpsc-panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.lpsc-tab').forEach(t => t.classList.remove('active'));
-  // Seçili aç
-  document.getElementById('lpsc-' + id).classList.add('active');
-  btn.classList.add('active');
-}
+  const blocks   = document.querySelectorAll('.lp-ss-block');
+  const mocks    = document.querySelectorAll('.lp-mock');
+  const urlLabel = document.getElementById('lp-sd-url');
+  let current    = null;
 
-/* ── Showcase: Carousel Kaydırma ── */
-function lpscSlide(id, dir) {
-  const car = document.getElementById('car-' + id);
-  if (!car) return;
-  const screens = car.querySelectorAll('.lpsc-screen');
-  const total = screens.length;
-  if (!lpscState[id]) lpscState[id] = 0;
-  lpscState[id] = (lpscState[id] + dir + total) % total;
-  const offset = lpscState[id] * 100;
-  screens.forEach((s, i) => {
-    s.style.transform = 'translateX(' + ((i - lpscState[id]) * 110) + '%)';
-  });
-  // Dots güncelle
-  const dots = document.querySelectorAll('#dots-' + id + ' .lpsc-dot');
-  dots.forEach((d, i) => d.classList.toggle('active', i === lpscState[id]));
-}
-
-// İlk yüklemede tüm carousel'ları hazırla
-document.addEventListener('DOMContentLoaded', function() {
-  ['muvekkil','dava','icra','arabuluculuk','personel','gorevler','uyari','butce'].forEach(id => {
-    lpscState[id] = 0;
-    const car = document.getElementById('car-' + id);
-    if (!car) return;
-    const screens = car.querySelectorAll('.lpsc-screen');
-    screens.forEach((s, i) => {
-      s.style.transition = 'transform .4s cubic-bezier(.25,.46,.45,.94)';
-      s.style.transform = 'translateX(' + (i * 110) + '%)';
-      s.style.position = i === 0 ? 'relative' : 'absolute';
-      s.style.top = '0'; s.style.left = '0'; s.style.width = '100%';
+  function activateMock(mockId, url) {
+    if (current === mockId) return;
+    current = mockId;
+    mocks.forEach(m => {
+      m.classList.remove('active');
+      delete m.dataset.active;
     });
-    if (car.style.position !== 'relative') {
-      car.style.position = 'relative';
-      car.style.overflow = 'visible';
-    }
+    const target = document.getElementById('mock-' + mockId);
+    if (target) target.classList.add('active');
+    if (urlLabel && url) urlLabel.textContent = url;
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const mockId = entry.target.dataset.mock;
+        const url    = entry.target.dataset.url;
+        activateMock(mockId, url);
+        // Aktif olmayan blokları soluklaştır
+        blocks.forEach(b => {
+          b.classList.toggle('inactive', b.dataset.mock !== mockId);
+        });
+      }
+    });
+  }, {
+    root: null,
+    rootMargin: '-30% 0px -30% 0px',
+    threshold: 0
   });
+
+  blocks.forEach(b => observer.observe(b));
+
+  // İlk bloku başlat
+  if (blocks.length > 0) {
+    const first = blocks[0];
+    activateMock(first.dataset.mock, first.dataset.url);
+  }
 });
 </script>
 </body>
