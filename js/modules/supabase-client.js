@@ -70,8 +70,9 @@ async function sbMevcutKullanici() {
 // onAuthStateChange — globals yüklendikten sonra bağlan
 function sbAuthDinle() {
   sb.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'SIGNED_IN' && session && !currentBuroId) {
+    if (event === 'SIGNED_IN' && session && !currentBuroId && !_sbYukleniyor) {
       // Sadece henüz yüklenmemişse çalış (sayfa yenilemede load event halleder)
+      // TOKEN_REFRESHED bazen SIGNED_IN tetikler — currentBuroId kontrolü bunu önler
       await sbVeriYukle();
     } else if (event === 'SIGNED_OUT') {
       currentBuroId = null;
@@ -142,12 +143,12 @@ async function sbVeriYukle() {
 
   } catch (e) {
     console.error('Veri yükleme hatası:', e);
-    showYukleniyor(false);
     _sbYukleniyor = false;
     notify('❌ Bağlantı hatası: ' + e.message);
     setTimeout(uygulamayiBaslat, 100);
   } finally {
     _sbYukleniyor = false;
+    showYukleniyor(false); // her durumda spinner'ı kapat
   }
 }
 
@@ -231,8 +232,11 @@ async function sbTümüSenkronize() {
 // YARDIMCIlar
 // ================================================================
 
+// Güvenlik ağı — 8sn sonra spinner hâlâ açıksa zorla kapat
+let _spinnerTimeout;
 function showYukleniyor(goster) {
   let el = document.getElementById('sb-yukleniyor');
+  clearTimeout(_spinnerTimeout);
   if (goster) {
     if (!el) {
       el = document.createElement('div');
@@ -244,6 +248,12 @@ function showYukleniyor(goster) {
       document.body.appendChild(el);
     }
     el.style.display = 'block';
+    // 8 saniye sonra hâlâ açıksa zorla kapat
+    _spinnerTimeout = setTimeout(() => {
+      const stuck = document.getElementById('sb-yukleniyor');
+      if (stuck) { stuck.remove(); _sbYukleniyor = false; }
+      if (typeof uygulamayiBaslat === 'function' && currentBuroId) uygulamayiBaslat();
+    }, 8000);
   } else {
     if (el) el.remove(); // tamamen kaldır
   }
@@ -258,6 +268,7 @@ function showLanding() {
 }
 
 function uygulamayiBaslat() {
+  showYukleniyor(false); // garantili kapat
   // Landing'i gizle
   const landing = document.getElementById('landing-screen');
   if (landing) landing.classList.add('hidden');
