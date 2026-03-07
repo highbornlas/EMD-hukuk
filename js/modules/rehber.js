@@ -211,8 +211,38 @@ function openModal(id){
     const dmtur=document.getElementById('d-mtur');if(dmtur)dmtur.value='';
     populateIlSelect('d-il','');
     document.getElementById('d-adliye').innerHTML='<option value="">— Önce il seçin —</option>';
-    ktWidgetTemizle('d-karsi-ara','d-karsi-liste','d-karsi-id','d-karsi-goster');
-    ktWidgetTemizle('d-karsav-ara','d-karsav-liste','d-karsav-id','d-karsav-goster');
+    // Çoklu karşı taraf alanlarını temizle
+    const karsiWrap = document.getElementById('d-karsi-wrap');
+    if (karsiWrap) {
+      karsiWrap.innerHTML = `
+        <div class="form-row d-karsi-satir" id="d-karsi-satir-0">
+          <div class="form-group" style="flex:2">
+            <label>Karşı Taraf</label>
+            <div style="position:relative">
+              <input id="d-karsi-ara-0" class="d-karsi-ara" placeholder="Ad ile ara veya yeni ekle..." autocomplete="off"
+                oninput="ktAra(this.id,this.dataset.liste,this.dataset.hidden,this.dataset.goster)"
+                onfocus="ktAra(this.id,this.dataset.liste,this.dataset.hidden,this.dataset.goster)"
+                data-liste="d-karsi-dd-0" data-hidden="d-karsi-id-0" data-goster="d-karsi-g-0">
+              <div id="d-karsi-dd-0" class="kt-dropdown" style="display:none"></div>
+            </div>
+            <div id="d-karsi-g-0" class="kt-secili" style="display:none"></div>
+            <input type="hidden" id="d-karsi-id-0">
+          </div>
+          <div class="form-group">
+            <label>Karşı Taraf Vekili</label>
+            <div style="position:relative">
+              <input id="d-karsav-ara-0" class="d-karsav-ara" placeholder="Ad ile ara..." autocomplete="off"
+                oninput="vekAra(this.id,this.dataset.liste,this.dataset.hidden,this.dataset.goster)"
+                onfocus="vekAra(this.id,this.dataset.liste,this.dataset.hidden,this.dataset.goster)"
+                data-liste="d-karsav-dd-0" data-hidden="d-karsav-id-0" data-goster="d-karsav-g-0">
+              <div id="d-karsav-dd-0" class="kt-dropdown" style="display:none"></div>
+            </div>
+            <div id="d-karsav-g-0" class="kt-secili" style="display:none"></div>
+            <input type="hidden" id="d-karsav-id-0">
+          </div>
+        </div>`;
+      if (typeof _davaKarsiSayac !== 'undefined') _davaKarsiSayac = 1;
+    }
     const dlbl=document.getElementById('dav-modal-title');if(dlbl)dlbl.textContent='Yeni Dava';
     const dbtn=document.getElementById('dav-kaydet-btn');if(dbtn)dbtn.textContent='Kaydet';
   }
@@ -226,7 +256,33 @@ function openModal(id){
     const idurum=document.getElementById('i-durum');if(idurum)idurum.value='Devam Ediyor';
     populateIlSelect('i-il','');
     document.getElementById('i-adliye').innerHTML='<option value="">— Önce il seçin —</option>';
-    ktWidgetTemizle('i-karsav-ara','i-karsav-liste','i-karsav-id','i-karsav-goster');
+    // İcra karşı taraf widget temizle
+    const iKarsiWrap = document.getElementById('i-karsi-liste-wrap');
+    if (iKarsiWrap) {
+      iKarsiWrap.innerHTML = `
+        <div class="form-row i-karsi-satir">
+          <div class="form-group" style="flex:2">
+            <div style="position:relative">
+              <input class="i-karsi-ara" placeholder="Ad ile ara veya yeni ekle..." autocomplete="off"
+                id="i-karsi-ara-0"
+                oninput="ktAra(this.id,this.dataset.liste,this.dataset.hidden,this.dataset.goster)"
+                onfocus="ktAra(this.id,this.dataset.liste,this.dataset.hidden,this.dataset.goster)"
+                data-liste="i-karsi-dd-0" data-hidden="i-karsi-id-0" data-goster="i-karsi-g-0">
+              <div id="i-karsi-dd-0" class="kt-dropdown" style="display:none"></div>
+            </div>
+            <div id="i-karsi-g-0" class="kt-secili" style="display:none"></div>
+            <input type="hidden" id="i-karsi-id-0">
+          </div>
+        </div>`;
+      if (typeof _icraKarsiSayac !== 'undefined') _icraKarsiSayac = 1;
+    }
+    // İcra müvekkil widget temizle
+    const iMuvG = document.getElementById('i-muv-secili');
+    if (iMuvG) { iMuvG.style.display='none'; iMuvG.innerHTML=''; }
+    const iMuvH = document.getElementById('i-muv');
+    if (iMuvH) iMuvH.value = '';
+    const iMuvAra = document.getElementById('i-muv-ara');
+    if (iMuvAra) iMuvAra.value = '';
     const ilbl=document.getElementById('icra-modal-title');if(ilbl)ilbl.textContent='Yeni İcra Takibi';
     const ibtn=document.getElementById('icra-kaydet-btn');if(ibtn)ibtn.textContent='Kaydet';
   }
