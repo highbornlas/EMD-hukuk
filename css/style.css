@@ -2090,3 +2090,435 @@ select:focus, textarea:focus {
   border-color: var(--green);
   color: var(--green);
 }
+
+/* ================================================================
+   RESPONSIVE — MOBİL & TABLET UYUMLULUK
+   ================================================================
+   Breakpoints:
+   - 1024px: Tablet landscape — sidebar daraltılır
+   -  768px: Tablet portrait — sidebar off-canvas, grid'ler stack
+   -  480px: Mobil — tek kolon, küçültülmüş padding
+   ================================================================ */
+
+/* ── Hamburger Butonu (mobilde görünür) ──────────────────────── */
+.hamburger-btn {
+  display: none;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 20px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+  line-height: 1;
+  touch-action: manipulation;
+}
+.hamburger-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+/* ── Sidebar Overlay (mobil) ────────────────────────────────── */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.6);
+  z-index: 199;
+  opacity: 0;
+  transition: opacity .25s ease;
+}
+.sidebar-overlay.active {
+  display: block;
+  opacity: 1;
+}
+
+/* ── Tablo Scroll Wrapper ───────────────────────────────────── */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 0 -20px;
+  padding: 0 20px;
+}
+.table-scroll table {
+  min-width: 600px;
+}
+
+/* ================================================================
+   TABLET LANDSCAPE (≤ 1024px)
+   ================================================================ */
+@media (max-width: 1024px) {
+  /* Nav daralt */
+  #app-wrapper nav {
+    width: 64px;
+    padding-top: 16px;
+    overflow: hidden;
+  }
+  #app-wrapper .nav-item {
+    padding: 10px 0;
+    justify-content: center;
+    border-left: none;
+    border-radius: 0;
+  }
+  #app-wrapper .nav-item .nav-icon {
+    font-size: 18px;
+    width: auto;
+  }
+  /* Nav içindeki metinleri ve badge'leri gizle */
+  #app-wrapper .nav-item {
+    font-size: 0;
+    gap: 0;
+  }
+  #app-wrapper .nav-item .nav-icon {
+    font-size: 18px;
+  }
+  #app-wrapper .nav-badge {
+    position: absolute;
+    top: 2px;
+    right: 6px;
+    margin: 0;
+    font-size: 8px;
+    padding: 0 4px;
+    min-width: 14px;
+    text-align: center;
+  }
+  #app-wrapper .nav-item {
+    position: relative;
+  }
+  #app-wrapper .nav-sep {
+    margin: 4px 12px;
+  }
+  #app-wrapper .nav-bottom {
+    padding-bottom: 12px;
+  }
+
+  /* Main padding küçült */
+  main {
+    padding: 20px 24px;
+  }
+
+  /* Dashboard 3-kolon → 2-kolon */
+  #page-anasayfa > div[style*="grid-template-columns: 1fr 1fr 1fr"],
+  #page-anasayfa > div[style*="grid-template-columns:1fr 1fr 1fr"] {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* Cards grid minimum küçült */
+  .cards {
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 10px;
+  }
+
+  /* Header: tarih gizle, arama küçült */
+  #header-date { display: none; }
+}
+
+/* ================================================================
+   TABLET PORTRAIT (≤ 768px) — Sidebar off-canvas
+   ================================================================ */
+@media (max-width: 768px) {
+  /* Hamburger göster */
+  .hamburger-btn {
+    display: flex;
+    align-items: center;
+    margin-right: 8px;
+  }
+
+  /* Sidebar off-canvas */
+  #app-wrapper nav {
+    position: fixed;
+    left: -280px;
+    top: 56px;
+    bottom: 0;
+    width: 260px;
+    z-index: 200;
+    transition: left .3s cubic-bezier(.4,0,.2,1);
+    box-shadow: none;
+    overflow-y: auto;
+    padding-top: 16px;
+    min-height: auto;
+  }
+  #app-wrapper nav.open {
+    left: 0;
+    box-shadow: 4px 0 30px rgba(0,0,0,.5);
+  }
+
+  /* Nav genişliğine geri dön */
+  #app-wrapper nav.open .nav-item {
+    font-size: 13px;
+    gap: 10px;
+    padding: 10px 24px;
+    justify-content: flex-start;
+  }
+  #app-wrapper nav.open .nav-badge {
+    position: static;
+    margin-left: auto;
+    font-size: 10px;
+    padding: 1px 6px;
+  }
+
+  /* Main tam genişlik */
+  main {
+    padding: 16px;
+    margin-left: 0 !important;
+  }
+  .app {
+    flex-direction: column;
+  }
+
+  /* Header düzenle */
+  header {
+    padding: 0 12px;
+    gap: 8px;
+    height: 52px;
+  }
+  .logo {
+    font-size: 16px;
+    margin-right: 8px;
+  }
+  /* Bazı header butonlarını gizle */
+  #header-user button[title="Ayarlar"],
+  button[title="WhatsApp Gönder"],
+  #plan-badge {
+    display: none;
+  }
+
+  /* Dashboard grid tek kolon */
+  #page-anasayfa > div[style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Form row'ları stack */
+  .form-row,
+  .modal-body .form-row {
+    grid-template-columns: 1fr !important;
+    gap: 10px;
+  }
+
+  /* Modal tam ekran */
+  .modal-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+  .modal {
+    max-width: 100%;
+    max-height: 92vh;
+    border-radius: 16px 16px 0 0;
+    border-bottom: none;
+  }
+  .modal-body {
+    padding: 16px;
+  }
+  .modal-header {
+    padding: 14px 16px;
+    border-radius: 16px 16px 0 0;
+  }
+  .modal-footer {
+    padding: 12px 16px;
+    position: sticky;
+    bottom: 0;
+    background: var(--surface);
+    z-index: 1;
+  }
+
+  /* Page title */
+  .page-title {
+    font-size: 18px;
+  }
+
+  /* Card değerleri küçült */
+  .card-value {
+    font-size: 20px;
+  }
+  .card {
+    padding: 14px 16px;
+  }
+
+  /* Tablo responsive */
+  .section-body {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .section-body table {
+    min-width: 500px;
+  }
+
+  /* Sort bar */
+  .sort-bar {
+    display: none !important;
+  }
+
+  /* Müvekkil kartları — stat'lar alt satıra */
+  .muv-card {
+    flex-wrap: wrap;
+  }
+  .muv-card-stats {
+    width: 100%;
+    padding: 8px 12px 10px;
+    border-top: 1px solid var(--border);
+    justify-content: space-around;
+  }
+
+  /* Tabs scroll */
+  .tabs {
+    gap: 0;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+  .tab {
+    padding: 8px 12px;
+    font-size: 11px;
+  }
+
+  /* Section padding */
+  .section-body {
+    padding: 12px 14px;
+  }
+  .section-header {
+    padding: 10px 14px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
+/* ================================================================
+   MOBİL (≤ 480px) — Maksimum kompakt
+   ================================================================ */
+@media (max-width: 480px) {
+  main {
+    padding: 12px 10px;
+  }
+
+  /* Header ultra-kompakt */
+  header {
+    padding: 0 8px;
+    height: 48px;
+  }
+  .logo {
+    font-size: 14px;
+    margin-right: 4px;
+  }
+  /* Arama butonunu gizle */
+  header button[onclick*="spotlightAc"] {
+    display: none;
+  }
+  #header-user span {
+    display: none;
+  }
+
+  /* Cards tek sütun */
+  .cards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .card {
+    padding: 10px 12px;
+  }
+  .card-value {
+    font-size: 18px;
+  }
+  .card-label {
+    font-size: 9px;
+  }
+
+  /* Section margins */
+  .section {
+    margin-bottom: 12px;
+    border-radius: 6px;
+  }
+
+  /* Hakediş box */
+  div[style*="grid-template-columns:1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Müvekkil detay — tab'lar küçük */
+  .muv-card-name {
+    font-size: 13px;
+  }
+  .muv-card-meta {
+    font-size: 10px;
+  }
+
+  /* Modal — footer butonları stack */
+  .modal-footer {
+    flex-direction: column-reverse;
+  }
+  .modal-footer .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Dava/icra kartları kompakt */
+  .dava-card {
+    padding: 10px 14px;
+  }
+  .dava-no {
+    font-size: 12px;
+  }
+  .dava-konu {
+    font-size: 12px;
+  }
+
+  /* Butonlar — tam genişlik */
+  .page > .section-header .btn,
+  .page > div > .btn {
+    width: 100%;
+    justify-content: center;
+    padding: 10px;
+  }
+}
+
+/* ================================================================
+   DOKUNMATIK CİHAZ İYİLEŞTİRMELERİ
+   ================================================================ */
+@media (pointer: coarse) {
+  /* Daha büyük tıklama alanları */
+  .nav-item {
+    min-height: 44px;
+  }
+  .btn {
+    min-height: 40px;
+    padding: 8px 16px;
+  }
+  .tab {
+    min-height: 40px;
+  }
+  td {
+    padding: 12px;
+  }
+  .delete-btn {
+    padding: 8px;
+    font-size: 16px;
+  }
+  .muv-card {
+    min-height: 56px;
+  }
+
+  /* Hover efektlerini kaldır (touch'ta anlamsız) */
+  .muv-card:hover,
+  .dava-card:hover,
+  .nav-item:hover {
+    background: inherit;
+    border-color: inherit;
+  }
+  .muv-card:active,
+  .dava-card:active {
+    background: var(--gold-dim);
+    border-color: var(--gold);
+  }
+}
+
+/* ================================================================
+   SAFE AREA (iPhone notch/Dynamic Island desteği)
+   ================================================================ */
+@supports (padding: env(safe-area-inset-top)) {
+  header {
+    padding-top: env(safe-area-inset-top);
+  }
+  main {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  #app-wrapper nav {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}

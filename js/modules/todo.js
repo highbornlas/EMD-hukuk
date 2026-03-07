@@ -177,8 +177,8 @@ function openTodoModal(id) {
 function todoDosyaDoldur(tur, seciliId) {
   const sel = document.getElementById('todo-dosya-id');
   sel.innerHTML = '<option value="">— Seçin —</option>';
-  if (tur === 'dava') state.davalar.forEach(d => sel.innerHTML += `<option value="${d.id}"${d.id===seciliId?' selected':''}>${d.no||d.id} — ${escHTML(d.konu||'')}</option>`);
-  else if (tur === 'icra') state.icra.forEach(i => sel.innerHTML += `<option value="${i.id}"${i.id===seciliId?' selected':''}>${i.no||i.id} — ${escHTML(i.borclu||'')}</option>`);
+  if (tur === 'dava') state.davalar.forEach(d => sel.innerHTML += `<option value="${d.id}"${d.id===seciliId?' selected':''}>${escHTML(d.no||d.id)} — ${escHTML(d.konu||'')}</option>`);
+  else if (tur === 'icra') state.icra.forEach(i => sel.innerHTML += `<option value="${i.id}"${i.id===seciliId?' selected':''}>${escHTML(i.no||i.id)} — ${escHTML(i.borclu||'')}</option>`);
   else if (tur === 'danismanlik') state.danismanlik.forEach(d => sel.innerHTML += `<option value="${d.id}"${d.id===seciliId?' selected':''}>${d.konu||d.id}</option>`);
   else if (tur === 'arabuluculuk') (state.arabuluculuk||[]).forEach(a => sel.innerHTML += `<option value="${a.id}"${a.id===seciliId?' selected':''}>${a.no||a.id}</option>`);
 }

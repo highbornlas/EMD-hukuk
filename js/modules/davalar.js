@@ -86,7 +86,7 @@ function renderDavalar(search='',fk='',fa='',fd=''){
         <td style="font-size:11px">${escHTML([d.il,d.mno].filter(Boolean).join(' '))}</td>
         <td style="color:${escHTML(ARENK[d.asama]||'var(--text-muted)')};font-size:11px;font-weight:600">${escHTML(d.asama||'—')}</td>
         <td><span class="badge badge-${bc}">${escHTML(d.durum)}</span></td>
-        <td>${d.taraf||'—'}</td><td>${fmtD(d.durusma)}</td>
+        <td>${escHTML(d.taraf||'—')}</td><td>${fmtD(d.durusma)}</td>
         <td>${d.icrano?`<span style="color:var(--gold);font-size:11px">⚡ ${escHTML(d.icrano)}</span>`:'—'}</td>
         <td><button class="delete-btn" onclick="event.stopPropagation();deleteDavaById('${d.id}')">✕</button></td>
       </tr>`;

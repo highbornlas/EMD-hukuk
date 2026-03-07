@@ -98,7 +98,7 @@ function renderArabBilgi(a){
         <div class="hakediş-box"><div class="hakediş-label">Arabuluculuk Türü</div><div class="hakediş-value">${a.tur}</div></div>
         <div class="hakediş-box"><div class="hakediş-label">Başvuru Tarihi</div><div class="hakediş-value" style="font-size:15px">${fmtD(a.basvuruTarih)||'—'}</div></div>
         <div class="hakediş-box"><div class="hakediş-label">Müvekkil</div><div class="hakediş-value" style="font-size:14px">${getMuvAd(a.muvId)||'—'}</div></div>
-        <div class="hakediş-box"><div class="hakediş-label">Karşı Taraf</div><div class="hakediş-value" style="font-size:14px">${a.karsi||'—'}</div></div>
+        <div class="hakediş-box"><div class="hakediş-label">Karşı Taraf</div><div class="hakediş-value" style="font-size:14px">${escHTML(a.karsi||'—')}</div></div>
         ${a.ilkTarih?`<div class="hakediş-box"><div class="hakediş-label">İlk Toplantı</div><div class="hakediş-value" style="font-size:15px">${fmtD(a.ilkTarih)} ${a.ilkSaat||''}</div></div>`:''}
         ${a.yer?`<div class="hakediş-box"><div class="hakediş-label">Toplantı Yeri</div><div class="hakediş-value" style="font-size:13px">${a.yer}</div></div>`:''}
       </div>
@@ -106,13 +106,13 @@ function renderArabBilgi(a){
       <div style="background:var(--surface2);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px">
         <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:10px">Arabulucu Bilgileri</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          <div><div style="font-size:10px;color:var(--text-dim)">Adı</div><div style="font-size:13px;color:var(--text)">${escHTML(escHTML(a.arabulucuAd)}</div></div>
-          ${escHTML(a.arabulucuSicil?`<div><div style="font-size:10px;color:var(--text-dim)">Sicil No</div><div style="font-size:13px;color:var(--text)">${a.arabulucuSicil}</div></div>`:''}
-          ${escHTML(a.arabulucuTel?`<div><div style="font-size:10px;color:var(--text-dim)">Telefon</div><div style="font-size:13px;color:var(--text)">${a.arabulucuTel}</div></div>`:''}
+          <div><div style="font-size:10px;color:var(--text-dim)">Adı</div><div style="font-size:13px;color:var(--text)">${escHTML(a.arabulucuAd)}</div></div>
+          ${a.arabulucuSicil?`<div><div style="font-size:10px;color:var(--text-dim)">Sicil No</div><div style="font-size:13px;color:var(--text)">${a.arabulucuSicil}</div></div>`:''}
+          ${a.arabulucuTel?`<div><div style="font-size:10px;color:var(--text-dim)">Telefon</div><div style="font-size:13px;color:var(--text)">${a.arabulucuTel}</div></div>`:''}
           ${a.arabulucuBuro?`<div><div style="font-size:10px;color:var(--text-dim)">Büro / Merkez</div><div style="font-size:13px;color:var(--text)">${a.arabulucuBuro}</div></div>`:''}
         </div>
       </div>`:''}
-      ${escHTML(a.notlar?`<div style="background:var(--surface2);border-radius:var(--radius);padding:12px 14px;font-size:12px;color:var(--text-muted);line-height:1.6;white-space:pre-wrap">${a.notlar}</div>`:''}
+      ${a.notlar?`<div style="background:var(--surface2);border-radius:var(--radius);padding:12px 14px;font-size:12px;color:var(--text-muted);line-height:1.6;white-space:pre-wrap">${a.notlar}</div>`:''}
       ${bDava?`<div style="margin-top:14px;padding:12px 14px;background:rgba(142,68,173,.12);border:1px solid #8e44ad;border-radius:var(--radius);font-size:12px">
         <span style="color:#8e44ad;font-weight:700">⚖️ Bağlı Dava:</span> ${escHTML(bDava.no||'')} — ${escHTML(bDava.konu)}
         <button class="btn btn-outline btn-sm" style="margin-left:10px" onclick="showPage('davalar',document.getElementById('ni-davalar'));setTimeout(()=>openDavaDetay('${bDava.id}'),300)">Davaya Git →</button>
@@ -133,7 +133,7 @@ function renderArabToplanti(a){
         <div style="font-size:13px;font-weight:600;color:var(--text)">${escHTML(t.baslik||((i+1)+'. Toplantı'))}</div>
         <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${fmtD(t.tarih)} ${t.saat?'· '+t.saat:''} ${escHTML(t.yer?'· '+t.yer:'')}</div>
         ${t.sonuc?`<div style="margin-top:5px">${arabDurumBadge(t.sonuc)}</div>`:''}
-        ${escHTML(t.notlar?`<div style="margin-top:7px;font-size:11px;color:var(--text-muted);background:var(--surface2);border-radius:6px;padding:7px 10px;line-height:1.5;white-space:pre-wrap">${escHTML(t.notlar)}</div>`:''}
+        ${t.notlar?`<div style="margin-top:7px;font-size:11px;color:var(--text-muted);background:var(--surface2);border-radius:6px;padding:7px 10px;line-height:1.5;white-space:pre-wrap">${escHTML(t.notlar)}</div>`:''}
       </div>
       <button class="delete-btn" onclick="delArabToplanti('${t.id}')">✕</button>
     </div>`;
@@ -163,7 +163,7 @@ function renderArabTaraflar(a){
             </div>
           </div>
           ${t.tarih?`<div style="font-size:10px;color:var(--text-dim);margin-top:3px">${fmtD(t.tarih)}</div>`:''}
-          ${escHTML(t.detay?`<div style="font-size:11px;color:var(--text-muted);margin-top:7px;line-height:1.5;white-space:pre-wrap">${escHTML(t.detay)}</div>`:''}
+          ${t.detay?`<div style="font-size:11px;color:var(--text-muted);margin-top:7px;line-height:1.5;white-space:pre-wrap">${escHTML(t.detay)}</div>`:''}
         </div>`;
       });
       html+='</div>';

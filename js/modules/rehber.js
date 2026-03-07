@@ -996,7 +996,7 @@ function renderMdIletisim(){
           <div style="flex:1">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
               <span style="font-size:11px;color:${renk};font-weight:600">${k.kanal}</span>
-              ${escHTML(k.konu?`<span style="font-size:11px;color:var(--text-muted)">— ${escHTML(k.konu)}</span>`:''}
+              ${k.konu?`<span style="font-size:11px;color:var(--text-muted)">— ${escHTML(k.konu)}</span>`:''}
             </div>
             <div style="font-size:13px;color:var(--text);line-height:1.5;white-space:pre-wrap">${k.ozet}</div>
           </div>
@@ -1253,12 +1253,12 @@ function renderMdRapor(){
     <div style="flex:1">
       <div style="font-size:18px;font-weight:700;margin-bottom:4px">${muv.ad}</div>
       <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">
-        ${isTuzel?`${muv.sirketTur||''}} · VKN: ${muv.vergiNo||'—'} · MERSİS: ${muv.mersis||'—'}`:`TC: ${muv.tc||'—'} · ${muv.meslek||''}`}
+        ${isTuzel?`${escHTML(muv.sirketTur||'')}} · VKN: ${muv.vergiNo||'—'} · MERSİS: ${muv.mersis||'—'}`:`TC: ${muv.tc||'—'} · ${muv.meslek||''}`}
       </div>
       <div style="display:flex;gap:16px;font-size:12px">
-        ${escHTML(muv.tel?`<span>📞 ${muv.tel}</span>`:''}
-        ${escHTML(muv.mail?`<span>✉ ${muv.mail}</span>`:''}
-        ${escHTML(muv.adres?`<span>📍 ${escHTML(muv.adres)}</span>`:''}
+        ${muv.tel?`<span>📞 ${muv.tel}</span>`:''}
+        ${muv.mail?`<span>✉ ${muv.mail}</span>`:''}
+        ${muv.adres?`<span>📍 ${escHTML(muv.adres)}</span>`:''}
       </div>
     </div>
     <div style="text-align:center;min-width:80px">
@@ -1340,7 +1340,7 @@ function renderMdRapor(){
         const bitmis=v.bitis&&v.bitis<today();
         const yaklasan=v.bitis&&!bitmis&&v.bitis<new Date(Date.now()+30*24*3600000).toISOString().slice(0,10);
         return`<div style="padding:10px 18px;border-top:1px solid var(--border);display:flex;gap:16px;align-items:center">
-          <div style="flex:1;font-size:12px">${v.noter||'Belirtilmemiş'} ${v.yevmiye?'/ Yev: '+v.yevmiye:''}</div>
+          <div style="flex:1;font-size:12px">${escHTML(v.noter||'Belirtilmemiş')} ${v.yevmiye?'/ Yev: '+v.yevmiye:''}</div>
           ${bitmis?`<span style="color:#e74c3c;font-weight:700;font-size:12px">⛔ Süresi Doldu (${fmtD(v.bitis)})</span>`:
             yaklasan?`<span style="color:#e67e22;font-weight:700;font-size:12px">⚠ ${fmtD(v.bitis)}'de Sona Eriyor</span>`:
             v.bitis?`<span style="color:var(--green);font-size:12px">✓ Geçerli — ${fmtD(v.bitis)}</span>`:'<span style="color:var(--text-dim);font-size:12px">Bitiş belirtilmemiş</span>'}

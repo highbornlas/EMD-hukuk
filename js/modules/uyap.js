@@ -114,7 +114,7 @@ function renderSureler() {
           <div style="font-weight:600;font-size:14px;margin-bottom:4px">${escHTML(s.aciklama)}</div>
           <div style="font-size:12px;color:var(--text-muted)">
             Başlangıç: ${fmtD(s.baslangic)} | ${s.gun} gün | Son: <strong style="color:${renk}">${fmtD(s.sonTarih)}</strong>
-            ${dava ? ` | ${dava.no||dava.id.slice(0,6)}` : ''}
+            ${dava ? ` | ${escHTML(dava.no||dava.id.slice(0,6))}` : ''}
             ${s.muvId ? ` | ${escHTML(getMuvAd(s.muvId))}` : ''}
           </div>
         </div>

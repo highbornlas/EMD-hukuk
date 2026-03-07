@@ -261,8 +261,8 @@ function renderAnlasmaTab(ctx,obj){
     let aciklama='';
     if(an.tur==='pesin') aciklama=`Sabit ücret: ${fmt(an.ucret||0)}`;
     else if(an.tur==='taksit') aciklama=`${fmt(an.ucret||0)} — ${an.taksitSayi||'?'} taksit × ${an.taksitAralik===1?'Aylık':an.taksitAralik+'lı'} = Taksit: ${fmt(Math.round((an.ucret||0)/(an.taksitSayi||1)*100)/100)}`;
-    else if(an.tur==='basari'||an.tur==='tahsilat') aciklama=`%${an.yuzde||0} × ${fmt(an.baz||deger)} = ${fmt(hesaplananHakediş)}`;
-    else if(an.tur==='karma') aciklama=`Peşin ${fmt(an.karmaP||0)} + %${an.karmaYuzde||0} × ${fmt(an.baz||deger)} = ${fmt(hesaplananHakediş)}`;
+    else if(an.tur==='basari'||an.tur==='tahsilat') aciklama=`%${escHTML(an.yuzde||0)} × ${fmt(an.baz||deger)} = ${fmt(hesaplananHakediş)}`;
+    else if(an.tur==='karma') aciklama=`Peşin ${fmt(an.karmaP||0)} + %${escHTML(an.karmaYuzde||0)} × ${fmt(an.baz||deger)} = ${fmt(hesaplananHakediş)}`;
     html+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">
       <div class="hakediş-box"><div class="hakediş-label">Anlaşma Türü</div><div class="hakediş-value" style="font-size:17px;color:var(--gold-light)">${escHTML(turLabels[an.tur]||an.tur)}</div></div>
       <div class="hakediş-box" style="border-color:var(--gold)"><div class="hakediş-label">Toplam Ücret</div><div class="hakediş-value" style="color:var(--gold)">${fmt(an.ucret||hesaplananHakediş)}</div><div style="font-size:10px;color:var(--text-dim);margin-top:4px">${aciklama}</div></div>

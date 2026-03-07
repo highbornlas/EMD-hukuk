@@ -206,3 +206,37 @@ LB.events.on('state:davalar:changed', () => {
 | `js/modules/dashboard.js` | ✏️ Düzenlendi | XSS koruması |
 | `css/style.css` | ✏️ Düzenlendi | Yeni dialog ve skeleton CSS |
 | `index.html` | ✏️ Düzenlendi | security.js script eklendi |
+
+---
+
+## 6. YAPILAN TÜM DEĞİŞİKLİKLER (Güncellenmiş)
+
+### Güvenlik (280+ düzeltme)
+- **XSS koruması:** 17 dosyada 280+ innerHTML kullanımı `escHTML()` ile sarıldı
+- **Custom confirm dialog:** Native `confirm()` yerine tema uyumlu modal
+- **uid() güçlendirildi:** `crypto.randomUUID()` kullanılıyor (çakışma riski sıfır)
+- **Admin API key uyarısı** ve hata loglama eklendi
+- **Hata yutma** düzeltildi, bozuk veri yedekleniyor
+
+### Mimari
+- **Event bus sistemi** (`eventbus.js`) — modüller arası bağımlılık kaldırıldı
+- **State wrapper fonksiyonları** (`stateEkle`, `stateSil`, `stateGuncelle`) — otomatik event tetikler
+- **saveData çakışması** çözüldü, tek override noktası
+- **Duplicate init** kaldırıldı
+
+### Performans
+- **Görseller WebP'ye çevrildi:** 18.6 MB → 0.3 MB (%98 küçülme)
+- **`<picture>` elementi** ile WebP/PNG fallback
+
+### Yeni Dosyalar
+| Dosya | Boyut | Açıklama |
+|-------|-------|----------|
+| `js/modules/security.js` | 3.7 KB | XSS koruması, onay dialogu |
+| `js/modules/eventbus.js` | 5.2 KB | Event bus, state wrapper |
+| `images/*.webp` | ~100 KB/adet | Optimize görseller |
+
+### Toplam Etki
+- **Güvenlik:** 280+ XSS açığı kapatıldı
+- **Performans:** Sayfa boyutu ~18 MB küçüldü
+- **Stabilite:** uid çakışma riski sıfırlandı, hata yönetimi iyileştirildi
+- **Mimari:** Event bus altyapısı kuruldu (kademeli geçiş için hazır)

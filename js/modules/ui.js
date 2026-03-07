@@ -4,6 +4,9 @@
 // ================================================================
 
 function showPage(id,el){
+  // Mobil sidebar açıksa kapat
+  const _nav = document.querySelector('#app-wrapper nav');
+  if (_nav && _nav.classList.contains('open')) toggleSidebar();
   document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');p.style.display='';})
   document.querySelectorAll('.nav-item, .top-nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
@@ -930,3 +933,35 @@ function emptyTableRow(kolonSayisi, icon, mesaj) {
     else sonModal.classList.remove('open');
   });
 })();
+
+// ================================================================
+// MOBİL SİDEBAR TOGGLE
+// ================================================================
+function toggleSidebar() {
+  const nav = document.querySelector('#app-wrapper nav');
+  const overlay = document.getElementById('sidebar-overlay');
+  if (!nav || !overlay) return;
+
+  const isOpen = nav.classList.contains('open');
+
+  if (isOpen) {
+    nav.classList.remove('open');
+    overlay.classList.remove('active');
+    document.body.style.overflow = '';
+  } else {
+    nav.classList.add('open');
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden'; // Arka plan scroll'u engelle
+  }
+}
+
+// Pencere boyutu değişince sidebar state'ini resetle
+window.addEventListener('resize', function() {
+  if (window.innerWidth > 768) {
+    const nav = document.querySelector('#app-wrapper nav');
+    const overlay = document.getElementById('sidebar-overlay');
+    if (nav) nav.classList.remove('open');
+    if (overlay) overlay.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+});

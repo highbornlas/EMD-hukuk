@@ -46,11 +46,11 @@ function renderIhtarname() {
     const durRenk = i.tebligDurum==='Tebliğ Edildi'?'var(--green)':i.tebligDurum==='Bila'?'var(--red)':'#e67e22';
     const yonRenk = i.yon==='Giden'?'var(--blue)':'var(--purple)';
     tbody.innerHTML += `<tr onclick="openIhtarDetay('${i.id}')" style="cursor:pointer">
-      <td><strong style="color:var(--gold)">${i.no||'—'}</strong></td>
+      <td><strong style="color:var(--gold)">${escHTML(i.no||'—')}</strong></td>
       <td><span style="background:${yonRenk}22;color:${yonRenk};padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700">${i.yon}</span></td>
       <td style="font-size:11px">${i.tur||'—'}</td>
       <td>${getMuvAd(i.muvId)}</td>
-      <td style="font-size:12px">${i.karsiTaraf||'—'}</td>
+      <td style="font-size:12px">${escHTML(i.karsiTaraf||'—')}</td>
       <td style="font-size:11px">${i.noterlik||'—'}</td>
       <td style="font-size:11px">${i.yevmiyeNo||'—'}</td>
       <td>${fmtD(i.tarih)}</td>
@@ -114,9 +114,9 @@ function ihtarDosyaDoldur(tur) {
   if (!sel) return;
   sel.innerHTML = '<option value="">— Dosya seçin (opsiyonel) —</option>';
   if (tur === 'dava') {
-    state.davalar.forEach(d => sel.innerHTML += `<option value="${d.id}">${d.no||d.id} — ${escHTML(d.konu||'')}</option>`);
+    state.davalar.forEach(d => sel.innerHTML += `<option value="${d.id}">${escHTML(d.no||d.id)} — ${escHTML(d.konu||'')}</option>`);
   } else if (tur === 'icra') {
-    state.icra.forEach(i => sel.innerHTML += `<option value="${i.id}">${i.no||i.id} — ${escHTML(i.borclu||'')}</option>`);
+    state.icra.forEach(i => sel.innerHTML += `<option value="${i.id}">${escHTML(i.no||i.id)} — ${escHTML(i.borclu||'')}</option>`);
   }
 }
 
@@ -204,12 +204,12 @@ function openIhtarDetay(id) {
       ${escHTML(bilgiKutusu('Noterlik', ih.noterlik||'—'))}
       ${escHTML(bilgiKutusu('Yevmiye No', ih.yevmiyeNo||'—'))}
       ${bilgiKutusu('Düzenleme Tarihi', fmtD(ih.tarih))}
-      ${bilgiKutusu('Tebliğ Durumu', `<span style="color:${durRenk};font-weight:600">${ih.tebligDurum||'Bekliyor'}</span>`)}
+      ${bilgiKutusu('Tebliğ Durumu', `<span style="color:${durRenk};font-weight:600">${escHTML(ih.tebligDurum||'Bekliyor')}</span>`)}
       ${ih.tebligTarih ? bilgiKutusu('Tebliğ Tarihi', fmtD(ih.tebligTarih)) : ''}
       ${bilgiKutusu('İlgili Dosya', ilgiliDosyaBilgi)}
     </div>
-    ${escHTML(ih.konu ? `<div class="section"><div class="section-header"><div class="section-title">Konu</div></div><div class="section-body"><p style="font-size:13px;line-height:1.7">${escHTML(ih.konu)}</p></div></div>` : ''}
-    ${escHTML(ih.icindekiler ? `<div class="section"><div class="section-header"><div class="section-title">İçindekiler / Talepler</div></div><div class="section-body"><p style="font-size:13px;line-height:1.7;white-space:pre-wrap">${escHTML(ih.icindekiler)}</p></div></div>` : ''}
+    ${ih.konu ? `<div class="section"><div class="section-header"><div class="section-title">Konu</div></div><div class="section-body"><p style="font-size:13px;line-height:1.7">${escHTML(ih.konu)}</p></div></div>` : ''}
+    ${ih.icindekiler ? `<div class="section"><div class="section-header"><div class="section-title">İçindekiler / Talepler</div></div><div class="section-body"><p style="font-size:13px;line-height:1.7;white-space:pre-wrap">${escHTML(ih.icindekiler)}</p></div></div>` : ''}
   `;
 
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
