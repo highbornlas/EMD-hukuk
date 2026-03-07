@@ -852,3 +852,75 @@ function icraKarsiTaraflariTopla() {
   });
   return ids;
 }
+
+
+// ================================================================
+// EMPTY STATE HELPER
+// ================================================================
+function emptyStateHTML(icon, baslik, aciklama, btnLabel, btnOnclick) {
+  const btn = btnLabel
+    ? `<button class="btn btn-gold" onclick="${btnOnclick}" style="margin-top:4px">${btnLabel}</button>`
+    : '';
+  return `<div class="empty-state">
+    <div class="empty-state-icon">${icon}</div>
+    <div class="empty-state-title">${baslik}</div>
+    <div class="empty-state-sub">${aciklama}</div>
+    ${btn}
+  </div>`;
+}
+
+// Tablo için boş satır
+function emptyTableRow(kolonSayisi, icon, mesaj) {
+  return `<tr class="empty-table-row"><td colspan="${kolonSayisi}">
+    <div class="empty-state" style="padding:36px 16px">
+      <div class="empty-state-icon" style="width:56px;height:56px;font-size:22px">${icon}</div>
+      <div class="empty-state-title" style="font-size:13px">${mesaj}</div>
+    </div>
+  </td></tr>`;
+}
+
+
+// ================================================================
+// GLOBAL MODAL X BUTONU — tüm modal-overlay'lere otomatik ekle
+// ================================================================
+(function() {
+  function modalXEkle(overlay) {
+    const id = overlay.id;
+    if (!id) return;
+    const modal = overlay.querySelector('.modal');
+    if (!modal) return;
+    if (modal.querySelector('.modal-x-btn')) return;
+    const xBtn = document.createElement('button');
+    xBtn.className = 'modal-x-btn';
+    xBtn.innerHTML = '✕';
+    xBtn.title = 'Kapat (ESC)';
+    xBtn.onclick = () => {
+      if (typeof closeModal === 'function') closeModal(id);
+      else overlay.classList.remove('open');
+    };
+    modal.prepend(xBtn);
+  }
+
+  // Sayfa yüklenince tüm mevcut modallara ekle
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.modal-overlay').forEach(modalXEkle);
+  });
+
+  // Dinamik açılan modallara da ekle (MutationObserver)
+  const observer = new MutationObserver(mutations => {
+    mutations.forEach(m => {
+      m.target.querySelectorAll('.modal-overlay').forEach(modalXEkle);
+    });
+  });
+  observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+
+  // ESC tuşu ile kapat
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    const aciklar = document.querySelectorAll('.modal-overlay.open');
+    if (aciklar.length === 0) return;
+    const sonModal = aciklar[aciklar.length - 1];
+    if (typeof closeModal === 'function') closeModal(sonModal.id);
+    else sonModal.classList.remove('open');
+  });
+})();

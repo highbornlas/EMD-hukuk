@@ -20,7 +20,17 @@ function icraTab(t,el){
 // ================================================================
 // MODAL
 // ================================================================
-function closeModal(id){document.getElementById(id).classList.remove('open');}
+function closeModal(id){
+  const overlay = document.getElementById(id);
+  if (!overlay) return;
+  const modal = overlay.querySelector('.modal');
+  if (modal) {
+    modal.style.animation = 'modalOut .18s ease forwards';
+    setTimeout(() => { overlay.classList.remove('open'); modal.style.animation = ''; }, 170);
+  } else {
+    overlay.classList.remove('open');
+  }
+}
 // Modal overlay tıklayınca kapanmaz — kullanıcı kapatma tuşu kullanmalı
 
 function populateMuvSelects(){
@@ -321,7 +331,20 @@ function openModal(id){
   ['b-tarih','t-tarih','d-tarih','h-tarih','a-tarih','i-tarih','not-tarih','ev-tarih'].forEach(f=>{
     const e=document.getElementById(f);if(e&&!e.value)e.value=today();
   });
-  document.getElementById(id).classList.add('open');
+  // X butonunu her modala inject et
+  const overlay = document.getElementById(id);
+  if (overlay) {
+    const modal = overlay.querySelector('.modal');
+    if (modal && !modal.querySelector('.modal-x-btn')) {
+      const xBtn = document.createElement('button');
+      xBtn.className = 'modal-x-btn';
+      xBtn.innerHTML = '✕';
+      xBtn.title = 'Kapat';
+      xBtn.onclick = () => closeModal(id);
+      modal.prepend(xBtn);
+    }
+    overlay.classList.add('open');
+  }
 }
 
 function updateMuvekkil(){saveMuvekkil();}

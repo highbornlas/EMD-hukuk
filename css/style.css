@@ -479,3 +479,236 @@ input[type=date]{color-scheme:dark;}
 nav{width:220px;background:var(--surface);border-right:1px solid var(--border);padding:24px 0 0 0;display:flex;flex-direction:column;gap:2px;min-height:calc(100vh - 64px);}
 main{flex:1;overflow-y:auto;padding:28px 32px;}
 @media(max-width:768px){.lp-nav-links{display:none;}.lp-steps::before{display:none;}.gm-row{grid-template-columns:1fr;}.lp-mock-inner{grid-template-columns:1fr;}.lp-mock-nav{display:none;}.lp-mock-cards{grid-template-columns:repeat(2,1fr);}}
+
+/* ================================================================
+   AŞAMA 1 — PREMIUM UI/UX GÜNCELLEMELERİ
+================================================================ */
+
+/* === 1. ÖZEL SCROLLBAR === */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; transition: background .2s; }
+::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+::-webkit-scrollbar-corner { background: transparent; }
+* { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+
+/* === 2. GLASSMORPHISM MODAL OVERLAY === */
+.modal-overlay {
+  background: rgba(0,0,0,0.65) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+/* === 3. MODAL İYİLEŞTİRMELERİ === */
+.modal {
+  border-radius: 16px !important;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(201,168,76,0.08), inset 0 1px 0 rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(201,168,76,0.12) !important;
+  animation: modalIn .25s cubic-bezier(.22,.68,0,1.2) both;
+}
+@keyframes modalIn {
+  from { opacity:0; transform:scale(.96) translateY(16px); }
+  to   { opacity:1; transform:scale(1) translateY(0); }
+}
+.modal-overlay { padding: 24px !important; }
+
+/* === 4. KALİCİ X BUTONU === */
+.modal-x-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .2s;
+  z-index: 10;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.modal-x-btn:hover {
+  background: var(--red-dim);
+  border-color: var(--red);
+  color: var(--red);
+  transform: rotate(90deg);
+}
+.modal { position: relative; }
+/* Mevcut modal-close butonunu güncelle */
+.modal-close {
+  width: 32px !important;
+  height: 32px !important;
+  background: var(--surface2) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 50% !important;
+  color: var(--text-muted) !important;
+  cursor: pointer !important;
+  font-size: 14px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all .2s !important;
+  flex-shrink: 0;
+}
+.modal-close:hover {
+  background: var(--red-dim) !important;
+  border-color: var(--red) !important;
+  color: var(--red) !important;
+  transform: rotate(90deg) !important;
+}
+
+/* === 5. BOŞ DURUM (EMPTY STATE) === */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 56px 24px;
+  text-align: center;
+  gap: 12px;
+}
+.empty-state-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
+  background: var(--gold-dim);
+  border: 1px solid rgba(201,168,76,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  margin-bottom: 4px;
+}
+.empty-state-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+.empty-state-sub {
+  font-size: 13px;
+  color: var(--text-muted);
+  max-width: 280px;
+  line-height: 1.6;
+}
+/* Eski .empty stilini de güncelle */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 24px;
+  color: var(--text-dim);
+}
+.empty-icon { font-size: 36px; margin-bottom: 12px; opacity: .6; }
+.empty p { font-size: 13px; color: var(--text-muted); }
+
+/* === 6. MİKRO ETKİLEŞİMLER === */
+.btn {
+  transition: all .2s cubic-bezier(.22,.68,0,1.2) !important;
+}
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0,0,0,.25);
+}
+.btn:active {
+  transform: translateY(0) scale(.97);
+}
+.btn-gold:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(201,168,76,.35) !important;
+}
+
+tr { transition: background .15s; }
+tr:hover td { background: var(--surface2); }
+
+.muv-card  { transition: all .2s cubic-bezier(.22,.68,0,1.2); }
+.dava-card { transition: all .2s cubic-bezier(.22,.68,0,1.2); }
+.muv-card:hover, .dava-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,.3);
+}
+
+.nav-item { transition: all .18s ease; }
+
+/* Form input focus glow */
+input:not([type=checkbox]):not([type=radio]):not([type=range]):focus,
+select:focus, textarea:focus {
+  border-color: var(--gold) !important;
+  box-shadow: 0 0 0 3px rgba(201,168,76,0.12);
+}
+
+/* === 7. CHIP (ETİKET) SİSTEMİ — AŞAMA 2 === */
+.chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+  min-height: 0;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px 4px 12px;
+  background: var(--gold-dim);
+  border: 1px solid rgba(201,168,76,0.3);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gold-light);
+  animation: chipIn .2s ease;
+}
+@keyframes chipIn { from{opacity:0;transform:scale(.8)} to{opacity:1;transform:scale(1)} }
+.chip-x {
+  background: none;
+  border: none;
+  color: var(--gold);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+  line-height: 1;
+  opacity: .7;
+  transition: opacity .15s;
+}
+.chip-x:hover { opacity: 1; }
+
+/* === 8. SEARCHABLE DROPDOWN GELİŞTİRME === */
+.kt-dropdown {
+  border-radius: 10px !important;
+  border: 1px solid rgba(201,168,76,0.2) !important;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.5) !important;
+  animation: dropIn .15s ease;
+}
+@keyframes dropIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+.kt-item { transition: background .12s; }
+
+/* === MODAL HEADER sticky tutma === */
+.modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+/* === BADGE hover === */
+.badge { transition: opacity .15s; }
+
+
+@keyframes modalOut {
+  from { opacity:1; transform:scale(1) translateY(0); }
+  to   { opacity:0; transform:scale(.96) translateY(12px); }
+}
+
+/* Boş tablo satırı */
+.empty-table-row td {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--text-dim);
+}
+.empty-table-row:hover td { background: transparent !important; }
