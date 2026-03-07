@@ -11,7 +11,7 @@
 // - Periyodik kontrol (5 dk)
 // ================================================================
 
-const Bildirim = (function () {
+var Bildirim = (function () {
 
   // ── Ayarlar (localStorage'dan yüklenir) ─────────────────────
   const AYAR_KEY = 'lb_bildirim_ayar';

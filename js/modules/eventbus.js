@@ -11,7 +11,7 @@
 //   LBEvents.off('davalar:changed', renderDavalar);
 // ================================================================
 
-const LBEvents = (function() {
+var LBEvents = (function() {
   const _listeners = {};
 
   return {

@@ -785,6 +785,7 @@
 <header>
   <button class="hamburger-btn" id="hamburger-btn" onclick="toggleSidebar()" aria-label="Menü">☰</button>
   <div class="logo" style="font-family:'DM Sans',sans-serif;font-size:22px;font-weight:800;letter-spacing:-0.5px"><span style="color:#00BCD4">L</span>ex<span style="color:#00BCD4">B</span>ase</div>
+  <span id="avukat-adi" style="font-size:12px;color:var(--text-dim);margin-left:4px;display:none"></span>
   <div style="display:flex;align-items:center;gap:12px;margin-left:auto">
     <button onclick="spotlightAc()" title="Ctrl+K ile arama yap" style="background:var(--surface2);border:1px solid var(--border);color:var(--text-muted);padding:5px 12px;border-radius:6px;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:6px"><span>🔍</span> Ara <kbd style="font-size:9px;background:var(--surface);border:1px solid var(--border);padding:1px 5px;border-radius:3px">Ctrl+K</kbd></button>
     <!-- Bildirim Çanı -->
@@ -811,7 +812,7 @@
       <span style="font-size:12px;color:var(--text-muted)" id="header-user-ad"></span>
       <button onclick="showPage('ayarlar',document.getElementById('ni-ayarlar'))" style="background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer" title="Ayarlar">⚙️</button>
       <button onclick="cikisYap()" style="background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;touch-action:manipulation" title="Çıkış Yap">🚪 Çıkış</button>
-      <button onclick="openWpHizliModal()" style="background:#25D366;border:none;color:#fff;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;touch-action:manipulation" title="WhatsApp Gönder">📱 WP</button>
+      <button id="header-wp-btn" onclick="openWpHizliModal()" style="background:#25D366;border:none;color:#fff;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;touch-action:manipulation" title="WhatsApp Gönder">📱 WP</button>
     </div>
   </div>
 </header>
@@ -2121,6 +2122,9 @@
   <div class="form-section-label">Aşama & Durum</div>
   <div class="form-row">
     <div class="form-group"><label>Yargılama Aşaması</label><select id="d-asama"><option>İlk Derece</option><option>İstinaf</option><option>Yargıtay</option><option>Kesinleşti</option><option>Düşürüldü</option></select></div>
+    <div class="form-group"><label>Dava Durumu</label><select id="d-durum"><option value="Aktif">Aktif</option><option value="Devam Ediyor">Devam Ediyor</option><option value="Beklemede">Beklemede</option><option value="Kapandı">Kapandı</option></select></div>
+  </div>
+  <div class="form-row">
     <div class="form-group"><label>Dosya Durumu / Derdestlik</label>
       <select id="d-derdest" onchange="derdestDegis(this.value)">
         <option value="">—</option>
@@ -2184,7 +2188,8 @@
   </div>
   <div class="form-row"><div class="form-group"><label>İlişkili İcra No</label><input id="d-icrano"></div><div class="form-group"><label>Dava Değeri (₺)</label><input type="number" id="d-deger"></div></div>
   <div class="form-group"><label>Notlar</label><textarea id="d-not" rows="2"></textarea></div>
-  <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('dav-modal')">İptal</button><button class="btn btn-gold" onclick="saveDava()">Kaydet</button></div>
+  <input type="hidden" id="d-karsi-id"><input type="hidden" id="d-karsav-id">
+  <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('dav-modal')">İptal</button><button class="btn btn-gold" id="dav-kaydet-btn" onclick="saveDava()">Kaydet</button></div>
   </div>
 </div></div>
 
@@ -2372,7 +2377,7 @@
 
 <!-- İcra Modal -->
 <div class="modal-overlay" id="icra-modal"><div class="modal modal-lg">
-  <div class="modal-title">İcra Dosyası Ekle</div>
+  <div class="modal-title" id="icra-modal-title">İcra Dosyası Ekle</div>
   <div class="form-row">
     <div class="form-group">
       <label>Dosya No <span style="font-size:10px;color:var(--gold);margin-left:6px">● Otomatik atanır</span></label>
@@ -2485,7 +2490,8 @@
   </div>
   <div class="form-row"><div class="form-group"><label>İlişkili Dava No</label><input id="i-davno"></div><div class="form-group"><label>Dayanak Belge</label><input id="i-dayanak"></div></div>
   <div class="form-group"><label>Notlar</label><textarea id="i-not" rows="2"></textarea></div>
-  <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('icra-modal')">İptal</button><button class="btn btn-gold" onclick="saveIcra()">Kaydet</button></div>
+  <input type="hidden" id="i-borclu"><input type="hidden" id="i-btc">
+  <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('icra-modal')">İptal</button><button class="btn btn-gold" id="icra-kaydet-btn" onclick="saveIcra()">Kaydet</button></div>
 </div></div>
 
 <!-- Harcama Modal -->

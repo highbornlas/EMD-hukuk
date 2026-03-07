@@ -340,7 +340,7 @@ function openArabTalepModal(){
   document.getElementById('att-tarih').value=today();
   document.getElementById('att-konu').value='';
   document.getElementById('att-tutar').value='';
-  document.getElementById('att-detay').value='';
+  const _attEl = document.getElementById('att-detay'); if(_attEl) _attEl.value='';
   document.getElementById('arab-talep-modal').classList.add('open');
 }
 function saveArabTalep(){
@@ -352,7 +352,7 @@ function saveArabTalep(){
     taraf:document.getElementById('att-taraf').value,
     tarih:document.getElementById('att-tarih').value,
     konu,tutar:parseFloat(document.getElementById('att-tutar').value)||0,
-    detay:document.getElementById('att-detay').value.trim()});
+    detay:(document.getElementById('att-detay')||{value:''}).value.trim()});
   closeModal('arab-talep-modal');saveData();renderArabTabContent('taraflar');
   notify('✓ Talep eklendi');
 }
@@ -426,7 +426,7 @@ function saveArabNot(){
   if(!zorunluKontrol([{id:'not2-icerik',deger:icerik,label:'Not içeriği'}])){notify('⚠️ Zorunlu alanları doldurun.');return;}
   const a=getArab(aktivArabId);if(!a)return;
   if(!a.topNotlar)a.topNotlar=[];
-  a.topNotlar.push({id:uid(),tarih:document.getElementById('arab-not-tarih').value,icerik});
+  a.topNotlar.push({id:uid(),tarih:(document.getElementById('arab-not-tarih')||{value:today()}).value,icerik});
   document.getElementById('arab-not-modal-temp')?.remove();
   saveData();renderArabTabContent('notlar');notify('✓ Not eklendi');
 }

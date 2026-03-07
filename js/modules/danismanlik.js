@@ -110,7 +110,7 @@ function renderDanDetayBilgi(d) {
 function danDurumGuncelle() {
   const d = state.danismanlik.find(x => x.id === aktivDanId);
   if (!d) return;
-  d.durum = document.getElementById('dan-detay-durum').value;
+  const _ddEl = document.getElementById('dan-detay-durum'); if(_ddEl) d.durum = _ddEl.value;
   saveData();
   renderDanDetayBilgi(d);
   renderDanismanlik();

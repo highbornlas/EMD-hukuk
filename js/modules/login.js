@@ -22,7 +22,7 @@ function lpInit() {
         uygulamayiBaslatLocal();
         return;
       }
-    } catch(e) {}
+    } catch(e) { console.error('[LexBase] Başlatma hatası:', e); }
   }
   // Giriş yoksa landing'i göster ve init yap
   init();

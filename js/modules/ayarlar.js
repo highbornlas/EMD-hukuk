@@ -101,7 +101,7 @@ async function buroBilgisiGuncelle() {
   try {
     await sb.from('burolar').update({ ad, telefon, email, adres }).eq('id', currentBuroId);
     currentUser = { ...currentUser, buro_ad: ad };
-    document.getElementById('avukat-adi').textContent = ad;
+    const _aaEl = document.getElementById('avukat-adi'); if(_aaEl) _aaEl.textContent = ad;
     notify('✅ Büro bilgileri güncellendi');
   } catch (e) { notify('⚠️ Hata: ' + e.message); }
 }

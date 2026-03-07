@@ -75,16 +75,22 @@ async function cikisYap() {
 }
 
 function uygulamayiBaslatLocal() {
-  document.getElementById('header-user-ad').textContent = currentUser.ad_soyad;
-  document.getElementById('avukat-adi').textContent = currentUser.buro_ad || 'Yönetim Sistemi';
-  document.getElementById('login-screen').classList.add('hidden');
+  const unEl = document.getElementById('header-user-ad');
+  if (unEl) unEl.textContent = currentUser.ad_soyad;
+  const buroEl = document.getElementById('avukat-adi');
+  if (buroEl) buroEl.textContent = currentUser.buro_ad || 'Yönetim Sistemi';
+  const loginEl = document.getElementById('login-screen');
+  if (loginEl) loginEl.classList.add('hidden');
   const ls = document.getElementById('landing-screen');
   if (ls) ls.classList.add('hidden');
-  document.getElementById('app-wrapper').classList.add('visible');
+  const app = document.getElementById('app-wrapper');
+  if (app) app.classList.add('visible');
   temaYukle(); yetkiMenuGuncelle();
-  planBilgisiGuncelle(); // ← Plan badge güncelle
+  planBilgisiGuncelle();
   renderMuvekkillar(); renderDavalar(); renderDavaCards(); renderIcra(); renderIcraCards();
   renderButce(); renderDanismanlik(); renderDashboard(); updateBadges();
+  if (typeof renderIhtarname === 'function') renderIhtarname();
+  if (typeof renderTodo === 'function') renderTodo();
   if (typeof Bildirim !== 'undefined') Bildirim.baslat();
   addAktiviteLog('Giriş Yapıldı', currentUser.ad_soyad, 'Genel');
   // Admin entegrasyon (sessizce, arka planda)

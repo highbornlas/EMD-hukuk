@@ -49,7 +49,7 @@ function openPersonelModal() {
   aktivPersonelId = null;
   document.getElementById('personel-modal-title').textContent = 'Personel Ekle';
   document.getElementById('p-sil-btn').style.display = 'none';
-  document.getElementById('p-sifre-label').textContent = 'Şifre *';
+  const _psl = document.getElementById('p-sifre-label'); if(_psl) _psl.textContent = 'Şifre *';
   document.getElementById('hesap-mevcut-bilgi').style.display = 'none';
   // Formu temizle
   ['p-ad','p-tel','p-email','p-tc','p-baro-sicil','p-notlar'].forEach(id=>{
@@ -72,7 +72,7 @@ function openPersonelDuzenle(id) {
   aktivPersonelId = id;
   document.getElementById('personel-modal-title').textContent = 'Personel Düzenle';
   document.getElementById('p-sil-btn').style.display = '';
-  document.getElementById('p-sifre-label').textContent = 'Şifre (değiştirmek için doldurun)';
+  const _psl = document.getElementById('p-sifre-label'); if(_psl) _psl.textContent = 'Şifre (değiştirmek için doldurun)';
   document.getElementById('p-ad').value = p.ad||'';
   document.getElementById('p-rol').value = p.rol||'avukat';
   document.getElementById('p-tel').value = p.tel||'';
