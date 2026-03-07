@@ -47,15 +47,14 @@ async function kayitOl() {
     loginHata('✅ Kayıt başarılı! E-postanızı doğrulayın, ardından giriş yapın.');
     // Admin DB'ye yeni müşteri kaydını arka planda gönder
     if (typeof adminMusteriKayit === 'function') {
-      const authUser = kayitData?.user;
-      if (authUser) {
-        adminMusteriKayit({
-          id:      authUser.id,
-          ad_soyad: ad,
-          email:   email,
-          buro_ad: buroAd,
-        });
-      }
+      const authUser = kayitData?.user || kayitData?.data?.user;
+      const userId = authUser?.id || crypto.randomUUID();
+      adminMusteriKayit({
+        id:       userId,
+        ad_soyad: ad,
+        email:    email,
+        buro_ad:  buroAd,
+      });
     }
   } catch(e) {
     btn.textContent = 'Kayıt Ol & Başla'; btn.disabled = false;
