@@ -42,7 +42,7 @@ async function kayitOl() {
   const btn = document.getElementById('kayit-btn');
   btn.textContent = 'Kayıt yapılıyor...'; btn.disabled = true;
   try {
-    const kayitData = await sbKayitOl(email, sifre, ad);
+    const kayitData = await sbKayitOl(email, sifre, ad, buroAd);
     btn.textContent = 'Kayıt Ol & Başla'; btn.disabled = false;
     loginHata('✅ Kayıt başarılı! E-postanızı doğrulayın, ardından giriş yapın.');
   } catch(e) {

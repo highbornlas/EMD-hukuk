@@ -13,12 +13,19 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // ================================================================
 
 // Büro sahibi kaydı: email + sifre + ad
-async function sbKayitOl(email, sifre, ad) {
+async function sbKayitOl(email, sifre, ad, buroAd) {
   const { data, error } = await sb.auth.signUp({
     email, password: sifre,
     options: { data: { ad } }
   });
   if (error) throw error;
+  // Admin DB'ye hemen kaydet — SIGNED_IN tetiklenmeden önce
+  try {
+    if (typeof adminMusteriKayit === 'function') {
+      const userId = data?.user?.id || crypto.randomUUID();
+      adminMusteriKayit({ id: userId, ad_soyad: ad, email, buro_ad: buroAd || '' });
+    }
+  } catch(e) { console.warn('adminMusteriKayit:', e); }
   return data;
 }
 
