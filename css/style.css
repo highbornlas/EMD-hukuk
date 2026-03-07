@@ -3128,3 +3128,53 @@ table thead th {
     display: none;
   }
 }
+
+/* ================================================================
+   WIZARD v2 — HATA DURUMLARI
+   ================================================================ */
+/* Hatalı input */
+.wiz-field-error {
+  border-color: #e74c3c !important;
+  box-shadow: 0 0 0 2px rgba(231,76,60,.15) !important;
+  animation: wizShake .3s ease;
+}
+@keyframes wizShake {
+  0%,100% { transform: translateX(0); }
+  20%     { transform: translateX(-4px); }
+  40%     { transform: translateX(4px); }
+  60%     { transform: translateX(-2px); }
+  80%     { transform: translateX(2px); }
+}
+/* Hata mesajı (input altı) */
+.wiz-error-msg {
+  display: none;
+  font-size: 11px;
+  color: #e74c3c;
+  margin-top: 4px;
+  padding: 2px 0;
+  line-height: 1.4;
+  animation: wizFadeIn .2s ease;
+}
+@keyframes wizFadeIn {
+  from { opacity:0; transform:translateY(-4px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+/* Adım dot'unda hata badge */
+.wizard-step-indicator.has-error .wizard-step-dot {
+  background: #e74c3c !important;
+  border-color: #e74c3c !important;
+  color: #fff !important;
+  animation: wizPulse 1s infinite;
+}
+.wizard-step-indicator.has-error .wizard-step-label {
+  color: #e74c3c !important;
+}
+@keyframes wizPulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(231,76,60,.4); }
+  50%     { box-shadow: 0 0 0 6px rgba(231,76,60,0); }
+}
+/* Adım dot tıklanabilir hover */
+.wizard-step-indicator:hover .wizard-step-dot {
+  transform: scale(1.1);
+  transition: transform .15s;
+}

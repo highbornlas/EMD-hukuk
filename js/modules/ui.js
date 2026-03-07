@@ -1114,24 +1114,29 @@ function todoGorunumDegis(mod) {
 document.addEventListener('DOMContentLoaded', function() {
   if (typeof Wizard === 'undefined') return;
 
-  // Dava wizard — yeni 3 sekme yapısı
+  // Dava wizard — alan bazlı validasyon ile
   Wizard.olustur('dav-modal', {
+    kaydetLabel: '✓ Davayı Kaydet',
     adimlar: [
-      { baslik: 'Mahkeme & Konu', panelId: 'dav-wiz-1',
-        dogrula: function() {
-          const konu = document.getElementById('d-konu')?.value.trim();
-          if (!konu) { notify('⚠️ Dava konusu zorunludur'); return false; }
-          return true;
-        }
+      {
+        baslik: 'Mahkeme & Konu',
+        panelId: 'dav-wiz-1',
+        alanlar: [
+          { id: 'd-konu', label: 'Dava Konusu', tip: 'zorunlu', mesaj: 'Dava konusu girilmelidir' },
+        ],
       },
-      { baslik: 'Taraflar', panelId: 'dav-wiz-2',
-        dogrula: function() {
-          const muv = document.getElementById('d-muv')?.value;
-          if (!muv) { notify('⚠️ Müvekkil seçmelisiniz'); return false; }
-          return true;
-        }
+      {
+        baslik: 'Taraflar',
+        panelId: 'dav-wiz-2',
+        alanlar: [
+          { id: 'd-muv', label: 'Müvekkil', tip: 'zorunlu', mesaj: 'Müvekkil seçilmelidir' },
+        ],
       },
-      { baslik: 'Tarih & Detay', panelId: 'dav-wiz-3' },
+      {
+        baslik: 'Tarih & Detay',
+        panelId: 'dav-wiz-3',
+        // Son adımda zorunlu alan yok — opsiyonel
+      },
     ],
     bitirFn: function() { saveDava(); }
   });

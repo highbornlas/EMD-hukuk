@@ -38,14 +38,96 @@ function saveIcra(){
 }
 function _saveIcraDevam(yeniIcra) {
   state.icra.push(yeniIcra);
+  
+  // ── Frontend Otomasyonları (localStorage modu) ──
+  // 1. Ödeme emri tarihi varsa → İtiraz süresi hesapla + görev
+  if (yeniIcra.otarih && (!yeniIcra.itarih || yeniIcra.itarih === '')) {
+    const yasalSure = {'İlamsız İcra':7,'Kambiyo Senedi':5,'İlamlı İcra':7}[yeniIcra.tur] || 7;
+    const itarih = new Date(yeniIcra.otarih);
+    itarih.setDate(itarih.getDate() + yasalSure);
+    yeniIcra.itarih = itarih.toISOString().split('T')[0];
+  }
+  if (yeniIcra.itarih) {
+    _icraItirazGorev(yeniIcra);
+  }
+
   ['i-no','i-borclu','i-btc','i-daire','i-esas','i-alacak','i-tahsil','i-faiz','i-davno','i-dayanak','i-not','i-tarih','i-otarih','i-itarih'].forEach(i=>{const e=document.getElementById(i);if(e)e.value='';}); document.getElementById('i-il').value=''; document.getElementById('i-adliye').innerHTML='<option value="">— Önce il seçin —</option>';
   ktWidgetTemizle('i-karsav-ara','i-karsav-liste','i-karsav-id','i-karsav-goster');
   closeModal('icra-modal');saveData();renderIcra();renderIcraCards();renderMdDavalar();updateBadges();notify('✓ İcra dosyası eklendi');
 }
+
+// ── İtiraz Süresi Görev Otomasyonu ───────────────────────────
+function _icraItirazGorev(icra) {
+  if (!state.todolar) state.todolar = [];
+  // Eski otomatik görevi sil
+  state.todolar = state.todolar.filter(function(t) { return t._icraId !== icra.id || !t._otoItiraz; });
+  
+  var itirazTarih = new Date(icra.itarih);
+  var bugun = new Date(today());
+  if (itirazTarih <= bugun) return; // geçmiş tarih
+  
+  var gorevTarih = new Date(itirazTarih);
+  gorevTarih.setDate(gorevTarih.getDate() - 2); // 2 gün önce
+  
+  state.todolar.push({
+    id: uid(),
+    _icraId: icra.id,
+    _otoItiraz: true,
+    baslik: '🔴 ' + icra.no + ' — İtiraz süresi doluyor',
+    aciklama: 'Ödeme Emri: ' + fmtD(icra.otarih) + ' | İtiraz Son: ' + fmtD(icra.itarih) + ' | Kesinleştirme işlemi yapılabilir.',
+    sonTarih: gorevTarih.toISOString().split('T')[0],
+    durum: 'Bekliyor',
+    oncelik: 'Yüksek',
+    muvId: icra.muvId,
+  });
+}
+
+// ── Harcama → Finans Senkronizasyonu ─────────────────────────
+function _icraHarcamaSync(icra) {
+  if (!state.avanslar) state.avanslar = [];
+  // Bu icra dosyasına ait eski otomatik masrafları sil
+  state.avanslar = state.avanslar.filter(function(a) { return a._icraId !== icra.id || !a._otoHarcama; });
+  
+  (icra.harcamalar || []).forEach(function(h) {
+    if (h.tutar > 0) {
+      state.avanslar.push({
+        id: uid(),
+        _icraId: icra.id,
+        _otoHarcama: true,
+        muvId: icra.muvId,
+        tur: 'Masraf',
+        tutar: h.tutar,
+        acik: icra.no + ' İcra — ' + (h.kat || 'Harcama') + ': ' + (h.acik || ''),
+        tarih: h.tarih || today(),
+        durum: 'Bekliyor',
+        odeme: '',
+      });
+    }
+  });
+}
+
+// ── Tahsilat → Hakediş Hesaplama ─────────────────────────────
+function _icraTahsilatSync(icra) {
+  var thList = icra.tahsilatlar || [];
+  var topTahsil = thList.filter(function(t){return t.tur==='tahsilat';}).reduce(function(s,t){return s+(t.tutar||0);},0);
+  icra.tahsil = topTahsil;
+  
+  // Anlaşma bazlı hakediş
+  var an = icra.anlasma || {};
+  if ((an.tur === 'tahsilat' || an.tur === 'basari') && an.yuzde > 0 && topTahsil > 0) {
+    icra.hesaplananHakedis = topTahsil * an.yuzde / 100;
+  }
+}
 function deleteIcraById(id){
   if(!confirm('Bu icra dosyasını silmek istediğinize emin misiniz?'))return;
+  // İlişkili otomatik masrafları temizle
+  state.avanslar = (state.avanslar||[]).filter(function(a){ return a._icraId !== id; });
+  // İlişkili otomatik görevleri temizle
+  state.todolar = (state.todolar||[]).filter(function(t){ return t._icraId !== id; });
   state.icra=state.icra.filter(i=>i.id!==id);
   saveData();renderIcra();renderIcraCards();renderMdDavalar();updateBadges();notify('İcra silindi');
+  // Detay sayfasındaysak listeye dön
+  if (aktivIcraId === id) showPage('icra', document.getElementById('ni-icra'));
 }
 function openIcraModalForMuv(){openModal('icra-modal');setTimeout(()=>{const e=document.getElementById('i-no');if(e&&!e.value)e.value=autoNo('icra');},50);setTimeout(()=>{const e=document.getElementById('i-muv');if(aktivMuvId)e.value=aktivMuvId;},50);}
 
@@ -98,8 +180,20 @@ function openIcraDetay(icraId){
   ensureArrays(i,['evraklar','notlar','harcamalar','tahsilatlar']);if(!i.anlasma)i.anlasma={};
   document.getElementById('id-bc').textContent=i.no;
   document.getElementById('id-baslik').textContent=`${i.no} — ${i.borclu}`;
-  document.getElementById('id-meta').innerHTML=`${getMuvAd(i.muvId)} · ${[i.il,i.adliye,i.daire].filter(Boolean).join(' ')} · ${i.tur}`;
-  document.getElementById('id-edit-btn').onclick=()=>notify('Düzenleme yakında');
+
+  // İlişkili dava link
+  let davaBilgi = '';
+  if (i.davno) {
+    const dava = (state.davalar||[]).find(d => d.no === i.davno || d.id === i.davno);
+    if (dava) {
+      davaBilgi = ` · <span onclick="showPage('davalar',document.getElementById('ni-davalar'));setTimeout(function(){openDavaDetay('${dava.id}')},200)" style="color:var(--gold);cursor:pointer;text-decoration:underline">📁 ${dava.no}</span>`;
+    } else {
+      davaBilgi = ` · 📁 ${i.davno}`;
+    }
+  }
+
+  document.getElementById('id-meta').innerHTML=`${getMuvAd(i.muvId)} · ${[i.il,i.adliye,i.daire].filter(Boolean).join(' ')} · ${i.tur}${davaBilgi}`;
+  document.getElementById('id-edit-btn').onclick=function(){ notify('⚠️ Düzenleme yakında eklenecek'); };
   renderIdCards(i);
   document.querySelectorAll('#page-icra-detay .tab').forEach((t,idx)=>t.classList.toggle('active',idx===0));
   document.querySelectorAll('#page-icra-detay .tab-panel').forEach((p,idx)=>p.classList.toggle('active',idx===0));
@@ -108,18 +202,42 @@ function openIcraDetay(icraId){
   document.getElementById('page-icra-detay').classList.add('active');
 }
 function renderIdCards(i){
-  const harcToplam=(i.harcamalar||[]).reduce((s,h)=>s+h.tutar,0);
+  const harcToplam=(i.harcamalar||[]).reduce((s,h)=>s+(h.tutar||0),0);
   const kalan=(i.alacak||0)-(i.tahsil||0);
+  const oran=i.alacak>0?Math.round(((i.tahsil||0)/i.alacak)*100):0;
   const thList=i.tahsilatlar||[];
-  const topTahsil=thList.filter(t=>t.tur==='tahsilat').reduce((s,t)=>s+t.tutar,0);
-  const topAktarim=thList.filter(t=>t.tur==='aktarim').reduce((s,t)=>s+t.tutar,0);
+  const topTahsil=thList.filter(t=>t.tur==='tahsilat').reduce((s,t)=>s+(t.tutar||0),0);
+  const topAktarim=thList.filter(t=>t.tur==='aktarim').reduce((s,t)=>s+(t.tutar||0),0);
+  // Hakediş hesapla (anlaşmaya göre)
+  const an = i.anlasma || {};
+  let hakedis = 0;
+  if ((an.tur === 'tahsilat' || an.tur === 'basari') && an.yuzde > 0 && topTahsil > 0) {
+    hakedis = topTahsil * an.yuzde / 100;
+  } else if (an.tur === 'sabit' && an.tutar > 0) {
+    hakedis = an.tutar;
+  }
+
+  // İtiraz süresi countdown
+  let itirazBilgi = '';
+  if (i.itarih) {
+    const kalanGun = Math.ceil((new Date(i.itarih) - new Date(today())) / 86400000);
+    if (kalanGun > 0) {
+      const renk = kalanGun <= 2 ? '#e74c3c' : kalanGun <= 5 ? '#e67e22' : 'var(--green)';
+      itirazBilgi = `<div class="card" style="border:1px solid ${renk}"><div class="card-label">İtiraz Süresi</div><div class="card-value" style="font-size:14px;color:${renk}">${kalanGun} gün</div><div style="font-size:9px;color:var(--text-dim)">${fmtD(i.itarih)}</div></div>`;
+    } else if (kalanGun <= 0) {
+      itirazBilgi = `<div class="card" style="border:1px solid var(--green)"><div class="card-label">İtiraz Süresi</div><div class="card-value" style="font-size:12px;color:var(--green)">✅ Kesinleşti</div></div>`;
+    }
+  }
+
   document.getElementById('id-cards').innerHTML=`
     <div class="card"><div class="card-label">Toplam Alacak</div><div class="card-value red">${fmt(i.alacak)}</div></div>
-    <div class="card"><div class="card-label">Tahsil Edilen</div><div class="card-value green">${fmt(i.tahsil)}</div></div>
+    <div class="card"><div class="card-label">Tahsil Edilen</div><div class="card-value green">${fmt(i.tahsil)}<div class="progress-bar" style="margin-top:4px"><div class="progress-fill" style="width:${oran}%"></div></div><div style="font-size:9px;color:var(--text-dim)">%${oran}</div></div></div>
     <div class="card"><div class="card-label">Kalan</div><div class="card-value red">${fmt(kalan)}</div></div>
     <div class="card"><div class="card-label">Dosya Harcaması</div><div class="card-value" style="color:#e74c3c">${fmt(harcToplam)}</div></div>
+    ${hakedis>0?`<div class="card" style="border:1px solid var(--gold)"><div class="card-label">Avukat Hakedişi</div><div class="card-value gold">${fmt(hakedis)}${an.yuzde?'<div style="font-size:9px;color:var(--text-dim)">%'+an.yuzde+' tahsilat payı</div>':''}</div></div>`:''}
     ${topTahsil>0?`<div class="card"><div class="card-label">Avukatlık Tahsilatı</div><div class="card-value green">${fmt(topTahsil)}</div></div>`:''}
     ${topAktarim>0?`<div class="card"><div class="card-label">Müvekkile Aktarım</div><div class="card-value" style="color:var(--blue)">${fmt(topAktarim)}</div></div>`:''}
+    ${itirazBilgi}
     <div class="card"><div class="card-label">Durum</div><div class="card-value" style="font-size:14px;color:${IDRENK[i.durum]||'var(--text-muted)'}">${i.durum}</div></div>`;
 }
 function renderIcraTabContent(t){
@@ -134,8 +252,6 @@ function renderIcraTabContent(t){
     document.getElementById('it-notlar-content').innerHTML=renderNotTab('icra',i);
   } else if(t==='anlasma'){
     document.getElementById('it-anlasma-content').innerHTML=renderAnlasmaTab('icra',i);
-  } else if(t==='tahsilat'){
-    document.getElementById('it-tahsilat-content').innerHTML=renderTahsilatTab('icra',i);
   } else if(t==='tahsilat'){
     document.getElementById('it-tahsilat-content').innerHTML=renderTahsilatTab('icra',i);
   }
