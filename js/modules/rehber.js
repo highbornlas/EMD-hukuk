@@ -62,14 +62,15 @@ function muvTipSec(tip){
 }
 
 function muvBankaEkle(data){
-  const idx=muvBankalar.length;
-  muvBankalar.push(data||{banka:'',sube:'',iban:'',hesapNo:'',hesapAd:''});
+  muvBankalar.push(data||{banka:'',bankaKod:'',sube:'',iban:'',hesapNo:'',hesapAd:'',isDefault:false});
   renderMuvBankalar();
 }
 function muvBankaKaldir(idx){
   muvBankalar.splice(idx,1);renderMuvBankalar();
 }
 function renderMuvBankalar(){
+  // bankaWidget.js yüklüyse gelişmiş widget'ı kullan
+  if(typeof renderMuvBankalarBW === 'function') { renderMuvBankalarBW(); return; }
   const el=document.getElementById('m-banka-list');if(!el)return;
   if(!muvBankalar.length){el.innerHTML='';return;}
   el.innerHTML=muvBankalar.map((b,i)=>`

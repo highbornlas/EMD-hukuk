@@ -373,16 +373,8 @@ function bwGlobalTcknKur() {
 (function bwInit() {
   function kur() {
     bwGlobalTcknKur();
-    // renderMuvBankalarBW'yi muvBankaEkle ve renderMuvBankalar'ın yerine geçir
-    if (typeof window !== 'undefined') {
-      const orijinalEkle = window.muvBankaEkle;
-      window.muvBankaEkle = function(data) {
-        if (!window.muvBankalar) window.muvBankalar = [];
-        window.muvBankalar.push(data || { banka: '', bankaKod: '', sube: '', iban: '', hesapNo: '', hesapAd: '', isDefault: false });
-        renderMuvBankalarBW();
-      };
-      window.renderMuvBankalar = renderMuvBankalarBW;
-    }
+    // renderMuvBankalarBW'yi global yap — rehber.js onu typeof kontrolüyle çağırır
+    window.renderMuvBankalarBW = renderMuvBankalarBW;
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', kur);
