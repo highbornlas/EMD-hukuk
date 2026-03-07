@@ -94,6 +94,20 @@ function gmHata(msg) {
   e.textContent = msg; e.style.display = 'block';
 }
 
+function gmBasari(msg) {
+  const e = document.getElementById('gm-err');
+  e.textContent = msg;
+  e.style.display = 'block';
+  e.style.background = 'var(--green-dim, #1a3a2a)';
+  e.style.borderColor = 'var(--green, #27ae60)';
+  e.style.color = 'var(--green, #27ae60)';
+}
+
+function gmHataTemizle() {
+  const e = document.getElementById('gm-err');
+  if (e) { e.style.display = 'none'; e.textContent = ''; }
+}
+
 async function gmGiris() {
   const email = document.getElementById('gm-email').value.trim();
   const kullaniciAdi = document.getElementById('gm-kadi').value.trim().toLowerCase();
@@ -130,7 +144,7 @@ async function gmKayit() {
     await sbKayitOl(email, sifre, ad, kadi);
     btn.textContent = 'Kayıt Ol & Başla →'; btn.disabled = false;
     gmTab('giris');
-    gmHata('✅ Kayıt başarılı! Kullanıcı adınız: ' + kadi + ' — şimdi giriş yapın.');
+    gmBasari('✅ Kayıt başarılı! Kullanıcı adınız: ' + kadi + ' — şimdi giriş yapın.');
     // Giriş formunu otomatik doldur
     const emailEl = document.getElementById('gm-email');
     const kadiEl = document.getElementById('gm-kadi');
