@@ -97,15 +97,16 @@ async function sbVeriYukle() {
     const kul = await sbMevcutKullanici();
     if (!kul) { showYukleniyor(false); showLanding(); return; }
 
-    currentUser = {
-      id:       kul.id,
-      ad:       kul.ad,
-      ad_soyad: kul.ad,           // admin.js uyumluluğu için alias
-      email:    kul.email,
-      rol:      kul.rol,
-      buro_ad:  buro?.ad || '',   // admin.js uyumluluğu için büro adı
-    };
+    currentUser = { id: kul.id, ad: kul.ad, ad_soyad: kul.ad, email: kul.email, rol: kul.rol, buro_ad: '' };
     currentBuroId = kul.buro_id;
+
+    // Büro kaydı henüz oluşmamışsa (yeni kayıt e-posta doğrulanmamış vs.) landing'e dön
+    if (!currentBuroId) {
+      console.warn('Büro kaydı bulunamadı, kullanıcı kurulum bekleniyor.');
+      showYukleniyor(false);
+      showLanding();
+      return;
+    }
 
     // Tüm tabloları paralel olarak çek
     const tablolar = [
@@ -133,10 +134,7 @@ async function sbVeriYukle() {
 
     // Büro bilgisini çek
     const { data: buro } = await sb.from('burolar').select('*').eq('id', currentBuroId).single();
-    if (buro) {
-      state.plan = buro.plan || 'deneme';
-      if (currentUser) currentUser.buro_ad = buro.ad || ''; // admin.js için büro adını güncelle
-    }
+    if (buro) state.plan = buro.plan || 'deneme';
 
     // ensure arrays
     ['davalar','icra'].forEach(k => {
