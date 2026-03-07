@@ -23,7 +23,7 @@ async function adminSbPost(tablo, data) {
         'apikey': ADMIN_SB_KEY,
         'Authorization': `Bearer ${ADMIN_SB_KEY}`,
         'Content-Type': 'application/json',
-        'Prefer': 'return=minimal'
+        'Prefer': 'resolution=merge-duplicates,return=minimal'
       },
       body: JSON.stringify(data)
     });
