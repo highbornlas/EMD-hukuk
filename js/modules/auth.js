@@ -92,7 +92,6 @@ function uygulamayiBaslatLocal() {
   if (typeof renderIhtarname === 'function') renderIhtarname();
   if (typeof renderTodo === 'function') renderTodo();
   if (typeof Bildirim !== 'undefined') Bildirim.baslat();
-  if (typeof LexSync !== 'undefined') LexSync.init();
   addAktiviteLog('Giriş Yapıldı', currentUser.ad_soyad, 'Genel');
   // Admin entegrasyon (sessizce, arka planda)
   if (currentUser.rol === 'sahip') {

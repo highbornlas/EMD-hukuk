@@ -1832,13 +1832,12 @@
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
             <div>
               <div style="font-size:13px;font-weight:700;color:var(--text)">☁️ Bulut Senkronizasyon</div>
-              <div style="font-size:11px;color:var(--text-muted)">Tüm verileri Supabase ile senkronize edin</div>
+              <div style="font-size:11px;color:var(--text-muted)">Veri kalıcılığı: Pessimistic (form bazlı kaydetme)</div>
             </div>
-            <button class="btn btn-outline btn-sm" onclick="if(typeof LexSync!=='undefined') LexSync.forcSync(); else notify('⚠️ Sync modülü yüklenemedi');" style="border-color:#00BCD4;color:#00BCD4">🔄 Zorla Senkronize Et</button>
+            <span style="font-size:11px;padding:4px 10px;border-radius:10px;background:rgba(39,174,96,.1);color:#27ae60;font-weight:700">✅ Aktif</span>
           </div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button class="btn btn-outline btn-sm" onclick="if(typeof LexSync!=='undefined'){ var r=LexSync.durum(); notify('📊 Sync: '+(r.aktif?'Aktif':'Pasif')+' | Hata: '+r.hataSayisi); }">📊 Durum Raporu</button>
-            <button class="btn btn-outline btn-sm" onclick="if(typeof LexSync!=='undefined'){ var d=LexSync._calcDiff(); var u=Object.keys(d.upserts).length; var dl=Object.keys(d.deletes).length; notify('📋 Bekleyen: '+u+' güncelleme, '+dl+' silme'); }">📋 Bekleyen Değişiklikler</button>
+          <div style="font-size:11px;color:var(--text-dim);line-height:1.6">
+            Her kaydet işlemi önce Supabase'e yazılır, başarılıysa modal kapanır. Hata durumunda veri korunur ve kırmızı bildirim gösterilir.
           </div>
         </div>
 

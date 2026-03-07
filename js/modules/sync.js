@@ -1,27 +1,33 @@
 // ================================================================
-// LEXBASE — GLOBAL SUPabase AUTO-SYNC SİSTEMİ
+// LEXBASE — PESSIMİSTİC FORM SUBMIT SİSTEMİ
 // js/modules/sync.js
 //
-// SORUN: 36 JS modülünden sadece 7'si saveToSupabase() çağırıyordu.
-// İhtarname, arabuluculuk, danışmanlık, personel, todo, takvim
-// modülleri Supabase'e HİÇ yazmıyordu → F5 = veri kaybı.
+// ❌ Arka plan auto-sync YOK
+// ❌ Debounce / diff motoru YOK
+// ✅ Form submit → await Supabase → başarılıysa kapat
+// ✅ Hata → modal AÇIK kalır, veri korunur
+// ✅ Loading state → buton disabled + spinner
+// ✅ Merkezi hata yönetimi — sıfır sessiz hata
 //
-// ÇÖZÜM: saveData() fonksiyonunu intercept edip değişen
-// koleksiyonları otomatik Supabase'e senkronize eden merkezi
-// sistem. Artık hiçbir modülün saveToSupabase() çağırmasına
-// gerek yok.
+// KULLANIM:
+//   var sonuc = await LexSubmit.kaydet('ihtarnameler', kayitObj);
+//   if (sonuc.ok) { closeModal(...); renderXxx(); }
+//   // Hata varsa LexSubmit zaten toast gösterir, modal açık kalır
 //
-// MİMARİ (react-hook-form useMutation karşılığı):
-// 1. Pessimistic Update: Önce Supabase'e yaz, sonra UI güncelle
-// 2. Merkezi Hata Yönetimi: Sessiz hata YOK, kırmızı toast
-// 3. Debounce: Hızlı ardışık kayıtlarda tek batch sync
-// 4. Diff Engine: Sadece değişen kayıtları gönder
+// VEYA kısa yol:
+//   await LexSubmit.formKaydet({
+//     tablo: 'ihtarnameler',
+//     kayit: veriObj,
+//     modalId: 'ihtar-modal',
+//     butonId: 'ihtar-kaydet-btn',
+//     renderFn: function() { renderIhtarname(); updateBadges(); },
+//     basariMesaj: '✓ İhtarname kaydedildi'
+//   });
 // ================================================================
 
-const LexSync = (function () {
+var LexSubmit = (function () {
 
-  // ── KONFİGÜRASYON ─────────────────────────────────────────
-  // State key → Supabase tablo adı eşleştirmesi
+  // ── State key → Supabase tablo adı ─────────────────────────
   var TABLO_MAP = {
     'muvekkillar': 'muvekkillar',
     'karsiTaraflar': 'karsi_taraflar',
@@ -38,303 +44,245 @@ const LexSync = (function () {
     'personel': 'personel',
   };
 
-  // Senkronize edilecek tüm koleksiyonlar
-  var SYNC_KEYS = Object.keys(TABLO_MAP);
+  // ── ANA FONKSİYON: Pessimistic Kaydet ─────────────────────
+  // Supabase yoksa sadece localStorage'a yazar (offline mod).
+  // Supabase varsa ÖNCE Supabase'e yazar, başarılıysa localStorage.
+  // Hata dönerse { ok:false, error:'...' } döner, toast gösterir.
+  async function kaydet(stateKey, kayit) {
+    var tablo = TABLO_MAP[stateKey] || stateKey;
 
-  // Önceki state snapshot'ı (diff hesaplamak için)
-  var _snapshot = {};
-  var _syncTimer = null;
-  var _syncQueue = {};  // { stateKey: [kayit1, kayit2, ...] }
-  var _deleteQueue = {}; // { stateKey: [id1, id2, ...] }
-  var _isSyncing = false;
-  var _initialized = false;
-  var _errorCount = 0;
+    // ── Supabase aktif değilse → sadece localStorage ──
+    if (typeof currentBuroId === 'undefined' || !currentBuroId || typeof sb === 'undefined') {
+      _localKaydet(stateKey, kayit);
+      return { ok: true, mode: 'local' };
+    }
 
-  // ── BAŞLAT ─────────────────────────────────────────────────
-  function init() {
-    if (_initialized) return;
-    _initialized = true;
-
-    // İlk snapshot'ı al
-    _takeSnapshot();
-
-    // Orijinal saveData'yı sarmalı (wrap)
-    _wrapSaveData();
-
-    console.log('[LexSync] ✅ Global auto-sync aktif — ' + SYNC_KEYS.length + ' koleksiyon izleniyor');
-  }
-
-  // ── SNAPSHOT: State'in kopyasını tut ───────────────────────
-  function _takeSnapshot() {
-    SYNC_KEYS.forEach(function (key) {
-      var arr = state[key];
-      if (Array.isArray(arr)) {
-        _snapshot[key] = {};
-        arr.forEach(function (item) {
-          if (item && item.id) {
-            _snapshot[key][item.id] = JSON.stringify(item);
-          }
-        });
-      }
-    });
-  }
-
-  // ── DIFF: Neyin değiştiğini bul ────────────────────────────
-  function _calcDiff() {
-    var changes = { upserts: {}, deletes: {} };
-
-    SYNC_KEYS.forEach(function (key) {
-      var current = state[key];
-      if (!Array.isArray(current)) return;
-      var prev = _snapshot[key] || {};
-      var currentIds = {};
-
-      // Yeni veya değişen kayıtlar
-      current.forEach(function (item) {
-        if (!item || !item.id) return;
-        currentIds[item.id] = true;
-        var serialized = JSON.stringify(item);
-        if (!prev[item.id] || prev[item.id] !== serialized) {
-          if (!changes.upserts[key]) changes.upserts[key] = [];
-          changes.upserts[key].push(item);
-        }
-      });
-
-      // Silinen kayıtlar
-      Object.keys(prev).forEach(function (id) {
-        if (!currentIds[id]) {
-          if (!changes.deletes[key]) changes.deletes[key] = [];
-          changes.deletes[key].push(id);
-        }
-      });
-    });
-
-    return changes;
-  }
-
-  // ── SAVE DATA WRAPPER ──────────────────────────────────────
-  // Orijinal saveData() fonksiyonunu sarmalayıp auto-sync ekle
-  function _wrapSaveData() {
-    var _origSaveData = window.saveData;
-
-    window.saveData = function () {
-      // 1. localStorage'a yaz (her zaman, offline modda da çalışsın)
-      if (_origSaveData) _origSaveData();
-
-      // 2. Supabase aktifse senkronize et
-      if (typeof currentBuroId !== 'undefined' && currentBuroId && typeof sb !== 'undefined') {
-        _scheduleSync();
-      }
-    };
-  }
-
-  // ── DEBOUNCED SYNC ─────────────────────────────────────────
-  // Hızlı ardışık kayıtlarda 500ms bekle, sonra tek batch gönder
-  function _scheduleSync() {
-    if (_syncTimer) clearTimeout(_syncTimer);
-    _syncTimer = setTimeout(_executeSync, 500);
-  }
-
-  // ── SYNC İCRASI ────────────────────────────────────────────
-  async function _executeSync() {
-    if (_isSyncing) { _scheduleSync(); return; }
-    _isSyncing = true;
-
+    // ── Supabase'e yaz (AWAIT — pessimistic) ──
     try {
-      var diff = _calcDiff();
-      var hasChanges = false;
+      var id = kayit.id;
+      var data = {};
+      Object.keys(kayit).forEach(function (k) { if (k !== 'id') data[k] = kayit[k]; });
 
-      // ── UPSERT'ler ──
-      var upsertKeys = Object.keys(diff.upserts);
-      for (var u = 0; u < upsertKeys.length; u++) {
-        var key = upsertKeys[u];
-        var items = diff.upserts[key];
-        var tablo = TABLO_MAP[key];
-        if (!tablo || !items.length) continue;
-        hasChanges = true;
-
-        // Batch upsert — her kayıt için { id, buro_id, data }
-        var rows = items.map(function (item) {
-          var id = item.id;
-          var rest = {};
-          Object.keys(item).forEach(function (k) { if (k !== 'id') rest[k] = item[k]; });
-          return { id: id, buro_id: currentBuroId, data: rest };
-        });
-
-        var result = await sb.from(tablo).upsert(rows);
-        
-        if (result.error) {
-          _handleError('kaydetme', tablo, result.error);
-        } else {
-          // Başarılı — konsola log
-          console.log('[LexSync] ✅ ' + tablo + ': ' + items.length + ' kayıt senkronize edildi');
-        }
-      }
-
-      // ── DELETE'ler ──
-      var deleteKeys = Object.keys(diff.deletes);
-      for (var d = 0; d < deleteKeys.length; d++) {
-        var dKey = deleteKeys[d];
-        var ids = diff.deletes[dKey];
-        var dTablo = TABLO_MAP[dKey];
-        if (!dTablo || !ids.length) continue;
-        hasChanges = true;
-
-        for (var di = 0; di < ids.length; di++) {
-          var delResult = await sb.from(dTablo).delete()
-            .eq('id', ids[di])
-            .eq('buro_id', currentBuroId);
-          
-          if (delResult.error) {
-            _handleError('silme', dTablo, delResult.error);
-          }
-        }
-
-        if (!ids.some(function(id) { return false; })) {
-          console.log('[LexSync] 🗑️ ' + dTablo + ': ' + ids.length + ' kayıt silindi');
-        }
-      }
-
-      // Snapshot güncelle
-      if (hasChanges) {
-        _takeSnapshot();
-        _errorCount = 0; // Başarılı sync → hata sayacını sıfırla
-      }
-
-    } catch (e) {
-      _handleError('bağlantı', 'genel', { message: e.message });
-    } finally {
-      _isSyncing = false;
-    }
-  }
-
-  // ── HATA YÖNETİMİ (Sıfır Sessiz Hata) ────────────────────
-  function _handleError(islem, tablo, error) {
-    _errorCount++;
-    var mesaj = error.message || 'Bilinmeyen hata';
-
-    // Konsola detaylı log
-    console.error('[LexSync] ❌ ' + islem + ' hatası (' + tablo + '):', mesaj, error);
-
-    // Kullanıcıya kırmızı toast göster
-    if (typeof notify === 'function') {
-      // RLS hatası
-      if (mesaj.includes('row-level security') || mesaj.includes('policy')) {
-        notify('🔒 Yetkilendirme hatası: Bu işlem için izniniz yok. Lütfen tekrar giriş yapın.');
-      }
-      // Null constraint
-      else if (mesaj.includes('null value') || mesaj.includes('not-null')) {
-        notify('⚠️ Zorunlu alan eksik: ' + mesaj);
-      }
-      // Diğer
-      else {
-        notify('❌ Senkronizasyon hatası: ' + mesaj);
-      }
-    }
-
-    // 5+ ardışık hatada uyarı
-    if (_errorCount >= 5 && typeof notify === 'function') {
-      notify('⚠️ Birden fazla kayıt hatası! İnternet bağlantınızı kontrol edin. Veriler yerel olarak saklandı, bağlantı düzelince otomatik senkronize edilecek.');
-      _errorCount = 0;
-    }
-  }
-
-  // ── MANUEL SYNC (Tüm state'i zorla senkronize et) ─────────
-  async function forcSync() {
-    if (!currentBuroId || typeof sb === 'undefined') {
-      notify('⚠️ Supabase bağlantısı aktif değil');
-      return;
-    }
-
-    notify('🔄 Tam senkronizasyon başlatılıyor...');
-    var basarili = 0;
-    var hatali = 0;
-
-    for (var i = 0; i < SYNC_KEYS.length; i++) {
-      var key = SYNC_KEYS[i];
-      var arr = state[key];
-      if (!Array.isArray(arr) || arr.length === 0) continue;
-      var tablo = TABLO_MAP[key];
-
-      var rows = arr.map(function (item) {
-        var id = item.id;
-        var rest = {};
-        Object.keys(item).forEach(function (k) { if (k !== 'id') rest[k] = item[k]; });
-        return { id: id, buro_id: currentBuroId, data: rest };
-      });
-
-      try {
-        var result = await sb.from(tablo).upsert(rows);
-        if (result.error) {
-          console.error('[LexSync] forceSync hata (' + tablo + '):', result.error.message);
-          hatali++;
-        } else {
-          basarili++;
-          console.log('[LexSync] forceSync ✅ ' + tablo + ': ' + rows.length + ' kayıt');
-        }
-      } catch (e) {
-        hatali++;
-        console.error('[LexSync] forceSync exception (' + tablo + '):', e.message);
-      }
-    }
-
-    _takeSnapshot();
-    notify('✅ Senkronizasyon tamamlandı: ' + basarili + ' tablo başarılı' + (hatali > 0 ? ', ' + hatali + ' hata' : ''));
-  }
-
-  // ── TEK KAYIT SYNC (Pessimistic — bekle, sonucu döndür) ────
-  // Modal kapanmadan önce çağrılabilir
-  async function kaydetVeBekle(stateKey, kayit) {
-    if (!currentBuroId || typeof sb === 'undefined') return { ok: true };
-
-    var tablo = TABLO_MAP[stateKey];
-    if (!tablo) return { ok: true };
-
-    var id = kayit.id;
-    var rest = {};
-    Object.keys(kayit).forEach(function (k) { if (k !== 'id') rest[k] = kayit[k]; });
-
-    try {
       var result = await sb.from(tablo).upsert({
         id: id,
         buro_id: currentBuroId,
-        data: rest
+        data: data
       });
 
       if (result.error) {
-        _handleError('kaydetme', tablo, result.error);
+        _hataGoster(result.error, tablo);
         return { ok: false, error: result.error.message };
       }
 
-      return { ok: true };
+      // ── Supabase başarılı → localStorage'a da yaz ──
+      _localKaydet(stateKey, kayit);
+      return { ok: true, mode: 'supabase' };
+
     } catch (e) {
-      _handleError('bağlantı', tablo, { message: e.message });
+      _hataGoster({ message: e.message }, tablo);
       return { ok: false, error: e.message };
     }
   }
 
-  // ── DURUM RAPORU ───────────────────────────────────────────
-  function durum() {
-    var rapor = { aktif: _initialized, syncing: _isSyncing, hataSayisi: _errorCount, koleksiyonlar: {} };
-    SYNC_KEYS.forEach(function (key) {
-      rapor.koleksiyonlar[key] = {
-        kayitSayisi: (state[key] || []).length,
-        snapshotSayisi: Object.keys(_snapshot[key] || {}).length,
-      };
-    });
-    console.table(rapor.koleksiyonlar);
-    return rapor;
+  // ── SİLME: Pessimistic ─────────────────────────────────────
+  async function sil(stateKey, id) {
+    var tablo = TABLO_MAP[stateKey] || stateKey;
+
+    if (typeof currentBuroId === 'undefined' || !currentBuroId || typeof sb === 'undefined') {
+      _localSil(stateKey, id);
+      return { ok: true, mode: 'local' };
+    }
+
+    try {
+      var result = await sb.from(tablo).delete().eq('id', id).eq('buro_id', currentBuroId);
+
+      if (result.error) {
+        _hataGoster(result.error, tablo);
+        return { ok: false, error: result.error.message };
+      }
+
+      _localSil(stateKey, id);
+      return { ok: true, mode: 'supabase' };
+
+    } catch (e) {
+      _hataGoster({ message: e.message }, tablo);
+      return { ok: false, error: e.message };
+    }
+  }
+
+  // ── KISA YOL: Form Kaydet (Tam döngü) ─────────────────────
+  // Buton loading → await Supabase → başarı: kapat/render
+  //                                → hata: modal açık, buton reset
+  async function formKaydet(opts) {
+    /*
+      opts = {
+        tablo: 'ihtarnameler',      // state key
+        kayit: { id, ... },         // kayıt objesi
+        modalId: 'ihtar-modal',     // kapanacak modal
+        butonId: 'ihtar-kaydet-btn', // loading state butonu (opsiyonel)
+        butonEl: element,           // veya doğrudan element (opsiyonel)
+        renderFn: function() {},    // başarıda çağrılacak render
+        basariMesaj: '✓ Kaydedildi', // başarı toast
+        stateArr: 'ihtarnameler',   // state dizisinin adı (opsiyonel, tablo ile aynıysa gerek yok)
+        isEdit: false,              // düzenleme mi?
+      }
+    */
+
+    var btn = opts.butonEl || (opts.butonId ? document.getElementById(opts.butonId) : null);
+    var btnOrijinalHTML = '';
+
+    // ── 1. Buton → Loading ──
+    if (btn) {
+      btnOrijinalHTML = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="btn-spinner"></span> Kaydediliyor...';
+    }
+
+    // ── 2. Supabase'e yaz (pessimistic await) ──
+    var sonuc = await kaydet(opts.tablo, opts.kayit);
+
+    // ── 3. Sonuç değerlendir ──
+    if (!sonuc.ok) {
+      // ❌ HATA — Modal açık kalır, buton resetlenir
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = btnOrijinalHTML;
+      }
+      // Toast zaten _hataGoster'da gösterildi
+      return false;
+    }
+
+    // ── 4. ✅ BAŞARI — State güncelle, modal kapat ──
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = btnOrijinalHTML;
+    }
+
+    if (opts.modalId) closeModal(opts.modalId);
+    if (opts.renderFn) opts.renderFn();
+    if (opts.basariMesaj) notify(opts.basariMesaj);
+
+    return true;
+  }
+
+  // ── KISA YOL: Form Sil (Tam döngü) ────────────────────────
+  async function formSil(opts) {
+    /*
+      opts = {
+        tablo: 'ihtarnameler',
+        id: 'xxx-yyy',
+        onayMesaj: 'Silmek istediğinize emin misiniz?',
+        renderFn: function() {},
+        basariMesaj: 'Silindi',
+      }
+    */
+    // Onay
+    var onay = typeof silmeOnay === 'function'
+      ? await silmeOnay('Kayıt', opts.onayMesaj || 'Bu kaydı silmek istediğinize emin misiniz?')
+      : confirm(opts.onayMesaj || 'Bu kaydı silmek istediğinize emin misiniz?');
+    if (!onay) return false;
+
+    var sonuc = await sil(opts.tablo, opts.id);
+    if (!sonuc.ok) return false;
+
+    if (opts.renderFn) opts.renderFn();
+    if (opts.basariMesaj) notify(opts.basariMesaj);
+    return true;
+  }
+
+  // ── TOPLU KAYDET (birden fazla kayıt) ──────────────────────
+  async function topluKaydet(stateKey, kayitlar) {
+    var tablo = TABLO_MAP[stateKey] || stateKey;
+
+    if (!currentBuroId || typeof sb === 'undefined') {
+      kayitlar.forEach(function (k) { _localKaydet(stateKey, k); });
+      return { ok: true, mode: 'local' };
+    }
+
+    try {
+      var rows = kayitlar.map(function (kayit) {
+        var id = kayit.id;
+        var data = {};
+        Object.keys(kayit).forEach(function (k) { if (k !== 'id') data[k] = kayit[k]; });
+        return { id: id, buro_id: currentBuroId, data: data };
+      });
+
+      var result = await sb.from(tablo).upsert(rows);
+      if (result.error) {
+        _hataGoster(result.error, tablo);
+        return { ok: false, error: result.error.message };
+      }
+
+      kayitlar.forEach(function (k) { _localKaydet(stateKey, k); });
+      return { ok: true, mode: 'supabase', count: kayitlar.length };
+
+    } catch (e) {
+      _hataGoster({ message: e.message }, tablo);
+      return { ok: false, error: e.message };
+    }
+  }
+
+  // ================================================================
+  // YARDIMCILAR
+  // ================================================================
+
+  // ── localStorage'a kaydet ──────────────────────────────────
+  function _localKaydet(stateKey, kayit) {
+    if (!state[stateKey]) state[stateKey] = [];
+    var idx = state[stateKey].findIndex(function (x) { return x.id === kayit.id; });
+    if (idx >= 0) {
+      state[stateKey][idx] = kayit;
+    } else {
+      state[stateKey].push(kayit);
+    }
+    try { localStorage.setItem(SK, JSON.stringify(state)); }
+    catch (e) { console.warn('[LexSubmit] localStorage yazma hatası:', e.message); }
+  }
+
+  // ── localStorage'dan sil ───────────────────────────────────
+  function _localSil(stateKey, id) {
+    if (!state[stateKey]) return;
+    state[stateKey] = state[stateKey].filter(function (x) { return x.id !== id; });
+    try { localStorage.setItem(SK, JSON.stringify(state)); }
+    catch (e) { console.warn('[LexSubmit] localStorage yazma hatası:', e.message); }
+  }
+
+  // ── MERKEZİ HATA YÖNETİMİ ─────────────────────────────────
+  function _hataGoster(error, tablo) {
+    var mesaj = error.message || 'Bilinmeyen hata';
+
+    // Konsola detaylı log (her zaman)
+    console.error('[LexSubmit] ❌ Hata (' + tablo + '):', mesaj, error);
+
+    // Kullanıcıya kategorize edilmiş toast
+    if (typeof notify === 'function') {
+      if (mesaj.includes('row-level security') || mesaj.includes('policy') || mesaj.includes('403')) {
+        notify('🔒 Yetkilendirme hatası — bu işlem için izniniz yok. Tekrar giriş yapmayı deneyin.');
+      }
+      else if (mesaj.includes('null value') || mesaj.includes('not-null') || mesaj.includes('violates')) {
+        notify('⚠️ Veritabanı kısıtlama hatası: ' + mesaj);
+      }
+      else if (mesaj.includes('duplicate') || mesaj.includes('unique')) {
+        notify('⚠️ Bu kayıt zaten mevcut (çift kayıt engellendi).');
+      }
+      else if (mesaj.includes('network') || mesaj.includes('fetch') || mesaj.includes('Failed')) {
+        notify('📡 Bağlantı hatası — internet bağlantınızı kontrol edin. Kayıt yerel olarak saklandı.');
+        // Offline durumda localStorage'a yaz ki veri kaybolmasın
+      }
+      else {
+        notify('❌ Kaydedilemedi: ' + mesaj);
+      }
+    }
   }
 
   // ── PUBLIC API ─────────────────────────────────────────────
   return {
-    init: init,
-    forcSync: forcSync,
-    kaydetVeBekle: kaydetVeBekle,
-    durum: durum,
-    // Test/debug
-    _calcDiff: _calcDiff,
-    _takeSnapshot: _takeSnapshot,
+    kaydet: kaydet,
+    sil: sil,
+    formKaydet: formKaydet,
+    formSil: formSil,
+    topluKaydet: topluKaydet,
+    TABLO_MAP: TABLO_MAP,
   };
 
 })();

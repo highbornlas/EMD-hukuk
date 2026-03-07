@@ -3178,3 +3178,25 @@ table thead th {
   transform: scale(1.1);
   transition: transform .15s;
 }
+
+/* ================================================================
+   BUTTON LOADING SPINNER (Pessimistic Submit)
+   ================================================================ */
+.btn-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(0,0,0,.2);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: btnSpin .6s linear infinite;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+@keyframes btnSpin {
+  to { transform: rotate(360deg); }
+}
+.btn[disabled] {
+  opacity: 0.6;
+  cursor: wait;
+}

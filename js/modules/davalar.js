@@ -46,14 +46,29 @@ function saveDava(){
   _saveDavaDevam(yeniDava);
 }
 function _saveDavaDevam(yeniDava) {
-  state.davalar.push(yeniDava);
-  ['d-no','d-konu','d-mno','d-esas-yil','d-esas-no','d-karar-yil','d-karar-no','d-hakim','d-derdest','d-icrano','d-deger','d-not','d-durusma','d-ktarih','d-kesin','d-muv','d-muv-ara'].forEach(i=>{const e=document.getElementById(i);if(e)e.value='';});
-  const muvGoster=document.getElementById('d-muv-secili');if(muvGoster){muvGoster.style.display='none';muvGoster.innerHTML='';}; document.getElementById('d-il').value=''; document.getElementById('d-adliye').innerHTML='<option value="">— Önce il seçin —</option>';
-  ktWidgetTemizle('d-karsi-ara','d-karsi-liste','d-karsi-id','d-karsi-goster');
-  ktWidgetTemizle('d-karsav-ara','d-karsav-liste','d-karsav-id','d-karsav-goster');
-  addLog(yeniDava.muvId,'Dava Eklendi',`${yeniDava.no} | ${yeniDava.konu}${yeniDava.mtur?' | '+yeniDava.mtur:''}`);
-  if(currentBuroId) saveToSupabase('davalar', {id:yeniDava.id, muvId:yeniDava.muvId, davaNo:yeniDava.no, konu:yeniDava.konu, mahkeme:yeniDava.adliye, tur:yeniDava.mtur, durum:yeniDava.durum, tarih:yeniDava.tarih||null, notlar:yeniDava.not});
-  closeModal('dav-modal');saveData();renderDavalar();renderDavaCards();renderMdDavalar();updateBadges();notify('✓ Dava eklendi');
+  _saveDavaDevamAsync(yeniDava);
+}
+async function _saveDavaDevamAsync(yeniDava) {
+  if (typeof LexSubmit !== 'undefined') {
+    var btn = document.querySelector('#dav-modal .btn-gold');
+    var basarili = await LexSubmit.formKaydet({
+      tablo: 'davalar',
+      kayit: yeniDava,
+      modalId: 'dav-modal',
+      butonEl: btn,
+      basariMesaj: '✓ Dava eklendi',
+      renderFn: function() {
+        addLog(yeniDava.muvId,'Dava Eklendi', yeniDava.no+' | '+yeniDava.konu);
+        renderDavalar();renderDavaCards();renderMdDavalar();updateBadges();
+      }
+    });
+    if (!basarili) return; // Hata — modal açık
+  } else {
+    state.davalar.push(yeniDava);
+    addLog(yeniDava.muvId,'Dava Eklendi', yeniDava.no+' | '+yeniDava.konu);
+    if(currentBuroId) saveToSupabase('davalar', yeniDava);
+    closeModal('dav-modal');saveData();renderDavalar();renderDavaCards();renderMdDavalar();updateBadges();notify('✓ Dava eklendi');
+  }
 }
 
 async function deleteDavaById(id){

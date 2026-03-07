@@ -37,23 +37,35 @@ function saveIcra(){
   _saveIcraDevam(yeniIcra);
 }
 function _saveIcraDevam(yeniIcra) {
-  state.icra.push(yeniIcra);
-  
-  // ── Frontend Otomasyonları (localStorage modu) ──
-  // 1. Ödeme emri tarihi varsa → İtiraz süresi hesapla + görev
+  _saveIcraDevamAsync(yeniIcra);
+}
+async function _saveIcraDevamAsync(yeniIcra) {
   if (yeniIcra.otarih && (!yeniIcra.itarih || yeniIcra.itarih === '')) {
-    const yasalSure = {'İlamsız İcra':7,'Kambiyo Senedi':5,'İlamlı İcra':7}[yeniIcra.tur] || 7;
-    const itarih = new Date(yeniIcra.otarih);
+    var yasalSure = {'İlamsız İcra':7,'Kambiyo Senedi':5,'İlamlı İcra':7}[yeniIcra.tur] || 7;
+    var itarih = new Date(yeniIcra.otarih);
     itarih.setDate(itarih.getDate() + yasalSure);
     yeniIcra.itarih = itarih.toISOString().split('T')[0];
   }
-  if (yeniIcra.itarih) {
-    _icraItirazGorev(yeniIcra);
-  }
 
-  ['i-no','i-borclu','i-btc','i-daire','i-esas','i-alacak','i-tahsil','i-faiz','i-davno','i-dayanak','i-not','i-tarih','i-otarih','i-itarih'].forEach(i=>{const e=document.getElementById(i);if(e)e.value='';}); document.getElementById('i-il').value=''; document.getElementById('i-adliye').innerHTML='<option value="">— Önce il seçin —</option>';
-  ktWidgetTemizle('i-karsav-ara','i-karsav-liste','i-karsav-id','i-karsav-goster');
-  closeModal('icra-modal');saveData();renderIcra();renderIcraCards();renderMdDavalar();updateBadges();notify('✓ İcra dosyası eklendi');
+  if (typeof LexSubmit !== 'undefined') {
+    var btn = document.querySelector('#icra-modal .btn-gold');
+    var basarili = await LexSubmit.formKaydet({
+      tablo: 'icra',
+      kayit: yeniIcra,
+      modalId: 'icra-modal',
+      butonEl: btn,
+      basariMesaj: '✓ İcra dosyası eklendi',
+      renderFn: function() {
+        if (yeniIcra.itarih) _icraItirazGorev(yeniIcra);
+        saveData(); renderIcra(); renderIcraCards(); renderMdDavalar(); updateBadges();
+      }
+    });
+    if (!basarili) return;
+  } else {
+    state.icra.push(yeniIcra);
+    if (yeniIcra.itarih) _icraItirazGorev(yeniIcra);
+    closeModal('icra-modal');saveData();renderIcra();renderIcraCards();renderMdDavalar();updateBadges();notify('✓ İcra dosyası eklendi');
+  }
 }
 
 // ── İtiraz Süresi Görev Otomasyonu ───────────────────────────

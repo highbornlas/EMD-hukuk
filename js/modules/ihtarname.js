@@ -155,7 +155,7 @@ function ihtarMasrafToggle() {
   else { el.style.display = 'none'; if(btn) btn.textContent = '▶'; }
 }
 
-function saveIhtar() {
+async function saveIhtar() {
   var no = document.getElementById('ihtar-no').value.trim();
   var muvId = document.getElementById('ihtar-muv').value;
   var konu = document.getElementById('ihtar-konu').value.trim();
@@ -198,54 +198,103 @@ function saveIhtar() {
   };
 
   var eskiDurum = id ? ((state.ihtarnameler.find(function(x){return x.id===id;})||{}).tebligDurum) : null;
-  var kayitId = id;
+  var kayitId = id || uid();
+  var tamKayit = Object.assign({id: kayitId}, veri);
 
-  if (id) {
-    var idx = state.ihtarnameler.findIndex(function(x){return x.id===id;});
-    if (idx >= 0) state.ihtarnameler[idx] = Object.assign({}, state.ihtarnameler[idx], veri);
-  } else {
-    kayitId = uid();
-    state.ihtarnameler.push(Object.assign({id: kayitId}, veri));
-  }
-
-  // Masraf otomasyonu
-  if (masrafTutar > 0 && masrafYansit) { _masrafOto(veri, kayitId); }
-  // Görev otomasyonu
+  // Masraf ve görev otomasyonlarını hazırla (henüz state'e yazma!)
+  var masrafKayit = null;
+  var gorevKayit = null;
+  if (masrafTutar > 0 && masrafYansit) { masrafKayit = _masrafOtoHazirla(veri, kayitId); }
   if (tebligDurum === 'Tebliğ Edildi' && tebligTarih && verilenSure > 0 && (!eskiDurum || eskiDurum !== 'Tebliğ Edildi')) {
-    _gorevOto(veri, kayitId);
+    gorevKayit = _gorevOtoHazirla(veri, kayitId);
   }
 
-  saveData(); closeModal('ihtar-modal'); renderIhtarname(); updateBadges();
-  notify('✓ İhtarname kaydedildi');
+  // ── PESSIMİSTİC KAYDET ──
+  // Buton loading → Supabase'e yaz → başarılıysa kapat
+  // Hata dönerse modal AÇIK kalır, veri korunur
+  if (typeof LexSubmit !== 'undefined') {
+    var btn = document.querySelector('#ihtar-modal .btn-gold');
+    var basarili = await LexSubmit.formKaydet({
+      tablo: 'ihtarnameler',
+      kayit: tamKayit,
+      modalId: 'ihtar-modal',
+      butonEl: btn,
+      basariMesaj: '✓ İhtarname kaydedildi',
+      renderFn: function() {
+        // Otomasyonları state'e yaz (sadece başarıda!)
+        if (masrafKayit) _masrafOtoUygula(masrafKayit, kayitId);
+        if (gorevKayit) _gorevOtoUygula(gorevKayit, kayitId);
+        renderIhtarname(); updateBadges();
+      }
+    });
+    if (!basarili) return; // Hata — modal açık, veri form'da duruyor
+  } else {
+    // Supabase yoksa eski davranış (localStorage only)
+    if (id) {
+      var idx = state.ihtarnameler.findIndex(function(x){return x.id===id;});
+      if (idx >= 0) state.ihtarnameler[idx] = tamKayit;
+    } else {
+      if (!state.ihtarnameler) state.ihtarnameler = [];
+      state.ihtarnameler.push(tamKayit);
+    }
+    if (masrafKayit) _masrafOtoUygula(masrafKayit, kayitId);
+    if (gorevKayit) _gorevOtoUygula(gorevKayit, kayitId);
+    saveData(); closeModal('ihtar-modal'); renderIhtarname(); updateBadges();
+    notify('✓ İhtarname kaydedildi');
+  }
 }
 
 function _hesaplaSure(tarih, gun) { var d = new Date(tarih); d.setDate(d.getDate() + gun); return d.toISOString().split('T')[0]; }
 
 function _getKarsiAdById(id) { if(!id) return ''; var k = (state.karsiTaraflar||[]).find(function(x){return x.id===id;}); return k ? k.ad : ''; }
 
-function _masrafOto(veri, ihtarId) {
+function _masrafOtoHazirla(veri, ihtarId) {
+  return { id: uid(), _ihtarId: ihtarId, muvId: veri.muvId, tur: 'Masraf', tutar: veri.masrafTutar, acik: veri.no+' numaralı '+veri.tur+' masrafı', tarih: veri.tarih, durum: 'Bekliyor', odeme: '' };
+}
+function _masrafOtoUygula(kayit, ihtarId) {
   if (!state.avanslar) state.avanslar = [];
   var mevcutIdx = state.avanslar.findIndex(function(a){return a._ihtarId===ihtarId && a.tur==='Masraf';});
-  var kayit = { id: mevcutIdx >= 0 ? state.avanslar[mevcutIdx].id : uid(), _ihtarId: ihtarId, muvId: veri.muvId, tur: 'Masraf', tutar: veri.masrafTutar, acik: veri.no+' numaralı '+veri.tur+' masrafı', tarih: veri.tarih, durum: 'Bekliyor', odeme: '' };
   if (mevcutIdx >= 0) state.avanslar[mevcutIdx] = kayit;
   else state.avanslar.push(kayit);
+  saveData();
 }
 
-function _gorevOto(veri, ihtarId) {
+function _gorevOtoHazirla(veri, ihtarId) {
+  var sureSonu = _hesaplaSure(veri.tebligTarih, veri.verilenSure);
+  return { id: uid(), _ihtarId: ihtarId, _otoIhtar: true, baslik: veri.no+' — İhtarname Süresi Doldu', aciklama: 'Tebliğ: '+fmtD(veri.tebligTarih)+' | Süre: '+veri.verilenSure+' gün | Son gün: '+fmtD(sureSonu), sonTarih: sureSonu, durum: 'Bekliyor', oncelik: 'Yüksek', muvId: veri.muvId };
+}
+function _gorevOtoUygula(kayit, ihtarId) {
   if (!state.todolar) state.todolar = [];
   state.todolar = state.todolar.filter(function(t){return t._ihtarId !== ihtarId || !t._otoIhtar;});
-  var sureSonu = _hesaplaSure(veri.tebligTarih, veri.verilenSure);
-  state.todolar.push({ id: uid(), _ihtarId: ihtarId, _otoIhtar: true, baslik: veri.no+' — İhtarname Süresi Doldu', aciklama: 'Tebliğ: '+fmtD(veri.tebligTarih)+' | Süre: '+veri.verilenSure+' gün | Son gün: '+fmtD(sureSonu), sonTarih: sureSonu, durum: 'Bekliyor', oncelik: 'Yüksek', muvId: veri.muvId });
+  state.todolar.push(kayit);
+  saveData();
 }
 
-function deleteIhtar(id) {
-  if (!confirm('Bu ihtarnameyi silmek istediğinize emin misiniz?')) return;
-  state.avanslar = (state.avanslar||[]).filter(function(a){return a._ihtarId !== id;});
-  state.todolar = (state.todolar||[]).filter(function(t){return t._ihtarId !== id || !t._otoIhtar;});
-  state.ihtarnameler = (state.ihtarnameler||[]).filter(function(i){return i.id!==id;});
-  saveData(); renderIhtarname(); updateBadges();
-  if (aktivIhtarId === id) showPage('ihtarname', document.getElementById('ni-ihtarname'));
-  notify('İhtarname silindi');
+async function deleteIhtar(id) {
+  if (typeof LexSubmit !== 'undefined') {
+    var basarili = await LexSubmit.formSil({
+      tablo: 'ihtarnameler',
+      id: id,
+      onayMesaj: 'Bu ihtarnameyi silmek istediğinize emin misiniz?',
+      basariMesaj: 'İhtarname silindi',
+      renderFn: function() {
+        // İlişkili otomatik kayıtları da temizle
+        state.avanslar = (state.avanslar||[]).filter(function(a){return a._ihtarId !== id;});
+        state.todolar = (state.todolar||[]).filter(function(t){return t._ihtarId !== id || !t._otoIhtar;});
+        saveData();
+        renderIhtarname(); updateBadges();
+        if (aktivIhtarId === id) showPage('ihtarname', document.getElementById('ni-ihtarname'));
+      }
+    });
+  } else {
+    if (!confirm('Bu ihtarnameyi silmek istediğinize emin misiniz?')) return;
+    state.avanslar = (state.avanslar||[]).filter(function(a){return a._ihtarId !== id;});
+    state.todolar = (state.todolar||[]).filter(function(t){return t._ihtarId !== id || !t._otoIhtar;});
+    state.ihtarnameler = (state.ihtarnameler||[]).filter(function(i){return i.id!==id;});
+    saveData(); renderIhtarname(); updateBadges();
+    if (aktivIhtarId === id) showPage('ihtarname', document.getElementById('ni-ihtarname'));
+    notify('İhtarname silindi');
+  }
 }
 
 function openIhtarDetay(id) {
