@@ -283,7 +283,7 @@ th.sort-th.desc::after{content:' ▼';font-size:8px;color:var(--gold);}
   position:fixed;top:0;left:0;right:0;z-index:9999;
   display:flex !important;flex-direction:row !important;align-items:center;
   justify-content:space-between;
-  padding:0 5vw;height:72px;width:100%;
+  padding:0 5vw;height:88px;width:100%;
   background:rgba(13,17,23,.7);
   backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
   border-bottom:1px solid rgba(0,188,212,.08);
@@ -761,11 +761,28 @@ select:focus, textarea:focus {
 
 /* Navbar logo */
 .lp-nav-logo {
+  display:flex;align-items:center;gap:14px;
+  flex-shrink:0;text-decoration:none;cursor:pointer;
+}
+.lp-nav-logo-img {
+  height:52px;width:auto;
+  filter: drop-shadow(0 0 8px rgba(0,188,212,0.45))
+          drop-shadow(0 0 20px rgba(0,188,212,0.2));
+  transition:filter .3s;
+}
+.lp-nav-logo:hover .lp-nav-logo-img {
+  filter: drop-shadow(0 0 12px rgba(0,188,212,0.65))
+          drop-shadow(0 0 28px rgba(0,188,212,0.3));
+}
+.lp-nav-logo-text {
   font-family:'DM Sans',sans-serif;
-  font-size:20px;font-weight:800;
-  color:#00BCD4;letter-spacing:-0.3px;
-  display:flex;align-items:center;gap:8px;
-  flex-shrink:0;
+  font-size:22px;font-weight:800;
+  color:#ECF8FF;
+  letter-spacing:-0.2px;
+  transition:color .2s;
+}
+.lp-nav-logo:hover .lp-nav-logo-text {
+  color:#fff;
 }
 /* Nav links yatay */
 .lp-nav-links {
@@ -921,7 +938,7 @@ select:focus, textarea:focus {
 .lp-hero-split {
   display:flex !important;align-items:center;
   justify-content:space-between;gap:60px;
-  text-align:left;padding:130px 8vw 80px;
+  text-align:left;padding:148px 8vw 80px;
 }
 .lp-hero-content { flex:1;min-width:0;max-width:560px; }
 .lp-hero-content .lp-badge { justify-content:flex-start; }
@@ -1092,4 +1109,214 @@ select:focus, textarea:focus {
     align-items: flex-start;
     gap: 6px;
   }
+}
+
+/* ============================================================
+   LEXBASE — Z-PATTERN TANITIM BLOKLARI
+   ============================================================ */
+
+.lp-zpattern {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 80px 5vw 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 120px;
+}
+
+/* Her blok: 2 sütun, ortalı, hizalı */
+.lp-zblock {
+  display: flex;
+  align-items: center;
+  gap: 72px;
+}
+/* Ters yerleşim: görsel solda, metin sağda */
+.lp-zblock-rev {
+  flex-direction: row-reverse;
+}
+
+/* ── Metin Tarafı ── */
+.lp-zblock-text {
+  flex: 1;
+  min-width: 0;
+}
+.lp-ztag {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #00BCD4;
+  background: rgba(0,188,212,.08);
+  border: 1px solid rgba(0,188,212,.22);
+  border-radius: 20px;
+  padding: 5px 14px;
+  margin-bottom: 24px;
+}
+.lp-zh2 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(28px, 3.2vw, 42px);
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+  margin-bottom: 20px;
+}
+.lp-zh2 span {
+  color: #00BCD4;
+  position: relative;
+}
+.lp-zp {
+  font-size: 16px;
+  line-height: 1.8;
+  color: rgba(255,255,255,.5);
+  margin-bottom: 32px;
+  max-width: 480px;
+}
+.lp-zlist {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.lp-zlist li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 14px;
+  color: rgba(255,255,255,.65);
+  line-height: 1.6;
+}
+.lp-zlist li strong {
+  color: rgba(255,255,255,.9);
+}
+.lp-zcheck {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: rgba(0,188,212,.12);
+  border: 1px solid rgba(0,188,212,.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: #00BCD4;
+  font-weight: 700;
+  margin-top: 1px;
+}
+.lp-zbtn {
+  background: transparent;
+  border: 1px solid rgba(0,188,212,.45);
+  color: #00BCD4;
+  padding: 12px 28px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: all .22s;
+  letter-spacing: .3px;
+}
+.lp-zbtn:hover {
+  background: #00BCD4;
+  color: #0D1117;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,188,212,.3);
+}
+
+/* ── Görsel Tarafı ── */
+.lp-zblock-visual {
+  flex: 0 0 50%;
+  position: relative;
+}
+/* Dışa taşma efekti */
+.lp-zblock:not(.lp-zblock-rev) .lp-zblock-visual {
+  transform: translateX(24px);
+}
+.lp-zblock-rev .lp-zblock-visual {
+  transform: translateX(-24px);
+}
+.lp-zmock-wrap {
+  position: relative;
+  border-radius: 20px;
+  overflow: visible;
+}
+.lp-zmock-img {
+  width: 100%;
+  border-radius: 20px;
+  display: block;
+  box-shadow:
+    0 0 0 1px rgba(0,188,212,.18),
+    0 32px 80px rgba(0,0,0,.7),
+    0 0 80px rgba(0,188,212,.18);
+}
+/* Görsel yokken göster */
+.lp-zmock-placeholder {
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(0,188,212,.2);
+  box-shadow:
+    0 32px 80px rgba(0,0,0,.7),
+    0 0 80px rgba(0,188,212,.15);
+  background: #161B22;
+}
+.lp-zmock-fallback .lp-zmock-placeholder {
+  display: block;
+}
+/* Görsel varken placeholder gizle */
+.lp-zmock-img:not([style*="display:none"]) ~ .lp-zmock-placeholder {
+  display: none;
+}
+.lp-zmock-ph-inner {
+  background: #161B22;
+}
+.lp-zmock-ph-bar {
+  background: #0D1117;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 1px solid rgba(0,188,212,.08);
+}
+.lp-zmock-ph-body {
+  padding: 16px;
+}
+.lp-zmock-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 6px;
+  margin-bottom: 4px;
+  background: rgba(255,255,255,.02);
+  border: 1px solid rgba(255,255,255,.05);
+}
+/* Turkuaz parıltı altında */
+.lp-zmock-glow {
+  position: absolute;
+  bottom: -48px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 75%;
+  height: 80px;
+  background: radial-gradient(ellipse, rgba(0,188,212,.22), transparent 70%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* ── Responsive ── */
+@media (max-width: 960px) {
+  .lp-zpattern { gap: 80px; padding: 60px 5vw 20px; }
+  .lp-zblock,
+  .lp-zblock-rev { flex-direction: column; gap: 40px; }
+  .lp-zblock-visual { flex: none; width: 100%; transform: none !important; }
+  .lp-zblock:not(.lp-zblock-rev) .lp-zblock-visual,
+  .lp-zblock-rev .lp-zblock-visual { transform: none !important; }
+  .lp-zp { max-width: 100%; }
+  .lp-zh2 { font-size: clamp(24px, 5vw, 36px); }
 }
