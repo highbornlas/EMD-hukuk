@@ -42,6 +42,8 @@ var LexSubmit = (function () {
     'ihtarnameler': 'ihtarnameler',
     'todolar': 'todolar',
     'personel': 'personel',
+    'finansIslemler': 'finans_islemler',
+    'ucretAnlasmalari': 'ucret_anlasmalari',
   };
 
   // ── ANA FONKSİYON: Pessimistic Kaydet ─────────────────────

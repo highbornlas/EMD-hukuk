@@ -79,30 +79,58 @@ function renderMuvekkilBakiye() {
   const muvler = state.muvekkillar;
   if (!muvler.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">👤</div><p>Müvekkil yok</p></div>'; return; }
 
+  // ── Birleşik hesaplama: finansIslemler + butce + avanslar ──
   let html = '';
   muvler.forEach(m => {
-    const gelir = state.butce.filter(b => b.muvId === m.id && b.tur === 'Gelir').reduce((s, b) => s + b.tutar, 0);
-    const gider = state.butce.filter(b => b.muvId === m.id && b.tur === 'Gider').reduce((s, b) => s + b.tutar, 0);
-    const net = gelir - gider;
+    // Yeni sistem (finans_islemler)
+    const fi = (state.finansIslemler||[]).filter(i => i.muvId === m.id);
+    const fiBorc = fi.filter(i => i.yön === 'borc').reduce((s,i) => s + (i.tutar||0), 0);
+    const fiAlacak = fi.filter(i => i.yön === 'alacak').reduce((s,i) => s + (i.tutar||0), 0);
+
+    // Eski sistem (butce + avanslar) — geriye uyumluluk
+    const eskiGelir = state.butce.filter(b => b.muvId === m.id && b.tur === 'Gelir').reduce((s, b) => s + b.tutar, 0);
+    const eskiGider = state.butce.filter(b => b.muvId === m.id && b.tur === 'Gider').reduce((s, b) => s + b.tutar, 0);
+    const avanslar = (state.avanslar||[]).filter(a => a.muvId === m.id);
+    const avansAlinan = avanslar.filter(a => a.tur === 'Avans Alındı').reduce((s, a) => s + (a.tutar||0), 0);
+    const beklAlacak = avanslar.filter(a => a.durum === 'Bekliyor').reduce((s, a) => s + (a.tutar||0), 0);
+
+    // Birleşik
+    const topBorc = fiBorc + eskiGider;
+    const topAlacak = fiAlacak + eskiGelir + avansAlinan;
+    const bakiye = topAlacak - topBorc;
+
     const faturalar = (state.faturalar||[]).filter(f => f.muvId === m.id);
     const odenmemis = faturalar.filter(f => f.durum === 'bekliyor' || f.durum === 'gecikti').reduce((s, f) => s + (f.genelToplam||0), 0);
-    if (gelir === 0 && gider === 0 && odenmemis === 0) return;
+
+    if (topAlacak === 0 && topBorc === 0 && odenmemis === 0 && beklAlacak === 0) return;
+
+    const bakiyeRenk = bakiye >= 0 ? 'var(--green)' : 'var(--red)';
+
     html += `
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:10px">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:10px;cursor:pointer" onclick="openCariEkstre('${m.id}')">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-          <div style="font-weight:600;font-size:14px">${m.ad}</div>
-          <div style="display:flex;gap:8px">
-            <button class="btn" style="font-size:11px;padding:4px 10px;background:var(--surface2)" onclick="openWpMuvekkilModal('${m.id}')">📱 WhatsApp</button>
+          <div>
+            <div style="font-weight:600;font-size:14px">${m.ad}</div>
+            <div style="font-size:11px;color:var(--text-dim)">${fi.length + avanslar.length} işlem</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <div style="text-align:right">
+              <div style="font-size:10px;color:var(--text-dim)">BAKİYE</div>
+              <div style="font-size:18px;font-weight:800;color:${bakiyeRenk}">${fmt(bakiye)}</div>
+            </div>
+            <button class="btn btn-gold btn-sm" onclick="event.stopPropagation();openFinansIslemModal('${m.id}')" style="padding:4px 10px;font-size:11px">+ İşlem</button>
           </div>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
-          <div style="text-align:center"><div style="font-size:11px;color:var(--text-muted)">Gelir</div><div style="font-size:14px;font-weight:700;color:var(--green)">${fmt(gelir)}</div></div>
-          <div style="text-align:center"><div style="font-size:11px;color:var(--text-muted)">Gider</div><div style="font-size:14px;font-weight:700;color:var(--red)">${fmt(gider)}</div></div>
-          <div style="text-align:center"><div style="font-size:11px;color:var(--text-muted)">Net</div><div style="font-size:14px;font-weight:700;color:${net>=0?'var(--green)':'var(--red)'}">${fmt(net)}</div></div>
-          <div style="text-align:center"><div style="font-size:11px;color:var(--text-muted)">Ödenmemiş Fatura</div><div style="font-size:14px;font-weight:700;color:${odenmemis>0?'#f39c12':'var(--text-muted)'}">${fmt(odenmemis)}</div></div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px">
+          <div style="text-align:center"><div style="font-size:10px;color:var(--text-muted)">Masraf/Borç</div><div style="font-size:13px;font-weight:700;color:var(--red)">${fmt(topBorc)}</div></div>
+          <div style="text-align:center"><div style="font-size:10px;color:var(--text-muted)">Tahsilat</div><div style="font-size:13px;font-weight:700;color:var(--green)">${fmt(topAlacak)}</div></div>
+          <div style="text-align:center"><div style="font-size:10px;color:var(--text-muted)">Avans Alınan</div><div style="font-size:13px;font-weight:700;color:var(--blue)">${fmt(avansAlinan)}</div></div>
+          <div style="text-align:center"><div style="font-size:10px;color:var(--text-muted)">Bekl. Alacak</div><div style="font-size:13px;font-weight:700;color:${beklAlacak>0?'#f39c12':'var(--text-muted)'}">${fmt(beklAlacak)}</div></div>
+          <div style="text-align:center"><div style="font-size:10px;color:var(--text-muted)">Ödenmemiş Fat.</div><div style="font-size:13px;font-weight:700;color:${odenmemis>0?'#e74c3c':'var(--text-muted)'}">${fmt(odenmemis)}</div></div>
         </div>
       </div>`;
   });
+
   el.innerHTML = html || '<div class="empty"><div class="empty-icon">💰</div><p>Müvekkil bazlı hareket yok</p></div>';
 }
 
@@ -544,5 +572,260 @@ function sureGunHesapla() {
   } else {
     kalanEl.textContent = `${kalan} gün kaldı`;
     kalanEl.style.color = 'var(--green)';
+  }
+}
+
+// ================================================================
+// CARİ EKSTRE — Müvekkil Detay Sayfası
+// ================================================================
+function openCariEkstre(muvId) {
+  var m = getMuv(muvId);
+  if (!m) return;
+
+  // Tüm işlemleri topla (yeni + eski sistem)
+  var islemler = [];
+
+  // finans_islemler
+  (state.finansIslemler||[]).filter(function(i){return i.muvId===muvId;}).forEach(function(i) {
+    islemler.push({ id:i.id, tarih:i.tarih, tur:i.tur, yon:i.yön, tutar:i.tutar||0, acik:i.aciklama||i.acik||'', kategori:i.kategori||'', dosyaNo:i.dosyaNo||'', kaynak:'finans_islemler' });
+  });
+
+  // Eski butce
+  state.butce.filter(function(b){return b.muvId===muvId;}).forEach(function(b) {
+    islemler.push({ id:b.id, tarih:b.tarih, tur:b.tur==='Gelir'?'Tahsilat':'Masraf', yon:b.tur==='Gelir'?'alacak':'borc', tutar:b.tutar||0, acik:b.acik||'', kategori:b.kat||'', dosyaNo:'', kaynak:'butce' });
+  });
+
+  // Eski avanslar
+  (state.avanslar||[]).filter(function(a){return a.muvId===muvId;}).forEach(function(a) {
+    islemler.push({ id:a.id, tarih:a.tarih, tur:a.tur||'Avans', yon:a.tur==='Avans Alındı'?'alacak':'borc', tutar:a.tutar||0, acik:a.acik||a.aciklama||'', kategori:'', dosyaNo:a.dosyaNo||'', kaynak:'avanslar' });
+  });
+
+  // Tarihe göre sırala (en yeni üstte)
+  islemler.sort(function(a,b){return (b.tarih||'').localeCompare(a.tarih||'');});
+
+  // Bakiye hesapla
+  var topBorc = islemler.filter(function(i){return i.yon==='borc';}).reduce(function(s,i){return s+i.tutar;},0);
+  var topAlacak = islemler.filter(function(i){return i.yon==='alacak';}).reduce(function(s,i){return s+i.tutar;},0);
+  var bakiye = topAlacak - topBorc;
+  var bakiyeRenk = bakiye >= 0 ? 'var(--green)' : 'var(--red)';
+
+  // Çalışan bakiye (running balance) hesapla — alttan üste
+  var calisan = 0;
+  var reversed = islemler.slice().reverse();
+  reversed.forEach(function(i) {
+    if (i.yon === 'alacak') calisan += i.tutar;
+    else calisan -= i.tutar;
+    i._bakiye = calisan;
+  });
+
+  // Modal HTML
+  var html = '<div style="padding:20px">';
+  // Başlık
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">';
+  html += '<div><div style="font-size:18px;font-weight:700;color:var(--text)">📊 ' + m.ad + ' — Cari Ekstre</div>';
+  html += '<div style="font-size:12px;color:var(--text-muted)">' + islemler.length + ' işlem</div></div>';
+  html += '<div style="text-align:right"><div style="font-size:10px;color:var(--text-dim);text-transform:uppercase">BAKİYE</div>';
+  html += '<div style="font-size:24px;font-weight:800;color:' + bakiyeRenk + '">' + fmt(bakiye) + '</div></div></div>';
+
+  // Özet kartlar
+  html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">';
+  html += '<div style="background:var(--surface2);border-radius:var(--radius);padding:12px;text-align:center"><div style="font-size:10px;color:var(--text-muted)">TOPLAM BORÇ</div><div style="font-size:16px;font-weight:700;color:var(--red)">' + fmt(topBorc) + '</div></div>';
+  html += '<div style="background:var(--surface2);border-radius:var(--radius);padding:12px;text-align:center"><div style="font-size:10px;color:var(--text-muted)">TOPLAM ALACAK</div><div style="font-size:16px;font-weight:700;color:var(--green)">' + fmt(topAlacak) + '</div></div>';
+  html += '<div style="background:' + bakiyeRenk + '11;border:1px solid ' + bakiyeRenk + ';border-radius:var(--radius);padding:12px;text-align:center"><div style="font-size:10px;color:var(--text-muted)">NET BAKİYE</div><div style="font-size:16px;font-weight:700;color:' + bakiyeRenk + '">' + fmt(bakiye) + '</div></div>';
+  html += '</div>';
+
+  // + İşlem Ekle butonu
+  html += '<div style="display:flex;justify-content:flex-end;margin-bottom:12px">';
+  html += '<button class="btn btn-gold btn-sm" onclick="closeModal(\'cari-ekstre-modal\');openFinansIslemModal(\'' + muvId + '\')">+ Yeni İşlem Ekle</button>';
+  html += '</div>';
+
+  // İşlem tablosu (banka ekstresi tarzı)
+  if (islemler.length) {
+    html += '<table><thead><tr><th>Tarih</th><th>Tür</th><th>Açıklama</th><th>Dosya</th><th style="text-align:right">Borç</th><th style="text-align:right">Alacak</th><th style="text-align:right">Bakiye</th></tr></thead><tbody>';
+    islemler.forEach(function(i) {
+      var turRenk = i.yon === 'alacak' ? 'var(--green)' : 'var(--red)';
+      var turIcon = {'Masraf':'💸','Tahsilat':'💰','Avans':'🏦','Hakediş':'⭐','Vekalet Ücreti':'⚖️','Fatura':'📄','İade':'↩️','Avans Alındı':'🏦'}[i.tur] || '📋';
+      var bakiyeRenk2 = i._bakiye >= 0 ? 'var(--green)' : 'var(--red)';
+      html += '<tr>';
+      html += '<td style="font-size:11px;white-space:nowrap">' + fmtD(i.tarih) + '</td>';
+      html += '<td><span style="font-size:11px;color:' + turRenk + ';font-weight:600">' + turIcon + ' ' + i.tur + '</span></td>';
+      html += '<td style="font-size:12px">' + (i.acik||'—') + (i.kategori ? ' <span style="font-size:9px;background:var(--surface2);padding:1px 6px;border-radius:3px">' + i.kategori + '</span>' : '') + '</td>';
+      html += '<td style="font-size:11px;color:var(--text-muted)">' + (i.dosyaNo||'—') + '</td>';
+      html += '<td style="text-align:right;font-weight:600;color:var(--red)">' + (i.yon === 'borc' ? fmt(i.tutar) : '') + '</td>';
+      html += '<td style="text-align:right;font-weight:600;color:var(--green)">' + (i.yon === 'alacak' ? fmt(i.tutar) : '') + '</td>';
+      html += '<td style="text-align:right;font-weight:700;color:' + bakiyeRenk2 + '">' + fmt(i._bakiye) + '</td>';
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+  } else {
+    html += '<div class="empty"><div class="empty-icon">📊</div><p>Henüz işlem yok</p></div>';
+  }
+  html += '</div>';
+
+  // Modal göster
+  var modal = document.getElementById('cari-ekstre-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.id = 'cari-ekstre-modal';
+    modal.innerHTML = '<div class="modal modal-lg" style="max-width:900px"><div class="modal-header"><div class="modal-title">Cari Ekstre</div></div><div id="cari-ekstre-icerik"></div><div class="modal-footer"><button class="btn btn-outline" onclick="closeModal(\'cari-ekstre-modal\')">Kapat</button></div></div>';
+    document.body.appendChild(modal);
+  }
+  document.getElementById('cari-ekstre-icerik').innerHTML = html;
+  modal.classList.add('open');
+}
+
+// ================================================================
+// FİNANS İŞLEM EKLEME MODALI (LexSubmit Pessimistic)
+// ================================================================
+function openFinansIslemModal(muvId) {
+  var modal = document.getElementById('finans-islem-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.id = 'finans-islem-modal';
+    modal.innerHTML = '\
+<div class="modal modal-lg" style="max-width:580px">\
+  <div class="modal-header"><div class="modal-title">💰 Yeni Finansal İşlem</div></div>\
+  <div class="modal-body">\
+    <input type="hidden" id="fi-muv-id">\
+    <div class="form-row">\
+      <div class="form-group"><label>İşlem Türü *</label>\
+        <select id="fi-tur" onchange="fiTurDegisti()">\
+          <option value="Masraf">💸 Masraf (Borç)</option>\
+          <option value="Tahsilat">💰 Tahsilat (Alacak)</option>\
+          <option value="Avans">🏦 Avans Alındı (Alacak)</option>\
+          <option value="Hakediş">⭐ Hakediş / Vekalet Ücreti</option>\
+          <option value="İade">↩️ İade</option>\
+        </select>\
+      </div>\
+      <div class="form-group"><label>Tutar (₺) *</label>\
+        <input type="number" id="fi-tutar" step="0.01" placeholder="0.00">\
+      </div>\
+    </div>\
+    <div class="form-row">\
+      <div class="form-group"><label>Tarih *</label><input type="date" id="fi-tarih"></div>\
+      <div class="form-group"><label>Kategori</label>\
+        <select id="fi-kategori">\
+          <option value="">— Seçin —</option>\
+          <option>Harç / Pul</option><option>Tebligat</option><option>Bilirkişi Ücreti</option>\
+          <option>Ulaşım</option><option>Avukatlık Ücreti</option><option>Danışmanlık</option>\
+          <option>Keşif</option><option>Tercüme</option><option>Genel Büro</option><option>Diğer</option>\
+        </select>\
+      </div>\
+    </div>\
+    <div class="form-row">\
+      <div class="form-group"><label>İlişkili Dosya</label>\
+        <select id="fi-dosya"><option value="">— Dosya seçin (opsiyonel) —</option></select>\
+      </div>\
+    </div>\
+    <div class="form-group"><label>Açıklama</label><input id="fi-acik" placeholder="İşlem açıklaması..."></div>\
+  </div>\
+  <div class="modal-footer">\
+    <button class="btn btn-outline" onclick="closeModal(\'finans-islem-modal\')">İptal</button>\
+    <button class="btn btn-gold" id="fi-kaydet-btn" onclick="saveFinansIslem()">💾 Kaydet</button>\
+  </div>\
+</div>';
+    document.body.appendChild(modal);
+  }
+
+  // Müvekkil ID ayarla
+  document.getElementById('fi-muv-id').value = muvId || '';
+  document.getElementById('fi-tarih').value = today();
+  document.getElementById('fi-tutar').value = '';
+  document.getElementById('fi-acik').value = '';
+  document.getElementById('fi-tur').value = 'Masraf';
+  document.getElementById('fi-kategori').value = '';
+
+  // Dosya listesi
+  var dosyaSel = document.getElementById('fi-dosya');
+  dosyaSel.innerHTML = '<option value="">— Dosya seçin (opsiyonel) —</option>';
+  (state.davalar||[]).filter(function(d){return !muvId || d.muvId === muvId;}).forEach(function(d) {
+    dosyaSel.innerHTML += '<option value="dava:' + d.id + '">📁 ' + (d.no||'') + ' — ' + (d.konu||'') + '</option>';
+  });
+  (state.icra||[]).filter(function(i){return !muvId || i.muvId === muvId;}).forEach(function(i) {
+    dosyaSel.innerHTML += '<option value="icra:' + i.id + '">⚡ ' + (i.no||'') + ' — ' + (i.borclu||'') + '</option>';
+  });
+
+  modal.classList.add('open');
+}
+
+function fiTurDegisti() {
+  var tur = (document.getElementById('fi-tur')||{}).value;
+  var katEl = document.getElementById('fi-kategori');
+  // Tahsilat/Avans için kategori gizle
+  if (katEl) {
+    katEl.closest('.form-group').style.display = (tur === 'Masraf' || tur === 'Hakediş') ? '' : 'none';
+  }
+}
+
+// ── KAYDET (LexSubmit Pessimistic) ───────────────────────────
+async function saveFinansIslem() {
+  var muvId = document.getElementById('fi-muv-id').value;
+  var tur = document.getElementById('fi-tur').value;
+  var tutar = parseFloat(document.getElementById('fi-tutar').value);
+  var tarih = document.getElementById('fi-tarih').value;
+
+  if (!tarih) { notify('⚠️ Tarih zorunludur'); return; }
+  if (isNaN(tutar) || tutar <= 0) { notify('⚠️ Geçerli bir tutar girin'); return; }
+
+  // Yön otomatik belirleme
+  var yon;
+  if (tur === 'Masraf') yon = 'borc';
+  else if (tur === 'Tahsilat' || tur === 'Avans' || tur === 'Hakediş') yon = 'alacak';
+  else if (tur === 'İade') yon = 'borc';
+  else yon = 'borc';
+
+  // Dosya bağlantısı
+  var dosyaVal = (document.getElementById('fi-dosya')||{}).value || '';
+  var dosyaTur = '', dosyaId = '', dosyaNo = '';
+  if (dosyaVal) {
+    var parts = dosyaVal.split(':');
+    dosyaTur = parts[0];
+    dosyaId = parts[1];
+    if (dosyaTur === 'dava') { var d = getDava(dosyaId); dosyaNo = d ? d.no : ''; }
+    else if (dosyaTur === 'icra') { var i = getIcra(dosyaId); dosyaNo = i ? i.no : ''; }
+  }
+
+  var kayit = {
+    id: uid(),
+    muvId: muvId,
+    tur: tur,
+    yön: yon,
+    tutar: tutar,
+    tarih: tarih,
+    aciklama: (document.getElementById('fi-acik')||{}).value || '',
+    kategori: (document.getElementById('fi-kategori')||{}).value || '',
+    dosyaTur: dosyaTur,
+    dosyaId: dosyaId,
+    dosyaNo: dosyaNo,
+    durum: 'Onaylandı',
+  };
+
+  // ── LexSubmit: Pessimistic kaydet ──
+  if (typeof LexSubmit !== 'undefined') {
+    var btn = document.getElementById('fi-kaydet-btn');
+    var ok = await LexSubmit.formKaydet({
+      tablo: 'finansIslemler',
+      kayit: kayit,
+      modalId: 'finans-islem-modal',
+      butonEl: btn,
+      basariMesaj: '✓ ' + tur + ' kaydedildi — ' + fmt(tutar),
+      renderFn: function() {
+        renderMuvekkilBakiye();
+        renderButce();
+        updateBadges();
+      }
+    });
+    if (!ok) return; // Hata → modal açık, veri korunur
+  } else {
+    // localStorage fallback
+    if (!state.finansIslemler) state.finansIslemler = [];
+    state.finansIslemler.push(kayit);
+    saveData();
+    closeModal('finans-islem-modal');
+    renderMuvekkilBakiye();
+    renderButce();
+    notify('✓ ' + tur + ' kaydedildi');
   }
 }

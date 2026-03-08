@@ -124,7 +124,8 @@ async function sbVeriYukle() {
     const tablolar = [
       'muvekkillar', 'davalar', 'icra', 'butce', 'etkinlikler',
       'avanslar', 'danismanlik', 'arabuluculuk', 'ihtarnameler',
-      'todolar', 'personel', 'karsi_taraflar', 'vekillar'
+      'todolar', 'personel', 'karsi_taraflar', 'vekillar',
+      'finans_islemler', 'ucret_anlasmalari'
     ];
 
     const sonuclar = await Promise.all(
@@ -134,6 +135,8 @@ async function sbVeriYukle() {
     // State'e yükle
     const stateMap = {
       'karsi_taraflar': 'karsiTaraflar',
+      'finans_islemler': 'finansIslemler',
+      'ucret_anlasmalari': 'ucretAnlasmalari',
     };
     tablolar.forEach((t, i) => {
       const { data, error } = sonuclar[i];
@@ -218,7 +221,8 @@ let _pendingSync = false;
 
 function _takeSyncSnapshot() {
   const KEYS = ['muvekkillar','davalar','icra','butce','etkinlikler','avanslar',
-    'danismanlik','arabuluculuk','ihtarnameler','todolar','personel','karsiTaraflar','vekillar'];
+    'danismanlik','arabuluculuk','ihtarnameler','todolar','personel','karsiTaraflar','vekillar',
+    'finansIslemler','ucretAnlasmalari'];
   KEYS.forEach(k => {
     const arr = state[k];
     if (Array.isArray(arr)) {
@@ -257,6 +261,7 @@ async function _executeDiffSync() {
       'danismanlik':'danismanlik', 'arabuluculuk':'arabuluculuk',
       'ihtarnameler':'ihtarnameler', 'todolar':'todolar', 'personel':'personel',
       'karsiTaraflar':'karsi_taraflar', 'vekillar':'vekillar',
+      'finansIslemler':'finans_islemler', 'ucretAnlasmalari':'ucret_anlasmalari',
     };
 
     for (const [stateKey, tablo] of Object.entries(TABLO_MAP)) {
@@ -339,6 +344,7 @@ window.addEventListener('beforeunload', function() {
       'danismanlik':'danismanlik', 'arabuluculuk':'arabuluculuk',
       'ihtarnameler':'ihtarnameler', 'todolar':'todolar', 'personel':'personel',
       'karsiTaraflar':'karsi_taraflar', 'vekillar':'vekillar',
+      'finansIslemler':'finans_islemler', 'ucretAnlasmalari':'ucret_anlasmalari',
     };
 
     for (var stateKey in TABLO_MAP) {

@@ -36,6 +36,8 @@ let state = {
   aktiviteLog:[], // {id,kullaniciId,kullaniciAd,islem,detay,tarih,saat,module}
   ihtarnameler:[], // {id,no,yon,tur,muvId,karsiTaraf,konu,noterlik,yevmiyeNo,tarih,tebligDurum,tebligTarih,icindekiler,ilgiliTur,ilgiliDosyaId}
   todolar:[], // {id,baslik,aciklama,oncelik,durum,atananId,olusturanId,dosyaTur,dosyaId,muvId,sonTarih,tamamlanmaTarih}
+  finansIslemler:[], // Birleşik işlem defteri — finans_islemler tablosu
+  ucretAnlasmalari:[], // Dosya bazlı ücret sözleşmeleri — ucret_anlasmalari tablosu
 };
 
 let aktivMuvId=null, aktivDavaId=null, aktivIcraId=null;
