@@ -159,6 +159,8 @@ async function sbVeriYukle() {
     showYukleniyor(false);
     // Snapshot al (diff engine için)
     if (typeof _takeSyncSnapshot === 'function') _takeSyncSnapshot();
+    // Faiz oranlarını yükle
+    if (typeof AracKutusu !== 'undefined') AracKutusu.oranlariYukle();
     // Küçük gecikme ile başlat — DOM hazır olsun
     setTimeout(uygulamayiBaslat, 100);
 
