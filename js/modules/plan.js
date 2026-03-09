@@ -218,9 +218,13 @@ var lisansKoduDogrula = async function() {
     }
 
     // Lisansı kullanıldı olarak işaretle
+    // NOT: currentBuroId büro ID'si — musteriler tablosunda auth user ID var
+    // FK constraint hatası vermemesi için auth user ID kullanılır
     var musteriId = '';
     try {
-      if (typeof currentBuroId !== 'undefined' && currentBuroId) musteriId = currentBuroId;
+      if (typeof currentUser !== 'undefined' && currentUser && currentUser.id) {
+        musteriId = currentUser.id;
+      }
     } catch(e) {}
 
     // Kullananlar kaydı oluştur
@@ -250,9 +254,11 @@ var lisansKoduDogrula = async function() {
     var yeniSayisi = kullanimSayisi + 1;
 
     // ── 1. Admin DB'de lisansı kullanıldı olarak işaretle ──
+    // NOT: kullanilan_musteri_id FK constraint hatası verebilir (müşteri admin DB'de
+    // olmayabilir) → null gönder, takip kullananlar dizisinden yapılır
     var lisansGuncellendi = await adminSbUpdate('lisans_kodlari', lisans.id, {
       kullanildi: yeniSayisi >= maxKullanim,
-      kullanilan_musteri_id: musteriId || null,
+      kullanilan_musteri_id: null,
       kullanim_tarihi: new Date().toISOString(),
       kullanim_sayisi: yeniSayisi,
       kullananlar: mevcutKullananlar
