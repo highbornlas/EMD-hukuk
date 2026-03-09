@@ -70,6 +70,16 @@ function sifreSifirla() {
 
 async function cikisYap() {
   if (typeof adminCikisLog === "function") adminCikisLog();
+  // Plan verisini temizle (farklı kullanıcıya sızmasını önle)
+  try {
+    var d = JSON.parse(localStorage.getItem(SK) || '{}');
+    delete d.planId;
+    delete d.planKullanici;
+    delete d.lisansBitis;
+    delete d.lisansTur;
+    delete d.planGuncellemeTarih;
+    localStorage.setItem(SK, JSON.stringify(d));
+  } catch(e) {}
   await sbCikisYap();
   // onAuthStateChange SIGNED_OUT eventi gerisini halleder
 }

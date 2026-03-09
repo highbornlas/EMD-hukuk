@@ -9,6 +9,18 @@ function mevcutPlan() {
     if (d) {
       const p = JSON.parse(d);
       const planId = p.planId || 'deneme';
+
+      // Farklı kullanıcıya plan sızmasını engelle
+      if (planId !== 'deneme' && p.planKullanici) {
+        try {
+          var cu = (typeof currentUser !== 'undefined') ? currentUser : null;
+          if (cu && cu.email && p.planKullanici !== cu.email) {
+            // Bu plan başka kullanıcıya ait — denemeye dön
+            return { ...PLANLAR.deneme, id: 'deneme' };
+          }
+        } catch(e2) {}
+      }
+
       // Deneme süresi kontrolü
       if (planId === 'deneme' && p.olusturmaTarih) {
         const gun = Math.ceil((Date.now() - new Date(p.olusturmaTarih)) / (1000*60*60*24));
@@ -26,6 +38,12 @@ function planGuncelle(planId, ekVeri) {
     const p = d ? JSON.parse(d) : {};
     p.planId = planId;
     p.planGuncellemeTarih = new Date().toISOString();
+    // Planı aktive eden kullanıcıyı kaydet (farklı kullanıcıya sızmasını önle)
+    try {
+      if (typeof currentUser !== 'undefined' && currentUser && currentUser.email) {
+        p.planKullanici = currentUser.email;
+      }
+    } catch(e2) {}
     if (ekVeri) Object.assign(p, ekVeri);
     localStorage.setItem(SK, JSON.stringify(p));
     Object.assign(state, p);
@@ -162,7 +180,8 @@ async function lisansKoduDogrula() {
     var maxKullanim = lisans.max_kullanim || 1;
     var kullanimSayisi = lisans.kullanim_sayisi || 0;
 
-    if (kullanimSayisi >= maxKullanim) {
+    // Hem eski (kullanildi boolean) hem yeni (kullanim_sayisi) kontrol
+    if (lisans.kullanildi || kullanimSayisi >= maxKullanim) {
       _lisansSonuc('❌ Bu lisans kodu daha önce kullanılmış.', 'err');
       btn.disabled = false;
       btn.textContent = '🔑 Doğrula';
@@ -196,9 +215,13 @@ async function lisansKoduDogrula() {
     var email = '';
     var adSoyad = '';
     try {
-      if (typeof state !== 'undefined' && state.ayarlar) {
+      if (typeof currentUser !== 'undefined' && currentUser) {
+        email = currentUser.email || '';
+        adSoyad = currentUser.ad_soyad || currentUser.ad || '';
+      }
+      if (!email && typeof state !== 'undefined' && state.ayarlar) {
         email = state.ayarlar.email || '';
-        adSoyad = state.ayarlar.buroAdi || state.ayarlar.ad || '';
+        if (!adSoyad) adSoyad = state.ayarlar.buroAdi || state.ayarlar.ad || '';
       }
       if (!email && typeof state !== 'undefined' && state.profil) email = state.profil.email || '';
     } catch(e) {}

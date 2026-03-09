@@ -191,7 +191,8 @@ async function destekTalebiGonder() {
   var musteriId = '';
   try {
     if (typeof currentBuroId !== 'undefined' && currentBuroId) musteriId = currentBuroId;
-    if (typeof state !== 'undefined' && state.ayarlar) email = state.ayarlar.email || '';
+    if (typeof currentUser !== 'undefined' && currentUser) email = currentUser.email || '';
+    if (!email && typeof state !== 'undefined' && state.ayarlar) email = state.ayarlar.email || '';
     if (!email && typeof state !== 'undefined' && state.profil) email = state.profil.email || '';
   } catch(e) {}
 
@@ -307,7 +308,8 @@ async function destekGecmisiYukle() {
 
   var email = '';
   try {
-    if (typeof state !== 'undefined' && state.ayarlar) email = state.ayarlar.email || '';
+    if (typeof currentUser !== 'undefined' && currentUser) email = currentUser.email || '';
+    if (!email && typeof state !== 'undefined' && state.ayarlar) email = state.ayarlar.email || '';
     if (!email && typeof state !== 'undefined' && state.profil) email = state.profil.email || '';
   } catch(e) {}
   if (!email) return;
@@ -329,16 +331,29 @@ async function destekGecmisiYukle() {
     };
 
     el.innerHTML = talepler.map(function(t) {
-      var tarih = t.created_at ? new Date(t.created_at).toLocaleDateString('tr-TR') : '';
-      return '<div style="padding:12px 0;border-bottom:1px solid var(--border)">' +
-        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">' +
-          '<div style="min-width:0">' +
-            '<div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px">' + (t.konu || '—') + '</div>' +
+      var tarih = t.created_at ? new Date(t.created_at).toLocaleDateString('tr-TR', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '';
+      // Mesajın özet kısmını göster (öncelik/tür satırlarını çıkar)
+      var mesajOzet = (t.mesaj || '').split('\n\n— Öncelik:')[0] || '';
+      if (mesajOzet.length > 120) mesajOzet = mesajOzet.slice(0, 120) + '…';
+
+      return '<div style="padding:14px;margin-bottom:10px;background:var(--surface2);border-radius:var(--radius);border:1px solid var(--border)">' +
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px">' +
+          '<div style="min-width:0;flex:1">' +
+            '<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">' + (t.konu || '—') + '</div>' +
             '<div style="font-size:11px;color:var(--text-muted)">' + tarih + '</div>' +
           '</div>' +
           '<div style="flex-shrink:0">' + (durumBadge[t.durum] || durumBadge.bekliyor) + '</div>' +
         '</div>' +
-        (t.admin_notu ? '<div style="margin-top:8px;padding:8px 10px;background:var(--gold-dim);border-radius:var(--radius);font-size:12px;color:var(--gold)">📝 ' + t.admin_notu + '</div>' : '') +
+        // Kullanıcının mesajı
+        '<div style="padding:10px 12px;background:var(--surface);border-radius:6px;font-size:12px;color:var(--text-muted);line-height:1.5;margin-bottom:6px">' +
+          '<div style="font-size:10px;font-weight:600;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase">Mesajınız</div>' +
+          mesajOzet +
+        '</div>' +
+        // Admin yanıtı
+        (t.admin_notu ? '<div style="padding:10px 12px;background:var(--gold-dim,rgba(201,168,76,.08));border-radius:6px;border-left:3px solid var(--gold);font-size:12px;color:var(--text);line-height:1.5">' +
+          '<div style="font-size:10px;font-weight:600;color:var(--gold);margin-bottom:4px;text-transform:uppercase">💬 Ekip Yanıtı</div>' +
+          t.admin_notu +
+        '</div>' : '<div style="font-size:11px;color:var(--text-dim);font-style:italic">Henüz yanıt verilmedi</div>') +
       '</div>';
     }).join('');
   } catch(e) {
