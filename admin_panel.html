@@ -1605,12 +1605,16 @@ function musteriSilConfirm(id) {
 }
 
 async function musteriSil(id) {
-  try { await sbDelete('musteriler', id); } catch (e) {}
-  musteriler = musteriler.filter(function(m) { return m.id !== id; });
-  renderMusteriler();
-  renderDashboard();
-  updateBadges();
-  notify('Müşteri silindi');
+  try {
+    await sbDelete('musteriler', id);
+    musteriler = musteriler.filter(function(m) { return m.id !== id; });
+    renderMusteriler();
+    renderDashboard();
+    updateBadges();
+    notify('Müşteri silindi');
+  } catch (e) {
+    notify('Müşteri silinemedi: ' + e.message, 'err');
+  }
 }
 
 function musteriLogGoster(id) {
@@ -1791,21 +1795,29 @@ async function saveDuyuru() {
     bitis_tarihi: document.getElementById('du-bitis').value || null
   };
 
-  try { await sbInsert('duyurular', data); } catch (e) {}
-  duyurular.unshift(Object.assign({}, data, { created_at: new Date().toISOString(), okunma_sayisi: 0 }));
-  closeModal('duyuru-modal');
-  renderDuyurular();
-  notify('📢 Duyuru yayınlandı');
+  try {
+    var sonuc = await sbInsert('duyurular', data);
+    duyurular.unshift(sonuc[0] || Object.assign({}, data, { created_at: new Date().toISOString(), okunma_sayisi: 0 }));
+    closeModal('duyuru-modal');
+    renderDuyurular();
+    notify('📢 Duyuru yayınlandı');
+  } catch (e) {
+    notify('Duyuru kaydedilemedi: ' + e.message, 'err');
+  }
 }
 
 async function duyuruToggle(id) {
   var d = duyurular.find(function(x) { return x.id === id; });
   if (!d) return;
   var yeniDurum = !d.yayinda;
-  try { await sbUpdate('duyurular', id, { yayinda: yeniDurum }); } catch (e) {}
-  d.yayinda = yeniDurum;
-  renderDuyurular();
-  notify(yeniDurum ? '✅ Duyuru yayınlandı' : '📝 Duyuru taslağa alındı');
+  try {
+    await sbUpdate('duyurular', id, { yayinda: yeniDurum });
+    d.yayinda = yeniDurum;
+    renderDuyurular();
+    notify(yeniDurum ? '✅ Duyuru yayınlandı' : '📝 Duyuru taslağa alındı');
+  } catch (e) {
+    notify('Duyuru durumu güncellenemedi', 'err');
+  }
 }
 
 function duyuruSilConfirm(id) {
@@ -1813,10 +1825,14 @@ function duyuruSilConfirm(id) {
 }
 
 async function duyuruSil(id) {
-  try { await sbDelete('duyurular', id); } catch (e) {}
-  duyurular = duyurular.filter(function(d) { return d.id !== id; });
-  renderDuyurular();
-  notify('Duyuru silindi');
+  try {
+    await sbDelete('duyurular', id);
+    duyurular = duyurular.filter(function(d) { return d.id !== id; });
+    renderDuyurular();
+    notify('Duyuru silindi');
+  } catch (e) {
+    notify('Duyuru silinemedi: ' + e.message, 'err');
+  }
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1882,13 +1898,17 @@ async function saveDestekYanit() {
     durum: document.getElementById('destek-durum-sel').value
   };
 
-  try { await sbUpdate('destek_talepleri', id, data); } catch (e) {}
-  var idx = destekler.findIndex(function(d) { return d.id === id; });
-  if (idx >= 0) Object.assign(destekler[idx], data);
-  closeModal('destek-modal');
-  renderDestek();
-  updateBadges();
-  notify('✅ Yanıt kaydedildi');
+  try {
+    await sbUpdate('destek_talepleri', id, data);
+    var idx = destekler.findIndex(function(d) { return d.id === id; });
+    if (idx >= 0) Object.assign(destekler[idx], data);
+    closeModal('destek-modal');
+    renderDestek();
+    updateBadges();
+    notify('✅ Yanıt kaydedildi');
+  } catch (e) {
+    notify('Yanıt kaydedilemedi: ' + e.message, 'err');
+  }
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1943,25 +1963,37 @@ async function lisansUret() {
   for (var i = 0; i < adet; i++) {
     var seg = function() { return Math.random().toString(36).slice(2, 6).toUpperCase(); };
     var kod = tur + '-' + seg() + '-' + seg() + '-' + seg();
-    _uretilen.push({ id: uid(), kod: kod, tur: tur.toLowerCase(), kullanildi: false, olusturma_tarihi: new Date().toISOString() });
+    _uretilen.push({ id: uid(), kod: kod, tur: tur.toLowerCase(), kullanildi: false });
   }
 
-  try {
-    for (var j = 0; j < _uretilen.length; j++) {
-      await sbInsert('lisans_kodlari', _uretilen[j]);
+  var basarili = [];
+  var hata = false;
+  for (var j = 0; j < _uretilen.length; j++) {
+    try {
+      var sonuc = await sbInsert('lisans_kodlari', _uretilen[j]);
+      basarili.push(sonuc[0] || _uretilen[j]);
+    } catch (e) {
+      hata = true;
+      console.warn('[Admin] Lisans insert hatası:', e.message);
     }
-  } catch (e) {}
+  }
 
-  lisanslar = _uretilen.concat(lisanslar);
+  if (!basarili.length) {
+    notify('Lisans kodları kaydedilemedi — Supabase bağlantısını kontrol edin', 'err');
+    return;
+  }
+
+  lisanslar = basarili.concat(lisanslar);
+  _uretilen = basarili;
 
   var sonucEl = document.getElementById('lis-sonuc');
-  sonucEl.innerHTML = _uretilen.map(function(l) {
+  sonucEl.innerHTML = basarili.map(function(l) {
     return '<div style="padding:3px 0;color:var(--gold)">' + esc(l.kod) + '</div>';
   }).join('');
   sonucEl.style.display = 'block';
   document.getElementById('lis-kopyala-btn').style.display = '';
   renderLisanslar();
-  notify('✅ ' + adet + ' lisans kodu üretildi');
+  notify(hata ? '⚠️ ' + basarili.length + '/' + adet + ' kod üretildi (bazıları kaydedilemedi)' : '✅ ' + adet + ' lisans kodu üretildi', hata ? 'err' : '');
 }
 
 function lisansKopyala() {
@@ -1982,10 +2014,14 @@ function lisansSilConfirm(id) {
 }
 
 async function lisansSil(id) {
-  try { await sbDelete('lisans_kodlari', id); } catch (e) {}
-  lisanslar = lisanslar.filter(function(l) { return l.id !== id; });
-  renderLisanslar();
-  notify('Lisans kodu silindi');
+  try {
+    await sbDelete('lisans_kodlari', id);
+    lisanslar = lisanslar.filter(function(l) { return l.id !== id; });
+    renderLisanslar();
+    notify('Lisans kodu silindi');
+  } catch (e) {
+    notify('Lisans kodu silinemedi: ' + e.message, 'err');
+  }
 }
 
 // ═══════════════════════════════════════════════════════════
