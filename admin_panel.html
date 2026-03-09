@@ -778,7 +778,7 @@ tr:hover td { background: rgba(255,255,255,.015); }
       <div class="tbl-wrap">
         <table>
           <thead><tr>
-            <th>Kod</th><th>Tür</th><th>Durum</th>
+            <th>Kod</th><th>Süre</th><th>Plan</th><th>Durum</th>
             <th>Kullanan</th><th>Tarih</th><th>İşlem</th>
           </tr></thead>
           <tbody id="lisans-tbody"></tbody>
@@ -890,9 +890,15 @@ tr:hover td { background: rgba(255,255,255,.015); }
   <div class="modal" style="max-width:420px">
     <div class="modal-title">🔑 Lisans Kodu Üret</div>
     <div class="form-row">
-      <div class="form-group"><label>Lisans Türü</label>
+      <div class="form-group"><label>Plan Tipi</label>
+        <select id="lis-plan">
+          <option value="profesyonel">⚡ Profesyonel</option>
+          <option value="buro">🏛 Büro</option>
+          <option value="kurumsal">🏢 Kurumsal</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Süre</label>
         <select id="lis-tur">
-          <option value="DENEME">Deneme (30 gün)</option>
           <option value="AYLIK">Aylık</option>
           <option value="YILLIK">Yıllık</option>
           <option value="OMUR">Ömür Boyu</option>
@@ -2104,6 +2110,8 @@ function renderLisanslar() {
   }
   em.style.display = 'none';
 
+  var planLabel = { profesyonel: '⚡ Profesyonel', buro: '🏛 Büro', kurumsal: '🏢 Kurumsal' };
+
   tb.innerHTML = lisanslar.map(function(l) {
     var m = l.kullanilan_musteri_id ? musteriler.find(function(x) { return x.id === l.kullanilan_musteri_id; }) : null;
     var turLabel = { deneme: 'Deneme', aylik: 'Aylık', yillik: 'Yıllık', omur: 'Ömür Boyu' };
@@ -2113,9 +2121,11 @@ function renderLisanslar() {
     var durumBadge = max > 1
       ? '<span class="badge ' + (dolu ? 'badge-pasif' : sayi > 0 ? 'badge-uyari' : 'badge-aktif') + '">' + sayi + '/' + max + '</span>'
       : '<span class="badge ' + (l.kullanildi ? 'badge-pasif' : 'badge-aktif') + '">' + (l.kullanildi ? 'Kullanıldı' : 'Bekliyor') + '</span>';
+    var pLabel = planLabel[l.plan_tipi] || '—';
     return '<tr>' +
       '<td style="font-family:\'Courier New\',monospace;font-weight:700;letter-spacing:1px;color:var(--gold);font-size:13px">' + esc(l.kod) + '</td>' +
       '<td><span class="badge badge-' + (l.tur || 'deneme') + '">' + (turLabel[l.tur] || l.tur || 'Deneme') + '</span></td>' +
+      '<td style="font-size:12px">' + pLabel + '</td>' +
       '<td>' + durumBadge + '</td>' +
       '<td style="font-size:12px">' + esc(m ? m.ad_soyad : (sayi > 0 ? sayi + ' kullanıcı' : '—')) + '</td>' +
       '<td style="font-size:11px;color:var(--text-muted)">' + (l.kullanim_tarihi ? fmtD(l.kullanim_tarihi) : '—') + '</td>' +
@@ -2137,6 +2147,7 @@ function openLisansUretModal() {
 var _uretilen = [];
 async function lisansUret() {
   var tur = document.getElementById('lis-tur').value;
+  var planTipi = document.getElementById('lis-plan').value;
   var adet = parseInt(document.getElementById('lis-adet').value);
   var coklu = document.getElementById('lis-coklu').checked;
   var maxKullanim = coklu ? (parseInt(document.getElementById('lis-max-kullanim').value) || 5) : 1;
@@ -2145,7 +2156,7 @@ async function lisansUret() {
   for (var i = 0; i < adet; i++) {
     var seg = function() { return Math.random().toString(36).slice(2, 6).toUpperCase(); };
     var kod = tur + '-' + seg() + '-' + seg() + '-' + seg();
-    _uretilen.push({ id: uid(), kod: kod, tur: tur.toLowerCase(), kullanildi: false, max_kullanim: maxKullanim, kullanim_sayisi: 0, kullananlar: [] });
+    _uretilen.push({ id: uid(), kod: kod, tur: tur.toLowerCase(), plan_tipi: planTipi, kullanildi: false, max_kullanim: maxKullanim, kullanim_sayisi: 0, kullananlar: [] });
   }
 
   var basarili = [];

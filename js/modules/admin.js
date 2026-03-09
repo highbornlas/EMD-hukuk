@@ -467,3 +467,48 @@ async function destekYanitGonder() {
     notify('Yanıt gönderilemedi.', true);
   }
 }
+
+// ── Destek Yanıt Bildirim Kontrolü (periyodik) ────────────
+var _destekBildirimInterval = null;
+
+async function destekBildirimKontrol() {
+  if (!ADMIN_SB_URL || !ADMIN_SB_KEY) return;
+  var email = '';
+  try {
+    if (typeof currentUser !== 'undefined' && currentUser) email = currentUser.email || '';
+  } catch(e) {}
+  if (!email) return;
+
+  try {
+    var sonKontrol = localStorage.getItem('lb_destek_son_kontrol') || '';
+    var talepler = await adminSbGet('destek_talepleri', 'email=eq.' + encodeURIComponent(email) + '&order=created_at.desc&limit=20');
+    if (!talepler || !talepler.length) return;
+
+    var yeniYanitSayisi = 0;
+    talepler.forEach(function(t) {
+      var mesajlar = t.mesajlar || [];
+      mesajlar.forEach(function(m) {
+        if (m.gonderen === 'admin' && m.tarih && m.tarih > sonKontrol) yeniYanitSayisi++;
+      });
+      // Eski format fallback — admin_notu varsa ve mesajlar boşsa
+      if (!mesajlar.length && t.admin_notu && !sonKontrol) yeniYanitSayisi++;
+    });
+
+    if (yeniYanitSayisi > 0) {
+      notify('🎧 ' + yeniYanitSayisi + ' yeni destek yanıtınız var!');
+    }
+    localStorage.setItem('lb_destek_son_kontrol', new Date().toISOString());
+  } catch(e) {
+    console.warn('[Destek] Bildirim kontrol hatası:', e.message);
+  }
+}
+
+function destekBildirimBaslat() {
+  if (_destekBildirimInterval) clearInterval(_destekBildirimInterval);
+  setTimeout(destekBildirimKontrol, 3000);
+  _destekBildirimInterval = setInterval(destekBildirimKontrol, 5 * 60 * 1000);
+}
+
+function destekBildirimDurdur() {
+  if (_destekBildirimInterval) { clearInterval(_destekBildirimInterval); _destekBildirimInterval = null; }
+}

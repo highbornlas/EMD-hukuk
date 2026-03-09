@@ -182,20 +182,31 @@ async function lisansKoduDogrula() {
 
     // Hem eski (kullanildi boolean) hem yeni (kullanim_sayisi) kontrol
     if (lisans.kullanildi || kullanimSayisi >= maxKullanim) {
-      _lisansSonuc('❌ Bu lisans kodu daha önce kullanılmış.', 'err');
+      _lisansSonuc('❌ Bu lisans kodu daha önce kullanılmış veya dolmuş.', 'err');
       btn.disabled = false;
       btn.textContent = '🔑 Doğrula';
       return;
     }
 
-    // Lisans türünü plan ID'sine eşle
+    // Aynı kullanıcının bu kodu daha önce kullanıp kullanmadığını kontrol et
+    var mevcutKullananlarKontrol = lisans.kullananlar || [];
+    var kullaniciEmail = '';
+    try { if (typeof currentUser !== 'undefined' && currentUser) kullaniciEmail = currentUser.email || ''; } catch(e) {}
+    if (kullaniciEmail && mevcutKullananlarKontrol.some(function(k) { return k.email === kullaniciEmail && k.aktif !== false; })) {
+      _lisansSonuc('❌ Bu kodu zaten kullanıyorsunuz.', 'err');
+      btn.disabled = false;
+      btn.textContent = '🔑 Doğrula';
+      return;
+    }
+
+    // Plan tipini belirle — plan_tipi varsa onu kullan, yoksa eski turPlanMap fallback
     var turPlanMap = {
       'deneme': 'deneme',
       'aylik': 'profesyonel',
       'yillik': 'buro',
       'omur': 'kurumsal'
     };
-    var planId = turPlanMap[lisans.tur] || 'profesyonel';
+    var planId = lisans.plan_tipi || turPlanMap[lisans.tur] || 'profesyonel';
     var plan = PLANLAR[planId];
 
     if (!plan) {

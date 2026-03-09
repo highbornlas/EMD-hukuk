@@ -70,6 +70,8 @@ function sifreSifirla() {
 
 async function cikisYap() {
   if (typeof adminCikisLog === "function") adminCikisLog();
+  // Destek bildirim interval'ı durdur
+  if (typeof destekBildirimDurdur === 'function') destekBildirimDurdur();
   // ── Kullanıcı veri izolasyonu ──
   // Mevcut kullanıcının TÜM verilerini kendi anahtarına yedekle,
   // sonra ana anahtarı temizle → yeni giren kullanıcı hiçbir veriyi göremez
@@ -84,6 +86,8 @@ async function cikisYap() {
     // Ana anahtarı tamamen temizle
     localStorage.removeItem(SK);
   } catch(e) {}
+  // Global değişkenleri sıfırla (sayfa yenilemesiz geçiş için)
+  aktivMuvId = null; aktivDavaId = null; aktivIcraId = null;
   await sbCikisYap();
   // onAuthStateChange SIGNED_OUT eventi gerisini halleder
 }
@@ -107,6 +111,8 @@ function uygulamayiBaslatLocal() {
   if (typeof renderTodo === 'function') renderTodo();
   if (typeof Bildirim !== 'undefined') Bildirim.baslat();
   addAktiviteLog('Giriş Yapıldı', currentUser.ad_soyad, 'Genel');
+  // Destek yanıt bildirimi (periyodik kontrol)
+  if (typeof destekBildirimBaslat === 'function') destekBildirimBaslat();
   // Admin entegrasyon (sessizce, arka planda)
   if (currentUser.rol === 'sahip') {
     if (typeof adminGirisLog === "function") adminGirisLog(currentUser);

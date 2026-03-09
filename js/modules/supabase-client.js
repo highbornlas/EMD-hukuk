@@ -99,9 +99,29 @@ function sbAuthDinle() {
       currentBuroId = null;
       currentUser = null;
       _sbYukleniyor = false;
+      // ── Tam state sıfırlama (tüm alan türleri) ──
       if (typeof state !== 'undefined') {
-        Object.keys(state).forEach(k => { if (Array.isArray(state[k])) state[k] = []; });
+        Object.keys(state).forEach(k => {
+          if (Array.isArray(state[k])) state[k] = [];
+          else if (typeof state[k] === 'object' && state[k] !== null) state[k] = {};
+          else if (typeof state[k] === 'boolean') state[k] = false;
+          else if (typeof state[k] === 'number') state[k] = 0;
+          else if (typeof state[k] === 'string') state[k] = '';
+          else state[k] = null;
+        });
+        // Dinamik flag'leri sil
+        delete state._finansMigrated;
+        delete state._belgelerMigrated;
+        delete state.plan;
+        delete state.planId;
+        delete state.planKullanici;
       }
+      // Global değişkenleri sıfırla
+      if (typeof aktivMuvId !== 'undefined') aktivMuvId = null;
+      if (typeof aktivDavaId !== 'undefined') aktivDavaId = null;
+      if (typeof aktivIcraId !== 'undefined') aktivIcraId = null;
+      // Destek bildirim interval'ı durdur
+      if (typeof destekBildirimDurdur === 'function') destekBildirimDurdur();
       showLanding();
     }
     // TOKEN_REFRESHED, INITIAL_SESSION vb. — hiçbir şey yapma
@@ -124,6 +144,16 @@ async function sbVeriYukle() {
 
     currentUser = { id: kul.id, ad: kul.ad, ad_soyad: kul.ad, email: kul.email, rol: kul.rol, buro_ad: '' };
     currentBuroId = kul.buro_id;
+
+    // ── Önceki kullanıcının in-memory state verisini temizle ──
+    if (typeof state !== 'undefined') {
+      Object.keys(state).forEach(k => { if (Array.isArray(state[k])) state[k] = []; });
+      delete state._finansMigrated;
+      delete state._belgelerMigrated;
+      delete state.plan;
+      delete state.planId;
+      delete state.planKullanici;
+    }
 
     // ── Kullanıcı veri izolasyonu: bu kullanıcının yerel verilerini geri yükle ──
     try {
