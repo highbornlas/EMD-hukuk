@@ -25,12 +25,17 @@ async function adminSbPost(tablo, data) {
         'apikey': ADMIN_SB_KEY,
         'Authorization': `Bearer ${ADMIN_SB_KEY}`,
         'Content-Type': 'application/json',
-        'Prefer': 'return=minimal'
+        'Prefer': 'return=representation'
       },
       body: JSON.stringify(data)
     });
     if (!res.ok) {
-      console.warn(`[Admin] POST ${tablo} hatası: ${res.status}`, await res.text().catch(()=>''));
+      var errText = await res.text().catch(function() { return ''; });
+      console.warn(`[Admin] POST ${tablo} hatası: ${res.status}`, errText);
+      // RLS hatası ise kullanıcıya anlamlı mesaj
+      if (res.status === 401 || res.status === 403 || errText.indexOf('policy') !== -1) {
+        console.warn('[Admin] RLS yetkisi eksik — admin projesinde tablo izinlerini kontrol edin.');
+      }
       return false;
     }
     return true;
@@ -48,12 +53,20 @@ async function adminSbUpdate(tablo, id, data) {
       headers: {
         'apikey': ADMIN_SB_KEY,
         'Authorization': `Bearer ${ADMIN_SB_KEY}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
       },
       body: JSON.stringify(data)
     });
     if (!res.ok) {
       console.warn(`[Admin] PATCH ${tablo} hatası: ${res.status}`, await res.text().catch(()=>''));
+      return false;
+    }
+    // Prefer: return=representation ile Supabase güncellenen satırları döndürür
+    // Eğer boş dizi dönerse → RLS engelledi veya id eşleşmedi
+    var body = await res.json().catch(function() { return null; });
+    if (Array.isArray(body) && body.length === 0) {
+      console.warn(`[Admin] PATCH ${tablo} başarısız: satır güncellenemedi (RLS veya id eşleşmedi). id=${id}`);
       return false;
     }
     return true;

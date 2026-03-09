@@ -248,13 +248,22 @@ async function lisansKoduDogrula() {
     mevcutKullananlar.push(yeniKullanan);
     var yeniSayisi = kullanimSayisi + 1;
 
-    await adminSbUpdate('lisans_kodlari', lisans.id, {
+    // ── 1. Admin DB'de lisansı kullanıldı olarak işaretle ──
+    var lisansGuncellendi = await adminSbUpdate('lisans_kodlari', lisans.id, {
       kullanildi: yeniSayisi >= maxKullanim,
       kullanilan_musteri_id: musteriId || null,
       kullanim_tarihi: new Date().toISOString(),
       kullanim_sayisi: yeniSayisi,
       kullananlar: mevcutKullananlar
     });
+
+    if (!lisansGuncellendi) {
+      console.warn('[Plan] Lisans kodu DB güncellemesi başarısız — RLS yetkisi kontrol edin.');
+      _lisansSonuc('⚠️ Lisans kodu veritabanında güncellenemedi. Lütfen yöneticinizle iletişime geçin.', 'err');
+      btn.disabled = false;
+      btn.textContent = '🔑 Doğrula';
+      return;
+    }
 
     // Bitiş tarihini hesapla
     var bugun = new Date().toISOString().slice(0, 10);
@@ -264,7 +273,7 @@ async function lisansKoduDogrula() {
     else if (lisans.tur === 'omur') bitis.setFullYear(bitis.getFullYear() + 99);
     else bitis.setDate(bitis.getDate() + 30);
 
-    // Müşteri kaydını güncelle
+    // ── 2. Admin DB'de müşteri kaydını güncelle (opsiyonel) ──
     if (musteriId) {
       await adminSbUpdate('musteriler', musteriId, {
         lisans_tur: lisans.tur,
@@ -274,7 +283,20 @@ async function lisansKoduDogrula() {
       });
     }
 
-    // Yerel planı güncelle (lisansBitis ve lisansTur ile)
+    // ── 3. Ana Supabase'de burolar.plan güncelle (kalıcı) ──
+    try {
+      if (typeof sb !== 'undefined' && currentBuroId) {
+        await sb.from('burolar').update({
+          plan: planId,
+          lisans_bitis: bitis.toISOString().slice(0, 10),
+          lisans_tur: lisans.tur
+        }).eq('id', currentBuroId);
+      }
+    } catch(e3) {
+      console.warn('[Plan] burolar.plan güncelleme hatası:', e3.message);
+    }
+
+    // ── 4. Yerel planı güncelle (localStorage + state) ──
     planGuncelle(planId, {
       lisansBitis: bitis.toISOString().slice(0, 10),
       lisansTur: lisans.tur

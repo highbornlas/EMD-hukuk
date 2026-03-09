@@ -207,6 +207,18 @@ async function sbVeriYukle() {
       currentUser.buro_tel = buro.telefon || '';
       currentUser.buro_mail = buro.email || '';
       currentUser.buro_adres = buro.adres || '';
+
+      // Plan bilgisini Supabase'den oku → localStorage'a yaz (kalıcılık)
+      if (buro.plan && buro.plan !== 'deneme') {
+        try {
+          var lsData = JSON.parse(localStorage.getItem(SK) || '{}');
+          lsData.planId = buro.plan;
+          if (buro.lisans_bitis) lsData.lisansBitis = buro.lisans_bitis;
+          if (buro.lisans_tur) lsData.lisansTur = buro.lisans_tur;
+          lsData.planKullanici = kul.email;
+          localStorage.setItem(SK, JSON.stringify(lsData));
+        } catch(e) {}
+      }
     }
 
     // ensure arrays
