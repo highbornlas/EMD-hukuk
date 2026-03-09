@@ -54,6 +54,14 @@ var AdresWidget = (function() {
     if (_cache.districts[provinceId]) return Promise.resolve(_cache.districts[provinceId]);
     return _apiFetch('/districts?provinceId=' + provinceId + '&limit=1000').then(function(data) {
       if (!data) return [];
+      // Mahalleler ilçe verisinin içinde gömülü geliyor — ayrı endpoint yok
+      data.forEach(function(d) {
+        if (d.neighborhoods && d.neighborhoods.length) {
+          var neigh = d.neighborhoods.map(function(n) { return { id: n.id, name: n.name }; });
+          neigh.sort(function(a, b) { return a.name.localeCompare(b.name, 'tr'); });
+          _cache.neighborhoods[d.id] = neigh;
+        }
+      });
       data.sort(function(a, b) { return a.name.localeCompare(b.name, 'tr'); });
       _cache.districts[provinceId] = data;
       return data;
@@ -61,13 +69,9 @@ var AdresWidget = (function() {
   }
 
   function _getNeighborhoods(districtId) {
+    // Mahalleler _getDistricts'te cache'e alındı — ayrı API çağrısı yok
     if (_cache.neighborhoods[districtId]) return Promise.resolve(_cache.neighborhoods[districtId]);
-    return _apiFetch('/neighborhoods?districtId=' + districtId + '&limit=5000').then(function(data) {
-      if (!data) return [];
-      data.sort(function(a, b) { return a.name.localeCompare(b.name, 'tr'); });
-      _cache.neighborhoods[districtId] = data;
-      return data;
-    });
+    return Promise.resolve([]);
   }
 
   // ── DOM YARDIMCILARI ───────────────────────────────────────────
