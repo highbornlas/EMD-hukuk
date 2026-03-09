@@ -420,25 +420,19 @@ th.sort-th.desc::after{content:' ▼';font-size:8px;color:var(--gold);}
 .card-value.green{color:var(--green);}
 .card-value.gold{color:var(--gold);}
 
-/* ── Dashboard İçerik Max Genişlik (ultra-wide ekranlar) ── */
-.dash-container{max-width:1600px;}
+/* ── Dashboard İçerik Genişlik ── */
+.dash-container{width:100%;}
 
-/* ── Dashboard KPI Grid (4 kolon, max-width sınırlı) ── */
-.dash-kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;max-width:1200px;}
+/* ── Dashboard KPI Grid (4 kolon, full width) ── */
+.dash-kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;width:100%;}
 .dash-kpi .card{position:relative;overflow:hidden;}
 .dash-kpi .card .card-deco{position:absolute;right:-6px;bottom:-4px;font-size:38px;opacity:.06;pointer-events:none;line-height:1;}
 
-/* ── Dashboard Ana Grid (3 kolon, col-span destekli) ── */
-.dash-grid-main{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:18px;}
-.dash-grid-main .dash-panel{margin-bottom:0;display:flex;flex-direction:column;}
+/* ── Dashboard Widget Grid (3 kolon, satır yükseklikleri eşit) ── */
+.dash-grid-main{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;width:100%;align-items:stretch;}
+.dash-grid-main .dash-panel{margin-bottom:0;display:flex;flex-direction:column;min-height:0;}
 .dash-grid-main .dash-panel-body{padding:12px;overflow-y:auto;flex:1;max-height:300px;}
 .dash-grid-main .dash-panel.col-span-2{grid-column:span 2;}
-
-/* ── Dashboard Alt Grid (3 kolon, esnek) ── */
-.dash-grid-bottom{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
-.dash-grid-bottom .dash-panel{margin-bottom:0;display:flex;flex-direction:column;}
-.dash-grid-bottom .dash-panel-body{padding:12px;overflow-y:auto;flex:1;max-height:280px;}
-.dash-grid-bottom .dash-panel.col-span-2{grid-column:span 2;}
 
 /* ── Dashboard Panel Renkli Sol Kenar ── */
 .dash-panel.dp-blue{border-left:3px solid var(--blue);}
@@ -2296,10 +2290,8 @@ select:focus, textarea:focus {
   }
 
   /* Dashboard 3-kolon → 2-kolon */
-  .dash-grid-main { grid-template-columns: repeat(2, 1fr); grid-template-rows: auto; }
+  .dash-grid-main { grid-template-columns: repeat(2, 1fr); }
   .dash-grid-main .dash-panel.col-span-2 { grid-column: span 2; }
-  .dash-grid-bottom { grid-template-columns: repeat(2, 1fr); }
-  .dash-grid-bottom .dash-panel.col-span-2 { grid-column: span 2; }
   .dash-kpi { grid-template-columns: repeat(4, 1fr); }
   .header-yeni-btn span.yeni-btn-text { display: none; }
   .header-yeni-btn { padding: 7px 10px; }
@@ -2388,10 +2380,8 @@ select:focus, textarea:focus {
   #page-anasayfa > div[style*="grid-template-columns"] {
     grid-template-columns: 1fr !important;
   }
-  .dash-grid-main { grid-template-columns: 1fr !important; grid-template-rows: auto !important; }
+  .dash-grid-main { grid-template-columns: 1fr !important; }
   .dash-grid-main .dash-panel.col-span-2 { grid-column: span 1 !important; }
-  .dash-grid-bottom { grid-template-columns: 1fr !important; }
-  .dash-grid-bottom .dash-panel.col-span-2 { grid-column: span 1 !important; }
   .dash-kpi { grid-template-columns: repeat(2, 1fr) !important; }
 
   /* Form row'ları stack */

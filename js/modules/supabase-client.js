@@ -21,7 +21,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 async function sbKayitOl(email, sifre, ad, buroAd) {
   const { data, error } = await sb.auth.signUp({
     email, password: sifre,
-    options: { data: { ad } }
+    options: { data: { ad }, emailRedirectTo: window.location.origin }
   });
   if (error) throw error;
   // Admin DB'ye hemen kaydet — SIGNED_IN tetiklenmeden önce

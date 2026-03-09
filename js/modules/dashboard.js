@@ -407,7 +407,7 @@ function renderBugunAjanda() {
 // ================================================================
 
 function initDashDragDrop() {
-  var containers = document.querySelectorAll('#dash-grid-main, #dash-grid-bottom');
+  var containers = document.querySelectorAll('#dash-grid-main');
   containers.forEach(function(container) {
     var panels = container.querySelectorAll('.dash-panel');
     panels.forEach(function(panel) {
@@ -455,7 +455,7 @@ function _dashDrop(e) {
 
 function saveDashOrder() {
   var order = {};
-  ['dash-grid-main', 'dash-grid-bottom'].forEach(function(gid) {
+  ['dash-grid-main'].forEach(function(gid) {
     var container = document.getElementById(gid);
     if (!container) return;
     var ids = [];
@@ -469,7 +469,7 @@ function restoreDashOrder() {
   var saved;
   try { saved = JSON.parse(localStorage.getItem('dashboardSiralama')); } catch(e) { return; }
   if (!saved) return;
-  ['dash-grid-main', 'dash-grid-bottom'].forEach(function(gid) {
+  ['dash-grid-main'].forEach(function(gid) {
     var container = document.getElementById(gid);
     if (!container || !saved[gid]) return;
     saved[gid].forEach(function(id) {

@@ -927,16 +927,10 @@
   <!-- KPI KARTLARI — 4 kolon sabit -->
   <div class="dash-kpi" id="dash-cards"></div>
 
-  <!-- ANA GRID: 3 kolon, satır yükseklikleri eşit -->
+  <!-- DASHBOARD WIDGET GRID: 3 sütun sabit -->
   <div class="dash-grid-main" id="dash-grid-main">
-    <!-- SATIR 1: Duruşmalar / Performans / Kritik Süreler -->
-    <div class="section dash-panel dp-blue" id="dp-durusmalar">
-      <div class="section-header">
-        <div class="section-title">⚖️ Yaklaşan Duruşmalar</div>
-        <a onclick="showPage('takvim',document.getElementById('ni-takvim'))" style="font-size:11px;color:var(--gold);cursor:pointer">Takvim ›</a>
-      </div>
-      <div class="section-body dash-panel-body"><div id="dash-durusmalar"></div></div>
-    </div>
+
+    <!-- SATIR 1: Aylık Performans (2/3) + Kritik Süreler (1/3) -->
     <div class="section dash-panel dp-green col-span-2" id="dp-performans">
       <div class="section-header">
         <div class="section-title">💰 Aylık Performans</div>
@@ -951,7 +945,14 @@
       <div class="section-body dash-panel-body"><div id="dash-sureler"></div></div>
     </div>
 
-    <!-- SATIR 2: Görevler / Vadesi Geçen / Menfaat -->
+    <!-- SATIR 2: Yaklaşan Duruşmalar + Acil Görevler + Finansal Uyarılar -->
+    <div class="section dash-panel dp-blue" id="dp-durusmalar">
+      <div class="section-header">
+        <div class="section-title">⚖️ Yaklaşan Duruşmalar</div>
+        <a onclick="showPage('takvim',document.getElementById('ni-takvim'))" style="font-size:11px;color:var(--gold);cursor:pointer">Takvim ›</a>
+      </div>
+      <div class="section-body dash-panel-body"><div id="dash-durusmalar"></div></div>
+    </div>
     <div class="section dash-panel dp-purple" id="dp-gorevler">
       <div class="section-header">
         <div class="section-title">✅ Acil Görevler</div>
@@ -966,23 +967,8 @@
       </div>
       <div class="section-body dash-panel-body"><div id="dash-vadesi-gecen"></div></div>
     </div>
-    <div class="section dash-panel dp-red" id="dp-menfaat">
-      <div class="section-header">
-        <div class="section-title">🔍 Menfaat Çakışması</div>
-        <button class="btn btn-outline btn-sm" onclick="MenfaatKontrol.raporGoster()" style="border-color:var(--red);color:var(--red);font-size:10px;padding:2px 8px">Tara</button>
-      </div>
-      <div class="section-body dash-panel-body"><div id="dash-menfaat"></div></div>
-    </div>
-  </div>
 
-  <!-- ALT GRID: 2 kolon, eşit yükseklik -->
-  <div class="dash-grid-bottom" id="dash-grid-bottom">
-    <div class="section dash-panel dp-blue col-span-2" id="dp-aktivite">
-      <div class="section-header">
-        <div class="section-title">📊 Son Aktiviteler</div>
-      </div>
-      <div class="section-body dash-panel-body"><div id="dash-aktivite"></div></div>
-    </div>
+    <!-- SATIR 3: Bugünkü Ajanda + Devam Eden Hizmetler + Menfaat Çatışması -->
     <div class="section dash-panel dp-blue" id="dp-bugun-ajanda">
       <div class="section-header">
         <div class="section-title">📋 Bugünkü Ajanda</div>
@@ -997,6 +983,14 @@
       </div>
       <div class="section-body dash-panel-body"><div id="dash-danismanlik"></div></div>
     </div>
+    <div class="section dash-panel dp-red" id="dp-menfaat">
+      <div class="section-header">
+        <div class="section-title">🔍 Menfaat Çakışması</div>
+        <button class="btn btn-outline btn-sm" onclick="MenfaatKontrol.raporGoster()" style="border-color:var(--red);color:var(--red);font-size:10px;padding:2px 8px">Tara</button>
+      </div>
+      <div class="section-body dash-panel-body"><div id="dash-menfaat"></div></div>
+    </div>
+
   </div>
 </div>
 
