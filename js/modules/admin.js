@@ -41,9 +41,9 @@ async function adminSbPost(tablo, data) {
 }
 
 async function adminSbUpdate(tablo, id, data) {
-  if (!ADMIN_SB_URL || !ADMIN_SB_KEY) return;
+  if (!ADMIN_SB_URL || !ADMIN_SB_KEY) return false;
   try {
-    await fetch(`${ADMIN_SB_URL}/rest/v1/${tablo}?id=eq.${id}`, {
+    const res = await fetch(`${ADMIN_SB_URL}/rest/v1/${tablo}?id=eq.${id}`, {
       method: 'PATCH',
       headers: {
         'apikey': ADMIN_SB_KEY,
@@ -52,7 +52,15 @@ async function adminSbUpdate(tablo, id, data) {
       },
       body: JSON.stringify(data)
     });
-  } catch(e) {}
+    if (!res.ok) {
+      console.warn(`[Admin] PATCH ${tablo} hatası: ${res.status}`, await res.text().catch(()=>''));
+      return false;
+    }
+    return true;
+  } catch(e) {
+    console.warn(`[Admin] PATCH ${tablo} ağ hatası:`, e.message);
+    return false;
+  }
 }
 
 async function adminSbGet(tablo, filtre) {
@@ -199,14 +207,18 @@ async function destekTalebiGonder() {
   var turEmoji = { sorun: '🐛', ozellik: '💡', soru: '❓', oneri: '📝' };
   var turLabel = { sorun: 'Hata', ozellik: 'Özellik', soru: 'Soru', oneri: 'Öneri' };
 
+  var tamMesaj = mesaj + '\n\n— Öncelik: ' + oncelik + '\n— Tür: ' + (turLabel[tur] || tur) + '\n— Versiyon: v2.1.0\n— Platform: ' + (navigator.userAgent.includes('Electron') ? 'Desktop' : 'Web');
+  var simdi = new Date().toISOString();
+
   var data = {
     id: (typeof uid === 'function') ? uid() : crypto.randomUUID(),
     musteri_id: musteriId || null,
     email: email,
     konu: '[' + (turLabel[tur] || tur) + '] ' + konu,
-    mesaj: mesaj + '\n\n— Öncelik: ' + oncelik + '\n— Tür: ' + (turLabel[tur] || tur) + '\n— Versiyon: v2.1.0\n— Platform: ' + (navigator.userAgent.includes('Electron') ? 'Desktop' : 'Web'),
+    mesaj: tamMesaj,
+    mesajlar: [{ gonderen: 'musteri', mesaj: tamMesaj, tarih: simdi }],
     durum: 'bekliyor',
-    created_at: new Date().toISOString()
+    created_at: simdi
   };
 
   // Önce musteri_id ile dene, foreign key hatası alırsa musteri_id'siz tekrar dene
@@ -302,7 +314,8 @@ function destekFormunuSifirla() {
   }
 }
 
-// ── Geçmiş Destek Taleplerini Yükle ─────────────────────────
+// ── Geçmiş Destek Taleplerini Yükle (Kompakt Liste) ──────────
+var _destekTalepler = [];
 async function destekGecmisiYukle() {
   if (!ADMIN_SB_URL || !ADMIN_SB_KEY) return;
 
@@ -318,45 +331,139 @@ async function destekGecmisiYukle() {
   if (!el) return;
 
   try {
-    var talepler = await adminSbGet('destek_talepleri', 'email=eq.' + encodeURIComponent(email) + '&order=created_at.desc&limit=10');
-    if (!talepler || !talepler.length) {
+    _destekTalepler = await adminSbGet('destek_talepleri', 'email=eq.' + encodeURIComponent(email) + '&order=created_at.desc&limit=20');
+    if (!_destekTalepler || !_destekTalepler.length) {
       el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-dim);font-size:13px">Henüz destek talebiniz yok</div>';
       return;
     }
 
-    var durumBadge = {
-      bekliyor:    '<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;background:rgba(230,126,34,.12);color:#e67e22">Bekliyor</span>',
-      inceleniyor: '<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;background:rgba(52,152,219,.12);color:#3498db">İnceleniyor</span>',
-      cozuldu:     '<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;background:rgba(39,174,96,.12);color:#27ae60">Çözüldü</span>'
-    };
+    var durumRenk = { bekliyor: '#e67e22', inceleniyor: '#3498db', cozuldu: '#27ae60' };
+    var durumLabel = { bekliyor: 'Bekliyor', inceleniyor: 'İnceleniyor', cozuldu: 'Çözüldü' };
 
-    el.innerHTML = talepler.map(function(t) {
-      var tarih = t.created_at ? new Date(t.created_at).toLocaleDateString('tr-TR', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '';
-      // Mesajın özet kısmını göster (öncelik/tür satırlarını çıkar)
-      var mesajOzet = (t.mesaj || '').split('\n\n— Öncelik:')[0] || '';
-      if (mesajOzet.length > 120) mesajOzet = mesajOzet.slice(0, 120) + '…';
-
-      return '<div style="padding:14px;margin-bottom:10px;background:var(--surface2);border-radius:var(--radius);border:1px solid var(--border)">' +
-        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px">' +
-          '<div style="min-width:0;flex:1">' +
-            '<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">' + (t.konu || '—') + '</div>' +
-            '<div style="font-size:11px;color:var(--text-muted)">' + tarih + '</div>' +
-          '</div>' +
-          '<div style="flex-shrink:0">' + (durumBadge[t.durum] || durumBadge.bekliyor) + '</div>' +
+    el.innerHTML = _destekTalepler.map(function(t, idx) {
+      var tarih = t.created_at ? new Date(t.created_at).toLocaleDateString('tr-TR', { day:'2-digit', month:'short' }) : '';
+      var renk = durumRenk[t.durum] || durumRenk.bekliyor;
+      var yanitVar = t.admin_notu || (t.mesajlar && t.mesajlar.some(function(m) { return m.gonderen === 'admin'; }));
+      return '<div onclick="destekDetayGoster(' + idx + ')" style="padding:10px 14px;margin-bottom:4px;background:var(--surface2);border-radius:var(--radius);cursor:pointer;display:flex;align-items:center;gap:10px;transition:background .15s" onmouseover="this.style.background=\'var(--surface3,#1e1c18)\'" onmouseout="this.style.background=\'var(--surface2)\'">' +
+        '<div style="width:6px;height:6px;border-radius:50%;background:' + renk + ';flex-shrink:0"></div>' +
+        '<div style="flex:1;min-width:0">' +
+          '<div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (t.konu || '—') + '</div>' +
         '</div>' +
-        // Kullanıcının mesajı
-        '<div style="padding:10px 12px;background:var(--surface);border-radius:6px;font-size:12px;color:var(--text-muted);line-height:1.5;margin-bottom:6px">' +
-          '<div style="font-size:10px;font-weight:600;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase">Mesajınız</div>' +
-          mesajOzet +
-        '</div>' +
-        // Admin yanıtı
-        (t.admin_notu ? '<div style="padding:10px 12px;background:var(--gold-dim,rgba(201,168,76,.08));border-radius:6px;border-left:3px solid var(--gold);font-size:12px;color:var(--text);line-height:1.5">' +
-          '<div style="font-size:10px;font-weight:600;color:var(--gold);margin-bottom:4px;text-transform:uppercase">💬 Ekip Yanıtı</div>' +
-          t.admin_notu +
-        '</div>' : '<div style="font-size:11px;color:var(--text-dim);font-style:italic">Henüz yanıt verilmedi</div>') +
+        (yanitVar ? '<span style="font-size:10px;padding:1px 6px;border-radius:8px;background:rgba(39,174,96,.12);color:#27ae60;font-weight:600">yanıt</span>' : '') +
+        '<span style="font-size:10px;padding:2px 7px;border-radius:8px;background:' + renk + '18;color:' + renk + ';font-weight:700">' + (durumLabel[t.durum] || 'Bekliyor') + '</span>' +
+        '<span style="font-size:11px;color:var(--text-muted);flex-shrink:0;min-width:44px;text-align:right">' + tarih + '</span>' +
       '</div>';
     }).join('');
   } catch(e) {
     console.warn('[Destek] Geçmiş yüklenemedi:', e.message);
+  }
+}
+
+// ── Talep Detay Modalı Aç ────────────────────────────────────
+function destekDetayGoster(idx) {
+  var t = _destekTalepler[idx];
+  if (!t) return;
+
+  var modal = document.getElementById('destek-talep-modal');
+  if (!modal) return;
+
+  // Başlık
+  var durumLabel = { bekliyor: 'Bekliyor', inceleniyor: 'İnceleniyor', cozuldu: 'Çözüldü' };
+  var durumRenk = { bekliyor: '#e67e22', inceleniyor: '#3498db', cozuldu: '#27ae60' };
+  var renk = durumRenk[t.durum] || durumRenk.bekliyor;
+  document.getElementById('dt-konu').textContent = t.konu || '—';
+  document.getElementById('dt-durum').textContent = durumLabel[t.durum] || 'Bekliyor';
+  document.getElementById('dt-durum').style.cssText = 'display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;background:' + renk + '18;color:' + renk;
+  document.getElementById('dt-tarih').textContent = t.created_at ? new Date(t.created_at).toLocaleDateString('tr-TR', { day:'2-digit', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '';
+
+  // Konuşma geçmişini oluştur
+  var konusma = [];
+  // mesajlar JSONB dizisi varsa onu kullan
+  if (t.mesajlar && t.mesajlar.length) {
+    konusma = t.mesajlar;
+  } else {
+    // Geriye uyumluluk: eski mesaj + admin_notu'ndan konuşma oluştur
+    if (t.mesaj) {
+      var temizMesaj = (t.mesaj || '').split('\n\n— Öncelik:')[0] || t.mesaj;
+      konusma.push({ gonderen: 'musteri', mesaj: temizMesaj, tarih: t.created_at });
+    }
+    if (t.admin_notu) {
+      konusma.push({ gonderen: 'admin', mesaj: t.admin_notu, tarih: '' });
+    }
+  }
+
+  var konusmaEl = document.getElementById('dt-konusma');
+  if (!konusma.length) {
+    konusmaEl.innerHTML = '<div style="text-align:center;color:var(--text-dim);font-size:13px;padding:20px">Henüz mesaj yok</div>';
+  } else {
+    konusmaEl.innerHTML = konusma.map(function(m) {
+      var benMi = m.gonderen !== 'admin';
+      var zaman = m.tarih ? new Date(m.tarih).toLocaleDateString('tr-TR', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) : '';
+      return '<div style="display:flex;justify-content:' + (benMi ? 'flex-start' : 'flex-end') + ';margin-bottom:10px">' +
+        '<div style="max-width:80%;padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.6;' +
+          (benMi
+            ? 'background:var(--surface2);color:var(--text);border-bottom-left-radius:4px'
+            : 'background:var(--gold-dim,rgba(201,168,76,.12));color:var(--text);border-bottom-right-radius:4px;border-left:3px solid var(--gold)') +
+        '">' +
+          '<div style="font-size:10px;font-weight:600;margin-bottom:4px;color:' + (benMi ? 'var(--text-muted)' : 'var(--gold)') + '">' +
+            (benMi ? '🧑 Siz' : '💬 Ekip') + (zaman ? ' · ' + zaman : '') +
+          '</div>' +
+          m.mesaj +
+        '</div>' +
+      '</div>';
+    }).join('');
+    // Konuşmayı en alta kaydır
+    setTimeout(function() { konusmaEl.scrollTop = konusmaEl.scrollHeight; }, 50);
+  }
+
+  // Yanıt alanını göster/gizle (çözülmüş taleplere de yanıt verilebilir)
+  document.getElementById('dt-yanit-alani').value = '';
+  modal.setAttribute('data-talep-idx', idx);
+  modal.classList.add('open');
+}
+
+// ── Kullanıcı Yanıtı Gönder ─────────────────────────────────
+async function destekYanitGonder() {
+  var modal = document.getElementById('destek-talep-modal');
+  var idx = parseInt(modal.getAttribute('data-talep-idx'));
+  var t = _destekTalepler[idx];
+  if (!t) return;
+
+  var mesaj = document.getElementById('dt-yanit-alani').value.trim();
+  if (!mesaj) { notify('Mesaj yazın.', true); return; }
+
+  var btn = document.getElementById('dt-gonder-btn');
+  btn.disabled = true;
+  btn.textContent = 'Gönderiliyor...';
+
+  var mevcutMesajlar = t.mesajlar || [];
+  // Eğer mesajlar boşsa, mevcut mesaj + admin_notu'nu da ekle
+  if (!mevcutMesajlar.length) {
+    if (t.mesaj) {
+      var temizMesaj = (t.mesaj || '').split('\n\n— Öncelik:')[0] || t.mesaj;
+      mevcutMesajlar.push({ gonderen: 'musteri', mesaj: temizMesaj, tarih: t.created_at });
+    }
+    if (t.admin_notu) {
+      mevcutMesajlar.push({ gonderen: 'admin', mesaj: t.admin_notu, tarih: '' });
+    }
+  }
+  mevcutMesajlar.push({ gonderen: 'musteri', mesaj: mesaj, tarih: new Date().toISOString() });
+
+  var basarili = await adminSbUpdate('destek_talepleri', t.id, {
+    mesajlar: mevcutMesajlar,
+    durum: 'bekliyor'
+  });
+
+  btn.disabled = false;
+  btn.textContent = '📨 Gönder';
+
+  if (basarili) {
+    t.mesajlar = mevcutMesajlar;
+    t.durum = 'bekliyor';
+    destekDetayGoster(idx);
+    destekGecmisiYukle();
+    notify('✅ Yanıtınız gönderildi');
+  } else {
+    notify('Yanıt gönderilemedi.', true);
   }
 }

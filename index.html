@@ -3235,6 +3235,26 @@
   </div>
 </div>
 
+<!-- DESTEK TALEP DETAY MODAL -->
+<div class="modal-overlay" id="destek-talep-modal">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-title" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span>🎧</span>
+      <span id="dt-konu" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis">—</span>
+      <span id="dt-durum">—</span>
+    </div>
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:14px" id="dt-tarih"></div>
+    <div id="dt-konusma" style="max-height:340px;overflow-y:auto;padding:4px;margin-bottom:14px"></div>
+    <div style="display:flex;gap:8px">
+      <textarea id="dt-yanit-alani" rows="2" placeholder="Yanıtınızı yazın..." style="flex:1;resize:none"></textarea>
+      <button class="btn btn-gold" id="dt-gonder-btn" onclick="destekYanitGonder()" style="align-self:flex-end;white-space:nowrap">📨 Gönder</button>
+    </div>
+    <div class="modal-footer" style="margin-top:10px">
+      <button class="btn" onclick="closeModal('destek-talep-modal')">Kapat</button>
+    </div>
+  </div>
+</div>
+
 <!-- SÜPER WHATSAPP / BİLDİRİM MODAL -->
 <div class="modal-overlay" id="wp-modal">
   <div class="modal" style="max-width:520px">
