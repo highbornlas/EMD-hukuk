@@ -8,8 +8,8 @@
 // - Diğer → Network-First with Cache Fallback
 // ================================================================
 
-const CACHE_NAME = 'lexbase-v1';
-const CACHE_VERSION = 1;
+const CACHE_NAME = 'lexbase-v3';
+const CACHE_VERSION = 3;
 
 // Önceden cache'lenecek dosyalar
 const PRECACHE = [
@@ -21,15 +21,19 @@ const PRECACHE = [
   '/icons/icon-512.svg',
 ];
 
-// Dinamik cache'lenecek dosya kalıpları
+// Dinamik cache'lenecek dosya kalıpları (Cache-First — sadece statik asset'ler)
 const CACHEABLE = [
-  /\.js$/,
-  /\.css$/,
   /\.svg$/,
   /\.png$/,
   /\.woff2?$/,
   /fonts\.googleapis/,
   /cdnjs\.cloudflare/,
+];
+
+// JS ve CSS → Network-First (her deploy'da güncel kod gelsin)
+const NETWORK_FIRST_ASSETS = [
+  /\.js$/,
+  /\.css$/,
 ];
 
 // Kesinlikle cache'lenmeyecek
@@ -79,7 +83,13 @@ self.addEventListener('fetch', function(event) {
   // Supabase / API → cache'leme
   if (NO_CACHE.some(function(p) { return p.test(url); })) return;
 
-  // Statik dosyalar → Cache-First
+  // JS ve CSS → Network-First (her deploy güncel)
+  if (NETWORK_FIRST_ASSETS.some(function(p) { return p.test(url); })) {
+    event.respondWith(networkFirst(event.request));
+    return;
+  }
+
+  // Statik dosyalar (resim, font) → Cache-First
   if (CACHEABLE.some(function(p) { return p.test(url); })) {
     event.respondWith(cacheFirst(event.request));
     return;
