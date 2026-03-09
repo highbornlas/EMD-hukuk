@@ -554,4 +554,6 @@ function uygulamayiBaslat() {
   updateBadges();
   // Bildirim sistemi başlat
   if (typeof Bildirim !== 'undefined') Bildirim.baslat();
+  // Deneme süresi dolduysa tam ekran engel koy
+  if (typeof planEngelKontrol === 'function') planEngelKontrol();
 }

@@ -471,6 +471,70 @@ tr:hover td { background: rgba(255,255,255,.015); }
   .filter-input { min-width: 100%; }
   .page-header { flex-direction: column; }
 }
+
+/* ── MÜŞTERİ PROFİL SAYFASI ──────────────────────────── */
+.profil-back {
+  background: transparent; border: 1px solid var(--border); color: var(--text-muted);
+  padding: 6px 14px; border-radius: var(--radius); cursor: pointer; font-size: 12px;
+  margin-bottom: 16px; transition: all .2s;
+}
+.profil-back:hover { color: var(--gold); border-color: var(--gold); }
+.profil-hero {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 28px 32px; display: flex; align-items: center; gap: 24px; margin-bottom: 20px;
+}
+.profil-avatar {
+  width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, var(--gold), #e8b94a);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px; font-weight: 800; color: #000; flex-shrink: 0;
+  text-transform: uppercase; letter-spacing: 1px;
+}
+.profil-info { flex: 1; min-width: 0; }
+.profil-name { font-size: 22px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+.profil-meta { display: flex; flex-wrap: wrap; gap: 16px; font-size: 12px; color: var(--text-muted); margin-bottom: 10px; }
+.profil-meta span { display: flex; align-items: center; gap: 4px; }
+.profil-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.profil-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.profil-tabs {
+  display: flex; gap: 0; border-bottom: 2px solid var(--border); margin-bottom: 20px;
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+}
+.profil-tab {
+  padding: 10px 18px; background: transparent; border: none; color: var(--text-muted);
+  font-size: 13px; cursor: pointer; white-space: nowrap; border-bottom: 2px solid transparent;
+  margin-bottom: -2px; transition: all .2s; font-weight: 600;
+}
+.profil-tab:hover { color: var(--text); }
+.profil-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+.profil-tab-content { display: none; }
+.profil-tab-content.active { display: block; }
+.profil-kpi { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.profil-kpi-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 16px; text-align: center;
+}
+.profil-kpi-val { font-size: 26px; font-weight: 800; font-family: 'Playfair Display', serif; }
+.profil-kpi-label { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+.activity-chart { display: flex; align-items: flex-end; gap: 3px; height: 80px; margin: 20px 0; }
+.activity-bar {
+  flex: 1; min-width: 6px; max-width: 18px; background: var(--gold); border-radius: 3px 3px 0 0;
+  transition: height .3s; cursor: pointer; position: relative;
+}
+.activity-bar:hover { opacity: .8; }
+.activity-bar[data-tip]:hover::after {
+  content: attr(data-tip); position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+  background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+  padding: 3px 8px; font-size: 10px; white-space: nowrap; color: var(--text); z-index: 10;
+}
+.name-link { cursor: pointer; transition: color .15s; }
+.name-link:hover { color: var(--gold) !important; text-decoration: underline; }
+@media (max-width: 768px) {
+  .profil-hero { flex-direction: column; text-align: center; padding: 20px; }
+  .profil-meta { justify-content: center; }
+  .profil-badges { justify-content: center; }
+  .profil-actions { justify-content: center; }
+  .profil-kpi { grid-template-columns: repeat(2, 1fr); }
+}
 </style>
 </head>
 <body>
@@ -792,6 +856,24 @@ tr:hover td { background: rgba(255,255,255,.015); }
   </div>
 </div>
 
+<!-- ── MÜŞTERİ PROFİL SAYFASI ──────────────────────────────── -->
+<div class="page" id="page-profil">
+  <button class="profil-back" onclick="profilGeri()">← Geri Dön</button>
+  <div class="profil-hero" id="profil-hero"></div>
+  <div class="profil-tabs">
+    <button class="profil-tab active" onclick="profilTab('ozet')">📊 Özet</button>
+    <button class="profil-tab" onclick="profilTab('oturumlar')">📋 Oturum Geçmişi</button>
+    <button class="profil-tab" onclick="profilTab('destek')">🎧 Destek Talepleri</button>
+    <button class="profil-tab" onclick="profilTab('finansal')">💰 Finansal</button>
+    <button class="profil-tab" onclick="profilTab('notlar')">📝 Notlar</button>
+  </div>
+  <div class="profil-tab-content active" id="profil-ozet"></div>
+  <div class="profil-tab-content" id="profil-oturumlar"></div>
+  <div class="profil-tab-content" id="profil-destek"></div>
+  <div class="profil-tab-content" id="profil-finansal"></div>
+  <div class="profil-tab-content" id="profil-notlar"></div>
+</div>
+
 </div><!-- /main -->
 </div><!-- /app -->
 
@@ -1002,6 +1084,11 @@ tr:hover td { background: rgba(255,255,255,.015); }
 // ── SUPABASE CONFIG ─────────────────────────────────────────
 const SB_URL = 'https://ewvbpfsgmjghmbnkuvpx.supabase.co';
 const SB_KEY = 'sb_publishable_ccz6M_f4JCnnQzr0auQD7A_-A2YGb91';
+
+// ── ANA PROJE SUPABASE (kullanıcı planı düşürme için) ──
+const ANA_SB_URL = 'https://omsahlgcuinyfvcuigfj.supabase.co';
+const ANA_SB_KEY = 'sb_publishable_iUS5jIX8NYPjdstm5U2xkg_MFXprA70';
+
 const ADMIN_SIFRE_HASH = 'f9370fe17bb408fa1101ce794f92f8a936343d4df7d0d7666164368d0b9c19ed';
 const SESSION_KEY = 'lexbase_admin_session';
 const INACTIVITY_LIMIT = 30 * 60 * 1000; // 30 dakika
@@ -1270,7 +1357,8 @@ function showPage(id) {
     loglar: renderLoglar,
     duyurular: renderDuyurular,
     destek: renderDestek,
-    lisanslar: renderLisanslar
+    lisanslar: renderLisanslar,
+    profil: renderProfil
   };
   if (renderMap[id]) renderMap[id]();
 
@@ -1457,8 +1545,11 @@ function renderDashboard() {
   if (sonGirisler.length) {
     sgEl.innerHTML = sonGirisler.map(function(l) {
       var m = musteriler.find(function(x) { return x.id === l.musteri_id; });
+      var adHtml = m
+        ? '<span class="name-link" onclick="openProfil(\'' + m.id + '\',\'dashboard\')">' + esc(m.ad_soyad) + '</span>'
+        : esc(l.email || '—');
       return '<div style="display:flex;justify-content:space-between;align-items:center;padding:11px 20px;border-bottom:1px solid var(--border);font-size:12px">' +
-        '<span style="display:flex;align-items:center"><span class="status-dot aktif"></span>' + esc(m ? m.ad_soyad : l.email || '—') + '</span>' +
+        '<span style="display:flex;align-items:center"><span class="status-dot aktif"></span>' + adHtml + '</span>' +
         '<span style="color:var(--text-muted)">' + fmtDT(l.giris_tarihi) + '</span>' +
       '</div>';
     }).join('');
@@ -1479,7 +1570,7 @@ function renderDashboard() {
       var kalan = Math.ceil((new Date(m.lisans_bitis) - new Date()) / (1000 * 60 * 60 * 24));
       var renk = kalan <= 0 ? 'var(--red)' : kalan <= 7 ? 'var(--red)' : kalan <= 14 ? 'var(--orange)' : 'var(--gold)';
       return '<div style="display:flex;justify-content:space-between;align-items:center;padding:11px 20px;border-bottom:1px solid var(--border);font-size:12px">' +
-        '<div><div style="font-weight:600">' + esc(m.ad_soyad) + '</div><div style="font-size:11px;color:var(--text-muted)">' + esc(m.buro_ad || '') + '</div></div>' +
+        '<div><div style="font-weight:600" class="name-link" onclick="openProfil(\'' + m.id + '\',\'dashboard\')">' + esc(m.ad_soyad) + '</div><div style="font-size:11px;color:var(--text-muted)">' + esc(m.buro_ad || '') + '</div></div>' +
         '<div style="text-align:right"><div style="color:' + renk + ';font-weight:700;font-size:13px">' + (kalan <= 0 ? 'DOLDU' : kalan + ' gün') + '</div><div style="color:var(--text-muted);font-size:11px">' + fmtD(m.lisans_bitis) + '</div></div>' +
       '</div>';
     }).join('');
@@ -1529,7 +1620,7 @@ function renderMusteriler() {
     var vadeStil = kalan === null ? '' : kalan <= 0 ? 'color:var(--red);font-weight:700' : kalan <= 7 ? 'color:var(--red)' : kalan <= 30 ? 'color:var(--orange)' : '';
 
     return '<tr>' +
-      '<td><div class="td-name">' + esc(m.ad_soyad) + '</div><div class="td-sub">' + esc(m.email) + '</div></td>' +
+      '<td><div class="td-name name-link" onclick="openProfil(\'' + m.id + '\',\'musteriler\')">' + esc(m.ad_soyad) + '</div><div class="td-sub">' + esc(m.email) + '</div></td>' +
       '<td style="font-size:12px">' + esc(m.buro_ad || '—') + '</td>' +
       '<td><span class="badge badge-' + (m.lisans_tur || 'deneme') + '">' + esc(m.lisans_tur || 'deneme') + '</span></td>' +
       '<td><span class="status-dot ' + (m.durum || '') + '"></span><span class="badge badge-' + (m.durum || 'pasif') + '">' + esc(m.durum || '—') + '</span></td>' +
@@ -1714,7 +1805,7 @@ function renderAbonelikler() {
     var sonraki = m.sonraki_odeme_tarihi ? new Date(m.sonraki_odeme_tarihi) : null;
     var gecikti = sonraki && sonraki < bugun;
     return '<tr>' +
-      '<td><div class="td-name">' + esc(m.ad_soyad) + '</div><div class="td-sub">' + esc(m.buro_ad || '') + '</div></td>' +
+      '<td><div class="td-name name-link" onclick="openProfil(\'' + m.id + '\',\'abonelikler\')">' + esc(m.ad_soyad) + '</div><div class="td-sub">' + esc(m.buro_ad || '') + '</div></td>' +
       '<td><span class="badge badge-' + (m.lisans_tur || 'deneme') + '">' + esc(m.lisans_tur || '') + '</span></td>' +
       '<td style="font-weight:600;color:var(--gold)">' + (m.odeme_tutari ? fmt(m.odeme_tutari) : '—') + '</td>' +
       '<td style="font-size:12px">' + fmtD(m.son_odeme_tarihi) + '</td>' +
@@ -1755,8 +1846,11 @@ function renderLoglar() {
 
   tb.innerHTML = sayfaListe.map(function(l) {
     var m = musteriler.find(function(x) { return x.id === l.musteri_id; });
+    var adHtml = m
+      ? '<div class="td-name name-link" onclick="openProfil(\'' + m.id + '\',\'loglar\')">' + esc(m.ad_soyad) + '</div>'
+      : '<div class="td-name">' + esc(l.email || '—') + '</div>';
     return '<tr>' +
-      '<td><div class="td-name">' + esc(m ? m.ad_soyad : l.email || '—') + '</div><div class="td-sub">' + esc(l.email || '') + '</div></td>' +
+      '<td>' + adHtml + '<div class="td-sub">' + esc(l.email || '') + '</div></td>' +
       '<td style="font-size:12px">' + fmtDT(l.giris_tarihi) + '</td>' +
       '<td style="font-size:12px">' + (l.sure_dakika ? l.sure_dakika + ' dk' : '—') + '</td>' +
       '<td style="text-align:center;font-size:12px">' + (l.dava_sayisi != null ? l.dava_sayisi : '—') + '</td>' +
@@ -1936,7 +2030,13 @@ function renderDestek() {
     html += '<div style="display:flex;align-items:center;gap:8px;min-width:0">';
     html += '<span style="font-size:16px">' + (acik ? '📂' : '📁') + '</span>';
     html += '<div style="min-width:0">';
-    html += '<div style="font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(g.ad || g.email) + '</div>';
+    // Müşteri adı tıklanabilir (profil sayfasına git)
+    var destekMusteri = musteriler.find(function(x) { return x.email && x.email.toLowerCase() === g.email.toLowerCase(); });
+    if (destekMusteri) {
+      html += '<div style="font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" class="name-link" onclick="event.stopPropagation();openProfil(\'' + destekMusteri.id + '\',\'destek\')">' + esc(g.ad || g.email) + '</div>';
+    } else {
+      html += '<div style="font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(g.ad || g.email) + '</div>';
+    }
     if (g.ad) html += '<div style="font-size:11px;color:var(--text-muted)">' + esc(g.email) + '</div>';
     html += '</div>';
     html += '</div>';
@@ -2241,7 +2341,7 @@ function lisansKullananlarGoster(id) {
       listeEl.innerHTML =
         '<div style="background:var(--surface2);border-radius:var(--radius);padding:14px;display:flex;align-items:center;justify-content:space-between;gap:10px">' +
           '<div>' +
-            '<div style="font-weight:600;font-size:14px">' + esc(m ? m.ad_soyad : 'Bilinmeyen Kullanıcı') + '</div>' +
+            '<div style="font-weight:600;font-size:14px" ' + (m ? 'class="name-link" onclick="closeModal(\'kullananlar-modal\');openProfil(\'' + m.id + '\',\'lisanslar\')"' : '') + '>' + esc(m ? m.ad_soyad : 'Bilinmeyen Kullanıcı') + '</div>' +
             '<div style="font-size:12px;color:var(--text-muted)">' + esc(m ? m.email : lisans.kullanilan_musteri_id) + '</div>' +
             '<div style="font-size:11px;color:var(--text-muted);margin-top:4px">' + (lisans.kullanim_tarihi ? fmtD(lisans.kullanim_tarihi) : '—') + '</div>' +
           '</div>' +
@@ -2256,9 +2356,13 @@ function lisansKullananlarGoster(id) {
   } else {
     listeEl.innerHTML = kullananlar.map(function(k, idx) {
       var aktif = k.aktif !== false;
+      var kMusteri = k.email ? musteriler.find(function(x) { return x.email && x.email.toLowerCase() === k.email.toLowerCase(); }) : null;
+      var adClick = kMusteri
+        ? 'class="name-link" onclick="closeModal(\'kullananlar-modal\');openProfil(\'' + kMusteri.id + '\',\'lisanslar\')"'
+        : '';
       return '<div style="background:var(--surface2);border-radius:var(--radius);padding:12px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:10px">' +
         '<div>' +
-          '<div style="font-weight:600;font-size:14px">' + esc(k.ad_soyad || 'İsimsiz') + '</div>' +
+          '<div style="font-weight:600;font-size:14px" ' + adClick + '>' + esc(k.ad_soyad || 'İsimsiz') + '</div>' +
           '<div style="font-size:12px;color:var(--text-muted)">' + esc(k.email || '—') + '</div>' +
           '<div style="font-size:11px;color:var(--text-muted);margin-top:4px">' + (k.tarih ? fmtD(k.tarih) : '—') + '</div>' +
         '</div>' +
@@ -2284,6 +2388,389 @@ function kullananMusteriyeGit(aramaMetni) {
   }
 }
 
+// ═══════════════════════════════════════════════════════════
+// MÜŞTERİ PROFİL SAYFASI
+// ═══════════════════════════════════════════════════════════
+var _profilMusteri = null;
+var _profilLoglar = [];
+var _profilDestekler = [];
+var _profilLisanslar = [];
+var _profilOncekiSayfa = 'musteriler';
+var _profilOturumSayfa = 1;
+var PROFIL_LOG_PER_PAGE = 20;
+
+function openProfil(musteriId, oncekiSayfa) {
+  _profilMusteri = musteriler.find(function(m) { return m.id === musteriId; });
+  if (!_profilMusteri) return notify('Müşteri bulunamadı', 'err');
+  _profilOncekiSayfa = oncekiSayfa || 'musteriler';
+  _profilOturumSayfa = 1;
+
+  // Loglar filtrele
+  _profilLoglar = loglar.filter(function(l) {
+    return l.musteri_id === musteriId || (l.email && _profilMusteri.email && l.email.toLowerCase() === _profilMusteri.email.toLowerCase());
+  }).sort(function(a, b) {
+    return new Date(b.giris_tarihi || 0) - new Date(a.giris_tarihi || 0);
+  });
+
+  // Destek filtrele
+  var pEmail = (_profilMusteri.email || '').toLowerCase();
+  _profilDestekler = destekler.filter(function(d) {
+    return d.email && d.email.toLowerCase() === pEmail;
+  }).sort(function(a, b) {
+    return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+  });
+
+  // Lisanslar filtrele
+  _profilLisanslar = lisanslar.filter(function(l) {
+    if (!l.kullananlar || !l.kullananlar.length) return false;
+    return l.kullananlar.some(function(k) {
+      return k.email && k.email.toLowerCase() === pEmail;
+    });
+  });
+
+  showPage('profil');
+}
+
+function profilGeri() {
+  showPage(_profilOncekiSayfa);
+}
+
+function profilTab(tabId) {
+  document.querySelectorAll('#page-profil .profil-tab').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelectorAll('#page-profil .profil-tab-content').forEach(function(c) { c.classList.remove('active'); });
+
+  var btn = document.querySelector('#page-profil .profil-tab[onclick*="' + tabId + '"]');
+  if (btn) btn.classList.add('active');
+  var content = document.getElementById('profil-' + tabId);
+  if (content) content.classList.add('active');
+
+  var renderlers = {
+    ozet: renderProfilOzet,
+    oturumlar: renderProfilOturumlar,
+    destek: renderProfilDestek,
+    finansal: renderProfilFinansal,
+    notlar: renderProfilNotlar
+  };
+  if (renderlers[tabId]) renderlers[tabId]();
+}
+
+function renderProfil() {
+  if (!_profilMusteri) return;
+  renderProfilHero();
+  renderProfilOzet();
+  // İlk sekmeyi aktif yap
+  document.querySelectorAll('#page-profil .profil-tab').forEach(function(t, i) { t.classList.toggle('active', i === 0); });
+  document.querySelectorAll('#page-profil .profil-tab-content').forEach(function(c, i) { c.classList.toggle('active', i === 0); });
+}
+
+function renderProfilHero() {
+  var m = _profilMusteri;
+  var basHarfler = (m.ad_soyad || '?').split(' ').map(function(w) { return w.charAt(0); }).join('').slice(0, 2);
+
+  // Üyelik süresi
+  var uyeSure = '';
+  if (m.created_at) {
+    var gun = Math.ceil((Date.now() - new Date(m.created_at)) / (1000 * 60 * 60 * 24));
+    uyeSure = gun < 30 ? gun + ' gün' : gun < 365 ? Math.floor(gun / 30) + ' ay' : Math.floor(gun / 365) + ' yıl ' + Math.floor((gun % 365) / 30) + ' ay';
+  }
+
+  // Vade kalan gün
+  var vadeStr = '';
+  if (m.lisans_bitis) {
+    var kalan = Math.ceil((new Date(m.lisans_bitis) - Date.now()) / (1000 * 60 * 60 * 24));
+    vadeStr = kalan <= 0 ? 'DOLDU' : kalan + ' gün kaldı';
+  }
+
+  document.getElementById('profil-hero').innerHTML =
+    '<div class="profil-avatar">' + esc(basHarfler) + '</div>' +
+    '<div class="profil-info">' +
+      '<div class="profil-name">' + esc(m.ad_soyad) + '</div>' +
+      '<div class="profil-meta">' +
+        '<span>📧 ' + esc(m.email || '—') + '</span>' +
+        '<span>🏛 ' + esc(m.buro_ad || '—') + '</span>' +
+        (m.telefon ? '<span>📞 ' + esc(m.telefon) + '</span>' : '') +
+        (uyeSure ? '<span>📅 ' + uyeSure + ' üye</span>' : '') +
+      '</div>' +
+      '<div class="profil-badges">' +
+        '<span class="badge badge-' + (m.lisans_tur || 'deneme') + '">' + esc(m.lisans_tur || 'deneme') + '</span>' +
+        '<span class="badge badge-' + (m.durum || 'pasif') + '">' + esc(m.durum || '—') + '</span>' +
+        (vadeStr ? '<span class="badge" style="background:' + (vadeStr === 'DOLDU' ? 'var(--red)' : 'var(--surface2)') + ';color:' + (vadeStr === 'DOLDU' ? '#fff' : 'var(--text-muted)') + '">' + vadeStr + '</span>' : '') +
+      '</div>' +
+      '<div class="profil-actions">' +
+        '<button class="btn btn-sm btn-gold" onclick="editMusteri(\'' + m.id + '\')">✏️ Düzenle</button>' +
+        '<button class="btn btn-sm" onclick="musteriLogGoster(\'' + m.id + '\')">📋 Tüm Loglar</button>' +
+      '</div>' +
+    '</div>';
+}
+
+function renderProfilOzet() {
+  var m = _profilMusteri;
+  var el = document.getElementById('profil-ozet');
+
+  // KPI hesapla
+  var toplamOturum = _profilLoglar.length;
+  var toplamSure = _profilLoglar.reduce(function(s, l) { return s + (l.sure_dakika || 0); }, 0);
+  var ortSure = toplamOturum ? Math.round(toplamSure / toplamOturum) : 0;
+  var sonGiris = _profilLoglar.length ? _profilLoglar[0].giris_tarihi : null;
+
+  // Son 30 gün aktif gün sayısı
+  var otuzGunOnce = new Date(); otuzGunOnce.setDate(otuzGunOnce.getDate() - 30);
+  var aktifGunler = {};
+  _profilLoglar.forEach(function(l) {
+    if (l.giris_tarihi && new Date(l.giris_tarihi) >= otuzGunOnce) {
+      var gun = l.giris_tarihi.slice(0, 10);
+      aktifGunler[gun] = (aktifGunler[gun] || 0) + 1;
+    }
+  });
+  var aktifGunSayisi = Object.keys(aktifGunler).length;
+  var destekSayisi = _profilDestekler.length;
+  var bekleyenDestek = _profilDestekler.filter(function(d) { return d.durum === 'bekliyor'; }).length;
+
+  // Son oturumdaki sayılar
+  var sonLog = _profilLoglar.length ? _profilLoglar[0] : {};
+
+  el.innerHTML =
+    '<div class="profil-kpi">' +
+      '<div class="profil-kpi-card"><div class="profil-kpi-val">' + toplamOturum + '</div><div class="profil-kpi-label">Toplam Oturum</div></div>' +
+      '<div class="profil-kpi-card"><div class="profil-kpi-val">' + fmt2(toplamSure) + '</div><div class="profil-kpi-label">Toplam Süre</div></div>' +
+      '<div class="profil-kpi-card"><div class="profil-kpi-val">' + ortSure + ' dk</div><div class="profil-kpi-label">Ort. Oturum Süresi</div></div>' +
+      '<div class="profil-kpi-card"><div class="profil-kpi-val">' + aktifGunSayisi + '/30</div><div class="profil-kpi-label">Aktif Gün (Son 30)</div></div>' +
+      '<div class="profil-kpi-card"><div class="profil-kpi-val">' + destekSayisi + '</div><div class="profil-kpi-label">Destek Talebi</div></div>' +
+      '<div class="profil-kpi-card"><div class="profil-kpi-val">' + (sonLog.dava_sayisi != null ? sonLog.dava_sayisi : '—') + '</div><div class="profil-kpi-label">Dava (Son Oturum)</div></div>' +
+    '</div>' +
+
+    '<div class="section">' +
+      '<div class="section-header"><div class="section-title">Son 30 Gün Aktivite</div></div>' +
+      '<div class="section-body"><div id="profil-aktivite-chart" class="activity-chart"></div></div>' +
+    '</div>' +
+
+    '<div class="section" style="margin-top:14px">' +
+      '<div class="section-header"><div class="section-title">Son Giriş Detayı</div></div>' +
+      '<div class="section-body">' +
+        (sonGiris
+          ? '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;font-size:13px">' +
+              '<div><div style="color:var(--text-muted);font-size:11px">Giriş</div><div>' + fmtDT(sonLog.giris_tarihi) + '</div></div>' +
+              '<div><div style="color:var(--text-muted);font-size:11px">Süre</div><div>' + (sonLog.sure_dakika ? sonLog.sure_dakika + ' dk' : '—') + '</div></div>' +
+              '<div><div style="color:var(--text-muted);font-size:11px">Dava</div><div>' + (sonLog.dava_sayisi != null ? sonLog.dava_sayisi : '—') + '</div></div>' +
+              '<div><div style="color:var(--text-muted);font-size:11px">Müvekkil</div><div>' + (sonLog.muvekkil_sayisi != null ? sonLog.muvekkil_sayisi : '—') + '</div></div>' +
+              '<div><div style="color:var(--text-muted);font-size:11px">İcra</div><div>' + (sonLog.icra_sayisi != null ? sonLog.icra_sayisi : '—') + '</div></div>' +
+              '<div><div style="color:var(--text-muted);font-size:11px">Versiyon</div><div>' + esc(sonLog.uygulama_versiyon || '—') + '</div></div>' +
+            '</div>'
+          : '<div style="text-align:center;color:var(--text-muted);padding:20px">Henüz giriş kaydı yok</div>'
+        ) +
+      '</div>' +
+    '</div>';
+
+  // Aktivite chart render
+  renderAktiviteChart(aktifGunler);
+}
+
+function fmt2(dakika) {
+  if (dakika < 60) return dakika + ' dk';
+  var saat = Math.floor(dakika / 60);
+  var dk = dakika % 60;
+  return saat + ' sa ' + dk + ' dk';
+}
+
+function renderAktiviteChart(gunlukVeri) {
+  var el = document.getElementById('profil-aktivite-chart');
+  if (!el) return;
+  var bars = [];
+  var maxVal = 1;
+  for (var i = 29; i >= 0; i--) {
+    var d = new Date();
+    d.setDate(d.getDate() - i);
+    var key = d.toISOString().slice(0, 10);
+    var val = gunlukVeri[key] || 0;
+    if (val > maxVal) maxVal = val;
+    bars.push({ key: key, val: val, label: d.toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' }) });
+  }
+  el.innerHTML = bars.map(function(b) {
+    var h = b.val > 0 ? Math.max(8, Math.round((b.val / maxVal) * 72)) : 2;
+    return '<div class="activity-bar" style="height:' + h + 'px;background:' + (b.val > 0 ? 'var(--gold)' : 'var(--border)') + '" data-tip="' + esc(b.label) + ': ' + b.val + ' giriş"></div>';
+  }).join('');
+}
+
+function renderProfilOturumlar() {
+  var el = document.getElementById('profil-oturumlar');
+  if (!_profilLoglar.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Oturum kaydı yok</div></div>';
+    return;
+  }
+
+  var total = _profilLoglar.length;
+  var start = (_profilOturumSayfa - 1) * PROFIL_LOG_PER_PAGE;
+  var sayfa = _profilLoglar.slice(start, start + PROFIL_LOG_PER_PAGE);
+
+  var html = '<div class="section"><div class="section-body no-pad"><div class="tbl-wrap"><table>' +
+    '<thead><tr><th>Giriş</th><th>Süre</th><th>Dava</th><th>Müvekkil</th><th>İcra</th><th>Versiyon</th></tr></thead><tbody>';
+
+  sayfa.forEach(function(l) {
+    html += '<tr>' +
+      '<td style="font-size:12px">' + fmtDT(l.giris_tarihi) + '</td>' +
+      '<td style="font-size:12px">' + (l.sure_dakika ? l.sure_dakika + ' dk' : '—') + '</td>' +
+      '<td style="text-align:center;font-size:12px">' + (l.dava_sayisi != null ? l.dava_sayisi : '—') + '</td>' +
+      '<td style="text-align:center;font-size:12px">' + (l.muvekkil_sayisi != null ? l.muvekkil_sayisi : '—') + '</td>' +
+      '<td style="text-align:center;font-size:12px">' + (l.icra_sayisi != null ? l.icra_sayisi : '—') + '</td>' +
+      '<td style="font-size:11px;color:var(--text-muted)">' + esc(l.uygulama_versiyon || '—') + '</td>' +
+    '</tr>';
+  });
+
+  html += '</tbody></table></div></div></div>';
+  html += '<div id="profil-oturum-pagination" style="margin-top:12px"></div>';
+  el.innerHTML = html;
+  renderPagination('profil-oturum-pagination', _profilOturumSayfa, total, PROFIL_LOG_PER_PAGE, 'goProfilOturumPage');
+}
+
+function goProfilOturumPage(p) { _profilOturumSayfa = p; renderProfilOturumlar(); }
+
+function renderProfilDestek() {
+  var el = document.getElementById('profil-destek');
+  if (!_profilDestekler.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">🎧</div><div class="empty-text">Destek talebi yok</div></div>';
+    return;
+  }
+
+  var html = '<div class="section"><div class="section-body no-pad"><div class="tbl-wrap"><table>' +
+    '<thead><tr><th>Konu</th><th>Durum</th><th>Mesaj</th><th>Tarih</th><th>İşlem</th></tr></thead><tbody>';
+
+  _profilDestekler.forEach(function(d) {
+    var mesajSayisi = (d.mesajlar && Array.isArray(d.mesajlar)) ? d.mesajlar.length : (d.mesaj ? 1 : 0);
+    html += '<tr>' +
+      '<td style="font-size:13px;font-weight:600;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(d.konu || '—') + '</td>' +
+      '<td><span class="badge badge-' + (d.durum || 'bekliyor') + '">' + esc(d.durum || 'bekliyor') + '</span></td>' +
+      '<td style="text-align:center;font-size:12px">💬 ' + mesajSayisi + '</td>' +
+      '<td style="font-size:12px">' + fmtDT(d.created_at) + '</td>' +
+      '<td><button class="btn btn-sm" onclick="openDestekModal(\'' + d.id + '\')">👁 Görüntüle</button></td>' +
+    '</tr>';
+  });
+
+  html += '</tbody></table></div></div></div>';
+  el.innerHTML = html;
+}
+
+function renderProfilFinansal() {
+  var el = document.getElementById('profil-finansal');
+  var m = _profilMusteri;
+
+  // Abonelik bilgileri
+  var html = '<div class="section"><div class="section-header"><div class="section-title">Abonelik Bilgileri</div></div><div class="section-body">';
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;font-size:13px">';
+  html += '<div><div style="color:var(--text-muted);font-size:11px;margin-bottom:4px">Plan</div><span class="badge badge-' + (m.lisans_tur || 'deneme') + '">' + esc(m.lisans_tur || 'deneme') + '</span></div>';
+  html += '<div><div style="color:var(--text-muted);font-size:11px;margin-bottom:4px">Ödeme Tutarı</div><div style="font-weight:700;color:var(--gold);font-size:16px">' + (m.odeme_tutari ? fmt(m.odeme_tutari) : '—') + '</div></div>';
+  html += '<div><div style="color:var(--text-muted);font-size:11px;margin-bottom:4px">Son Ödeme</div><div>' + fmtD(m.son_odeme_tarihi) + '</div></div>';
+  html += '<div><div style="color:var(--text-muted);font-size:11px;margin-bottom:4px">Sonraki Ödeme</div><div>' + fmtD(m.sonraki_odeme_tarihi) + '</div></div>';
+  html += '<div><div style="color:var(--text-muted);font-size:11px;margin-bottom:4px">Lisans Başlangıç</div><div>' + fmtD(m.lisans_baslangic) + '</div></div>';
+  html += '<div><div style="color:var(--text-muted);font-size:11px;margin-bottom:4px">Lisans Bitiş</div><div>' + fmtD(m.lisans_bitis) + '</div></div>';
+  html += '</div></div></div>';
+
+  // Kullanılan lisans kodları
+  if (_profilLisanslar.length) {
+    html += '<div class="section" style="margin-top:14px"><div class="section-header"><div class="section-title">Kullanılan Lisans Kodları</div></div>';
+    html += '<div class="section-body no-pad"><div class="tbl-wrap"><table><thead><tr><th>Kod</th><th>Plan</th><th>Durum</th><th>Kullanım Tarihi</th></tr></thead><tbody>';
+    var pEmail = (_profilMusteri.email || '').toLowerCase();
+    _profilLisanslar.forEach(function(l) {
+      var kullanan = l.kullananlar.find(function(k) { return k.email && k.email.toLowerCase() === pEmail; });
+      var aktif = kullanan && kullanan.aktif !== false;
+      html += '<tr>' +
+        '<td style="font-family:monospace;font-size:13px;font-weight:700;color:var(--gold)">' + esc(l.kod) + '</td>' +
+        '<td><span class="badge badge-' + (l.tur || 'deneme') + '">' + esc(l.tur || 'deneme') + '</span></td>' +
+        '<td><span class="badge ' + (aktif ? 'badge-aktif' : 'badge-pasif') + '">' + (aktif ? 'Aktif' : 'Deaktif') + '</span></td>' +
+        '<td style="font-size:12px">' + (kullanan && kullanan.tarih ? fmtD(kullanan.tarih) : fmtD(l.kullanim_tarihi)) + '</td>' +
+      '</tr>';
+    });
+    html += '</tbody></table></div></div></div>';
+  }
+
+  el.innerHTML = html;
+}
+
+function renderProfilNotlar() {
+  var el = document.getElementById('profil-notlar');
+  var m = _profilMusteri;
+
+  el.innerHTML =
+    '<div class="section"><div class="section-header"><div class="section-title">Müşteri Notları</div></div>' +
+    '<div class="section-body">' +
+      '<textarea id="profil-not-input" style="width:100%;min-height:150px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;color:var(--text);font-size:13px;resize:vertical;font-family:inherit" placeholder="Bu müşteri hakkında notlarınızı yazın...">' + esc(m.admin_not || m.not || '') + '</textarea>' +
+      '<div style="margin-top:10px;text-align:right">' +
+        '<button class="btn btn-gold" onclick="profilNotKaydet()">💾 Notu Kaydet</button>' +
+      '</div>' +
+    '</div></div>';
+}
+
+async function profilNotKaydet() {
+  var not = document.getElementById('profil-not-input').value;
+  try {
+    await sbUpdate('musteriler', _profilMusteri.id, { admin_not: not });
+    _profilMusteri.admin_not = not;
+    var idx = musteriler.findIndex(function(m) { return m.id === _profilMusteri.id; });
+    if (idx >= 0) musteriler[idx].admin_not = not;
+    notify('✅ Not kaydedildi');
+  } catch (e) {
+    notify('Not kaydedilemedi: ' + e.message, 'err');
+  }
+}
+
+/**
+ * Ana proje Supabase'de kullanıcının planını "deneme"ye düşürür.
+ * 1. kullanicilar tablosundan email ile buro_id bulur
+ * 2. burolar tablosunda plan = 'deneme' yapar
+ */
+async function anaSupabasePlanDusur(email) {
+  try {
+    // 1. kullanicilar tablosundan email ile buro_id bul
+    var kulRes = await fetch(ANA_SB_URL + '/rest/v1/kullanicilar?email=eq.' + encodeURIComponent(email) + '&select=buro_id', {
+      headers: {
+        'apikey': ANA_SB_KEY,
+        'Authorization': 'Bearer ' + ANA_SB_KEY
+      }
+    });
+    if (!kulRes.ok) {
+      console.warn('[Deaktivasyon] kullanicilar sorgusu başarısız:', await kulRes.text());
+      return false;
+    }
+    var kulData = await kulRes.json();
+    if (!kulData.length) {
+      console.warn('[Deaktivasyon] Kullanıcı bulunamadı:', email);
+      return false;
+    }
+
+    var buroId = kulData[0].buro_id;
+    if (!buroId) {
+      console.warn('[Deaktivasyon] buro_id bulunamadı:', email);
+      return false;
+    }
+
+    // 2. burolar tablosunda plan = 'deneme' yap
+    var buroRes = await fetch(ANA_SB_URL + '/rest/v1/burolar?id=eq.' + buroId, {
+      method: 'PATCH',
+      headers: {
+        'apikey': ANA_SB_KEY,
+        'Authorization': 'Bearer ' + ANA_SB_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+      },
+      body: JSON.stringify({ plan: 'deneme' })
+    });
+    if (!buroRes.ok) {
+      console.warn('[Deaktivasyon] burolar.plan güncelleme başarısız:', await buroRes.text());
+      return false;
+    }
+    var buroData = await buroRes.json();
+    if (buroData.length > 0) {
+      console.log('[Deaktivasyon] burolar.plan başarıyla denemeye döndürüldü:', email, '→', buroData[0].plan);
+      return true;
+    } else {
+      console.warn('[Deaktivasyon] burolar.plan güncelleme: satır bulunamadı veya RLS engeli');
+      return false;
+    }
+  } catch (e) {
+    console.error('[Deaktivasyon] anaSupabasePlanDusur hatası:', e.message);
+    return false;
+  }
+}
+
 async function lisansDeaktifEt(lisansId, idx) {
   showConfirm('Bu kullanıcının lisansını deaktif etmek istediğinize emin misiniz? Kullanıcının planı denemeye döndürülecektir.', '⛔', 'Deaktif Et', async function() {
     var lisans = lisanslar.find(function(l) { return l.id === lisansId; });
@@ -2295,23 +2782,40 @@ async function lisansDeaktifEt(lisansId, idx) {
     // Kullananı deaktif yap
     kullananlar[idx].aktif = false;
 
-    // Sayacı güncelle
-    var yeniSayi = Math.max(0, (lisans.kullanim_sayisi || 1) - 1);
-    var tamDolu = yeniSayi >= (lisans.max_kullanim || 1);
-
     try {
+      // Kodu kullanılmış olarak bırak — SAYACI DÜŞÜRME
+      // kullanim_sayisi ve kullanildi DEĞİŞMEZ — kod ebediyen kullanılmış kalır
       await sbUpdate('lisans_kodlari', lisansId, {
-        kullananlar: kullananlar,
-        kullanim_sayisi: yeniSayi,
-        kullanildi: tamDolu
+        kullananlar: kullananlar
       });
 
       // Yerel veriyi güncelle
       lisans.kullananlar = kullananlar;
-      lisans.kullanim_sayisi = yeniSayi;
-      lisans.kullanildi = tamDolu;
 
-      notify('✅ Kullanıcı deaktif edildi');
+      // Kullanıcının planını düşür
+      var deaktifEmail = kullananlar[idx].email;
+      if (deaktifEmail) {
+        // Ana proje Supabase'de burolar.plan = 'deneme' yap
+        var planDustu = await anaSupabasePlanDusur(deaktifEmail);
+
+        // Admin DB'de müşteri durumunu güncelle
+        var musteri = musteriler.find(function(m) { return m.email === deaktifEmail; });
+        if (musteri) {
+          await sbUpdate('musteriler', musteri.id, {
+            durum: 'deneme',
+            lisans_tur: 'deneme'
+          });
+          musteri.durum = 'deneme';
+          musteri.lisans_tur = 'deneme';
+        }
+
+        notify(planDustu
+          ? '✅ Kullanıcı deaktif edildi — plan denemeye döndürüldü'
+          : '⚠️ Kullanıcı deaktif edildi — ancak plan düşürme başarısız (konsolu kontrol edin)', planDustu ? '' : 'warn');
+      } else {
+        notify('✅ Kullanıcı deaktif edildi');
+      }
+
       renderLisanslar();
 
       // Modalı yeniden göster (güncel verilerle)

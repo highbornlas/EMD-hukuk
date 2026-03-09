@@ -49,6 +49,10 @@ function planGuncelle(planId, ekVeri) {
     localStorage.setItem(SK, JSON.stringify(p));
     Object.assign(state, p);
   } catch(e) {}
+
+  // Plan yükseltildiğinde deneme süresi engel overlay'ini kaldır
+  var engel = document.getElementById('plan-engel-overlay');
+  if (engel) engel.style.display = 'none';
 }
 
 // Limit kontrolü — true = izin ver, false = engelle
@@ -427,7 +431,37 @@ function uid() {
   );
 }
 
+// ── Deneme süresi dolduğunda tam ekran engel ──
+function planEngelKontrol() {
+  var plan = mevcutPlan();
+  if (!plan.sureDoldu) {
+    // Süre dolmamış — mevcut engeli kaldır (upgrade sonrası)
+    var engel = document.getElementById('plan-engel-overlay');
+    if (engel) engel.style.display = 'none';
+    return;
+  }
+
+  // Tam ekran engel overlay göster
+  var overlay = document.getElementById('plan-engel-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'plan-engel-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.92);display:flex;align-items:center;justify-content:center;';
+    overlay.innerHTML =
+      '<div style="background:var(--surface,#1a1a2e);border:1px solid var(--border,#333);border-radius:16px;padding:48px;text-align:center;max-width:440px;width:90%">' +
+        '<div style="font-size:48px;margin-bottom:16px">⏰</div>' +
+        '<h2 style="margin:0 0 12px;color:var(--text,#fff);font-size:22px">Deneme Süreniz Doldu</h2>' +
+        '<p style="color:var(--text-muted,#999);margin:0 0 24px;font-size:14px;line-height:1.6">30 günlük ücretsiz deneme süreniz sona erdi.<br>Uygulamayı kullanmaya devam etmek için bir plan seçin.</p>' +
+        '<button onclick="upgradeGoster(\'sureDoldu\')" style="width:100%;padding:12px;border-radius:var(--radius,8px);border:none;background:var(--gold,#c9a84c);color:#000;font-weight:700;cursor:pointer;font-size:14px;margin-bottom:10px">🚀 Plan Seç</button>' +
+        '<button onclick="cikisYap()" style="width:100%;padding:12px;border-radius:var(--radius,8px);border:1px solid var(--border,#333);background:transparent;color:var(--text-muted,#999);cursor:pointer;font-size:13px">Çıkış Yap</button>' +
+      '</div>';
+    document.body.appendChild(overlay);
+  }
+  overlay.style.display = 'flex';
+}
+
 // ── Global scope'a aç (onclick handler'lar için) ──
 window.lisansKoduDogrula = lisansKoduDogrula;
 window.planSecildi = planSecildi;
 window.upgradeGoster = upgradeGoster;
+window.planEngelKontrol = planEngelKontrol;
