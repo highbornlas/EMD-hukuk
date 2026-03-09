@@ -17,7 +17,7 @@ let _oturumLogId     = null;
 
 // ── Yardımcılar ───────────────────────────────────────────────
 async function adminSbPost(tablo, data) {
-  if (!ADMIN_SB_URL || !ADMIN_SB_KEY) return;
+  if (!ADMIN_SB_URL || !ADMIN_SB_KEY) return false;
   try {
     const res = await fetch(`${ADMIN_SB_URL}/rest/v1/${tablo}`, {
       method: 'POST',
@@ -25,13 +25,18 @@ async function adminSbPost(tablo, data) {
         'apikey': ADMIN_SB_KEY,
         'Authorization': `Bearer ${ADMIN_SB_KEY}`,
         'Content-Type': 'application/json',
-        'Prefer': 'resolution=merge-duplicates,return=minimal'
+        'Prefer': 'return=minimal'
       },
       body: JSON.stringify(data)
     });
-    if (!res.ok) console.warn(`[Admin] POST ${tablo} hatası: ${res.status}`);
+    if (!res.ok) {
+      console.warn(`[Admin] POST ${tablo} hatası: ${res.status}`, await res.text().catch(()=>''));
+      return false;
+    }
+    return true;
   } catch(e) {
     console.warn(`[Admin] POST ${tablo} ağ hatası:`, e.message);
+    return false;
   }
 }
 
@@ -199,26 +204,96 @@ async function destekTalebiGonder() {
     email: email,
     konu: '[' + (turLabel[tur] || tur) + '] ' + konu,
     mesaj: mesaj + '\n\n— Öncelik: ' + oncelik + '\n— Tür: ' + (turLabel[tur] || tur) + '\n— Versiyon: v2.1.0\n— Platform: ' + (navigator.userAgent.includes('Electron') ? 'Desktop' : 'Web'),
-    durum: 'bekliyor'
+    durum: 'bekliyor',
+    created_at: new Date().toISOString()
   };
 
-  try {
-    await adminSbPost('destek_talepleri', data);
+  var basarili = await adminSbPost('destek_talepleri', data);
+
+  if (basarili) {
     // Formu temizle
     document.getElementById('destek-konu').value = '';
     document.getElementById('destek-mesaj').value = '';
     document.getElementById('destek-tur').value = 'sorun';
     document.getElementById('destek-oncelik').value = 'normal';
-    notify('✅ Destek talebiniz gönderildi! En kısa sürede size dönüş yapacağız.');
+
+    // Belirgin başarı onay kartı göster
+    var formDiv = btn.closest('.ayar-section');
+    if (formDiv) {
+      var formContent = formDiv.querySelector('[style*="padding:20px"]');
+      if (formContent) {
+        formContent.innerHTML =
+          '<div style="text-align:center;padding:30px 20px">' +
+            '<div style="font-size:52px;margin-bottom:12px">✅</div>' +
+            '<div style="font-size:18px;font-weight:700;color:var(--green,#27ae60);margin-bottom:8px">Talebiniz Başarıyla Gönderildi!</div>' +
+            '<div style="font-size:13px;color:var(--text-muted);margin-bottom:20px;line-height:1.6">' +
+              'Ekibimiz talebinizi en kısa sürede inceleyecek.<br>Gelişmeleri <b style="color:var(--text)">Taleplerim</b> bölümünden takip edebilirsiniz.' +
+            '</div>' +
+            '<button class="btn btn-gold" onclick="destekFormunuSifirla()" style="padding:10px 28px">' +
+              '📨 Yeni Talep Oluştur' +
+            '</button>' +
+          '</div>';
+      }
+    }
+    notify('✅ Destek talebiniz gönderildi!');
     // Geçmiş talepleri yenile
     destekGecmisiYukle();
-  } catch(e) {
-    notify('Talep gönderilemedi. Lütfen tekrar deneyin.', true);
-    console.warn('[Destek] Gönderme hatası:', e.message);
+  } else {
+    // Hata durumu — belirgin hata göster
+    var hataMsj = document.getElementById('destek-hata-msj');
+    if (!hataMsj) {
+      hataMsj = document.createElement('div');
+      hataMsj.id = 'destek-hata-msj';
+      hataMsj.style.cssText = 'margin-top:10px;padding:12px 16px;border-radius:var(--radius,8px);background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.25);color:#e74c3c;font-size:13px;text-align:center';
+      btn.parentNode.insertBefore(hataMsj, btn.nextSibling);
+    }
+    hataMsj.textContent = '❌ Talep gönderilemedi. Lütfen internet bağlantınızı kontrol edip tekrar deneyin.';
+    hataMsj.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = '📨 Talebi Gönder';
+    return;
   }
 
   btn.disabled = false;
   btn.textContent = '📨 Talebi Gönder';
+}
+
+// ── Formu sıfırla (başarı kartından geri dönmek için) ────────
+function destekFormunuSifirla() {
+  var formDiv = document.querySelector('#page-destek .ayar-section');
+  if (!formDiv) return;
+  var formContent = formDiv.querySelector('[style*="padding"]');
+  if (formContent) {
+    formContent.innerHTML =
+      '<div class="form-group">' +
+        '<label>Talep Türü</label>' +
+        '<select id="destek-tur">' +
+          '<option value="sorun">🐛 Sorun / Hata Bildirimi</option>' +
+          '<option value="ozellik">💡 Yeni Özellik Talebi</option>' +
+          '<option value="soru">❓ Soru / Yardım</option>' +
+          '<option value="oneri">📝 Öneri / Geri Bildirim</option>' +
+        '</select>' +
+      '</div>' +
+      '<div class="form-group">' +
+        '<label>Konu *</label>' +
+        '<input id="destek-konu" placeholder="Kısa bir başlık yazın...">' +
+      '</div>' +
+      '<div class="form-group">' +
+        '<label>Açıklama *</label>' +
+        '<textarea id="destek-mesaj" rows="5" placeholder="Sorununuzu veya talebinizi detaylı açıklayın..."></textarea>' +
+      '</div>' +
+      '<div class="form-group">' +
+        '<label>Öncelik</label>' +
+        '<select id="destek-oncelik">' +
+          '<option value="normal">Normal</option>' +
+          '<option value="yuksek">⚡ Yüksek — İş akışımı engelliyor</option>' +
+          '<option value="dusuk">Düşük — Acil değil</option>' +
+        '</select>' +
+      '</div>' +
+      '<button class="btn btn-gold" id="destek-gonder-btn" onclick="destekTalebiGonder()" style="width:100%;justify-content:center;padding:11px">' +
+        '📨 Talebi Gönder' +
+      '</button>';
+  }
 }
 
 // ── Geçmiş Destek Taleplerini Yükle ─────────────────────────

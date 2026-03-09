@@ -115,23 +115,133 @@ function renderUpgradePlanlar(mevcutId) {
 }
 
 function planSecildi(planId) {
-  // Gerçek uygulamada burada ödeme sayfasına yönlendirme olacak
-  // Şimdilik admin lisans kodu ile aktifleştirme simüle ediyoruz
-  const modal = document.getElementById('upgrade-modal');
-  modal.classList.remove('open');
-  // Lisans kodu girişi
-  const kod = prompt(`${PLANLAR[planId].ad} planı için lisans kodunuzu girin:\n(Demo için: TEST-${planId.toUpperCase()}-2025)`);
-  if (!kod) return;
-  // Demo: TEST- ile başlayan kodları kabul et
-  if (kod.startsWith('TEST-') || kod.length > 10) {
+  // Seçilen planı lisans kodu alanına göster
+  var kodInput = document.getElementById('upg-lisans-kod');
+  if (kodInput) {
+    kodInput.focus();
+    kodInput.setAttribute('data-secilen-plan', planId);
+  }
+  var sonucEl = document.getElementById('upg-lisans-sonuc');
+  if (sonucEl) {
+    sonucEl.style.display = 'block';
+    sonucEl.style.color = 'var(--gold)';
+    sonucEl.textContent = PLANLAR[planId].ikon + ' ' + PLANLAR[planId].ad + ' planı seçildi — lisans kodunuzu girin';
+  }
+}
+
+// Lisans kodu doğrulama — Supabase'den kontrol eder
+async function lisansKoduDogrula() {
+  var kodInput = document.getElementById('upg-lisans-kod');
+  var kod = (kodInput.value || '').trim().toUpperCase();
+  var sonucEl = document.getElementById('upg-lisans-sonuc');
+  var btn = document.getElementById('upg-dogrula-btn');
+
+  if (!kod) {
+    _lisansSonuc('Lütfen lisans kodunuzu girin.', 'err');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Doğrulanıyor...';
+  _lisansSonuc('🔄 Kod doğrulanıyor...', 'info');
+
+  try {
+    // Admin Supabase'den kodu ara
+    var kodlar = await adminSbGet('lisans_kodlari', 'kod=eq.' + encodeURIComponent(kod));
+
+    if (!kodlar || !kodlar.length) {
+      _lisansSonuc('❌ Geçersiz lisans kodu. Lütfen kontrol edip tekrar deneyin.', 'err');
+      btn.disabled = false;
+      btn.textContent = '🔑 Doğrula';
+      return;
+    }
+
+    var lisans = kodlar[0];
+
+    if (lisans.kullanildi) {
+      _lisansSonuc('❌ Bu lisans kodu daha önce kullanılmış.', 'err');
+      btn.disabled = false;
+      btn.textContent = '🔑 Doğrula';
+      return;
+    }
+
+    // Lisans türünü plan ID'sine eşle
+    var turPlanMap = {
+      'deneme': 'deneme',
+      'aylik': 'profesyonel',
+      'yillik': 'buro',
+      'omur': 'kurumsal'
+    };
+    var planId = turPlanMap[lisans.tur] || 'profesyonel';
+    var plan = PLANLAR[planId];
+
+    if (!plan) {
+      _lisansSonuc('❌ Lisans türü tanınmadı.', 'err');
+      btn.disabled = false;
+      btn.textContent = '🔑 Doğrula';
+      return;
+    }
+
+    // Lisansı kullanıldı olarak işaretle
+    var musteriId = '';
+    try {
+      if (typeof currentBuroId !== 'undefined' && currentBuroId) musteriId = currentBuroId;
+    } catch(e) {}
+
+    await adminSbUpdate('lisans_kodlari', lisans.id, {
+      kullanildi: true,
+      kullanilan_musteri_id: musteriId || null,
+      kullanim_tarihi: new Date().toISOString()
+    });
+
+    // Müşteri kaydını güncelle
+    if (musteriId) {
+      var bugun = new Date().toISOString().slice(0, 10);
+      var bitis = new Date();
+      if (lisans.tur === 'aylik') bitis.setMonth(bitis.getMonth() + 1);
+      else if (lisans.tur === 'yillik') bitis.setFullYear(bitis.getFullYear() + 1);
+      else if (lisans.tur === 'omur') bitis.setFullYear(bitis.getFullYear() + 99);
+      else bitis.setDate(bitis.getDate() + 30);
+
+      await adminSbUpdate('musteriler', musteriId, {
+        lisans_tur: lisans.tur,
+        durum: 'aktif',
+        lisans_baslangic: bugun,
+        lisans_bitis: bitis.toISOString().slice(0, 10)
+      });
+    }
+
+    // Yerel planı güncelle
     planGuncelle(planId);
     planBilgisiGuncelle();
-    notify(`✅ ${PLANLAR[planId].ad} planına geçildi!`);
-    // Menüleri güncelle
     planMenuGuncelle();
-  } else {
-    notify('❌ Geçersiz lisans kodu.', 'err');
+
+    // Başarı
+    _lisansSonuc('✅ ' + plan.ad + ' planı başarıyla aktifleştirildi!', 'ok');
+    notify('✅ ' + plan.ad + ' planına geçildi! Tüm özellikler açıldı.');
+
+    // Modalı kapat (biraz bekle)
+    setTimeout(function() {
+      closeModal('upgrade-modal');
+      kodInput.value = '';
+      if (sonucEl) sonucEl.style.display = 'none';
+    }, 2000);
+
+  } catch(e) {
+    console.warn('[Plan] Lisans doğrulama hatası:', e.message);
+    _lisansSonuc('⚠️ Doğrulama sırasında hata oluştu. Tekrar deneyin.', 'err');
   }
+
+  btn.disabled = false;
+  btn.textContent = '🔑 Doğrula';
+}
+
+function _lisansSonuc(msg, tip) {
+  var el = document.getElementById('upg-lisans-sonuc');
+  if (!el) return;
+  el.style.display = 'block';
+  el.style.color = tip === 'err' ? 'var(--red)' : tip === 'ok' ? 'var(--green)' : 'var(--gold)';
+  el.textContent = msg;
 }
 
 // Header'da plan bilgisi göster
