@@ -242,7 +242,7 @@ function yasalKullanimKosullari() {
     '<p>İşbu sözleşme Türkiye Cumhuriyeti hukukuna tabidir. Uyuşmazlıklarda <strong>İstanbul Mahkemeleri ve İcra Daireleri</strong> yetkilidir.</p>' +
     '<h3>11. Değişiklikler</h3>' +
     '<p>Hizmet Sağlayıcı, kullanım koşullarını güncelleme hakkını saklı tutar. Önemli değişiklikler e-posta ve/veya platform içi bildirim ile duyurulur. Değişiklik sonrası platformu kullanmaya devam etmek, güncel koşulların kabul edildiği anlamına gelir.</p>' +
-    '<div class="yasal-iletisim"><strong>İletişim:</strong> info@lexbase.app</div>' +
+    '<div class="yasal-iletisim"><strong>İletişim:</strong> iletisim@lexbase.app</div>' +
     '</div>';
 }
 
@@ -292,8 +292,8 @@ function yasalGizlilikPolitikasi() {
     '<h3>7. Çerezler ve Yerel Depolama</h3>' +
     '<p>LexBase, oturum yönetimi için tarayıcı yerel depolama (localStorage) kullanmaktadır. Üçüncü taraf izleme çerezleri kullanılmamaktadır. Cloudflare güvenlik çerezleri otomatik olarak yerleştirilir ve yalnızca güvenlik amaçlıdır.</p>' +
     '<h3>8. Haklarınız</h3>' +
-    '<p>6698 sayılı KVKK kapsamındaki haklarınız için KVKK Aydınlatma Metni\'ni inceleyiniz. Talepleriniz için: <strong>info@lexbase.app</strong></p>' +
-    '<div class="yasal-iletisim"><strong>Veri Sorumlusu:</strong> EMD Yazılım — info@lexbase.app</div>' +
+    '<p>6698 sayılı KVKK kapsamındaki haklarınız için KVKK Aydınlatma Metni\'ni inceleyiniz. Talepleriniz için: <strong>guvenlik@lexbase.app</strong></p>' +
+    '<div class="yasal-iletisim"><strong>Veri Sorumlusu:</strong> EMD Yazılım — guvenlik@lexbase.app</div>' +
     '</div>';
 }
 
@@ -360,9 +360,9 @@ function yasalKvkkAydinlatma() {
     '<li><strong>ğ)</strong> Kanuna aykırı işleme sebebiyle zarara uğramanız hâlinde zararın giderilmesini talep etme</li>' +
     '</ul>' +
     '<h3>8. Başvuru Yöntemi</h3>' +
-    '<p>Yukarıdaki haklarınızı kullanmak için <strong>info@lexbase.app</strong> adresine kimliğinizi doğrulayıcı bilgilerle birlikte yazılı başvuruda bulunabilirsiniz. Başvurunuz en geç <strong>30 gün</strong> içinde ücretsiz olarak sonuçlandırılacaktır. İşlemin ayrıca bir maliyet gerektirmesi hâlinde, Kişisel Verileri Koruma Kurulu tarafından belirlenen tarife üzerinden ücret alınabilir.</p>' +
+    '<p>Yukarıdaki haklarınızı kullanmak için <strong>guvenlik@lexbase.app</strong> adresine kimliğinizi doğrulayıcı bilgilerle birlikte yazılı başvuruda bulunabilirsiniz. Başvurunuz en geç <strong>30 gün</strong> içinde ücretsiz olarak sonuçlandırılacaktır. İşlemin ayrıca bir maliyet gerektirmesi hâlinde, Kişisel Verileri Koruma Kurulu tarafından belirlenen tarife üzerinden ücret alınabilir.</p>' +
     '<p>Başvurunuzun reddedilmesi, verilen cevabın yetersiz bulunması veya süresinde cevap verilmemesi hâlinde; cevabı öğrendiğiniz tarihten itibaren 30 gün, her hâlde başvuru tarihinden itibaren 60 gün içinde <strong>Kişisel Verileri Koruma Kurulu\'na</strong> şikayette bulunma hakkınız mevcuttur.</p>' +
-    '<div class="yasal-iletisim"><strong>Veri Sorumlusu:</strong> EMD Yazılım<br><strong>E-posta:</strong> info@lexbase.app</div>' +
+    '<div class="yasal-iletisim"><strong>Veri Sorumlusu:</strong> EMD Yazılım<br><strong>E-posta:</strong> guvenlik@lexbase.app</div>' +
     '</div>';
 }
 
@@ -416,7 +416,7 @@ function yasalVeriGuvenligi() {
     '<p>LexBase bulut tabanlı bir hizmettir. Sunucu altyapısının fiziksel güvenliği, hizmet sağlayıcıların (AWS, Cloudflare) veri merkezlerindeki endüstri standardı fiziksel güvenlik önlemleri ile sağlanmaktadır (biyometrik erişim, 7/24 gözetim, çevre güvenliği vb.).</p>' +
     '<h3>9. Güvenlik Güncellemeleri</h3>' +
     '<p>Platform güvenlik yamaları düzenli olarak uygulanır. Kritik güvenlik açıkları tespit edildiğinde acil müdahale prosedürü işletilir.</p>' +
-    '<div class="yasal-iletisim"><strong>Güvenlik İletişim:</strong> info@lexbase.app</div>' +
+    '<div class="yasal-iletisim"><strong>Güvenlik İletişim:</strong> guvenlik@lexbase.app</div>' +
     '</div>';
 }
 
@@ -478,7 +478,7 @@ function sayfaAvukatAracKutusu() {
     '</div>' +
 
     '</div>' +
-    '<div class="yasal-iletisim" style="margin-top:24px"><strong>Detaylı bilgi:</strong> info@lexbase.app</div>' +
+    '<div class="yasal-iletisim" style="margin-top:24px"><strong>Detaylı bilgi:</strong> satis@lexbase.app</div>' +
     '</div>';
 }
 
@@ -581,7 +581,7 @@ function sayfaHakkimizda() {
     '<div class="rakam-item"><div class="rakam-buyuk">7/24</div><div>Cloud Erişim</div></div>' +
     '</div>' +
 
-    '<div class="yasal-iletisim" style="margin-top:24px"><strong>EMD Yazılım</strong> — Türkiye\'de geliştirilmiştir 🇹🇷<br>info@lexbase.app</div>' +
+    '<div class="yasal-iletisim" style="margin-top:24px"><strong>EMD Yazılım</strong> — Türkiye\'de geliştirilmiştir 🇹🇷<br>iletisim@lexbase.app</div>' +
     '</div>';
 }
 
@@ -627,7 +627,7 @@ function sayfaBlog() {
     '</article>' +
 
     '</div>' +
-    '<div class="yasal-iletisim" style="margin-top:24px"><strong>Blog yazılarımız yakında tam metin olarak yayında!</strong><br>Bültenimize kayıt olmak için: info@lexbase.app</div>' +
+    '<div class="yasal-iletisim" style="margin-top:24px"><strong>Blog yazılarımız yakında tam metin olarak yayında!</strong><br>Bültenimize kayıt olmak için: haber@lexbase.app</div>' +
     '</div>';
 }
 
@@ -655,14 +655,21 @@ function sayfaIletisim() {
     '<div class="iletisim-ikon">🤝</div>' +
     '<h3>İş Birlikleri</h3>' +
     '<p>Baro ortaklıkları ve kurumsal çözümler</p>' +
-    '<a href="mailto:info@lexbase.app" class="iletisim-link">info@lexbase.app</a>' +
+    '<a href="mailto:satis@lexbase.app" class="iletisim-link">satis@lexbase.app</a>' +
     '</div>' +
 
     '<div class="iletisim-kart">' +
     '<div class="iletisim-ikon">🐛</div>' +
     '<h3>Hata Bildirimi</h3>' +
     '<p>Hata ve iyileştirme önerileri</p>' +
-    '<a href="mailto:info@lexbase.app" class="iletisim-link">info@lexbase.app</a>' +
+    '<a href="mailto:destek@lexbase.app" class="iletisim-link">destek@lexbase.app</a>' +
+    '</div>' +
+
+    '<div class="iletisim-kart">' +
+    '<div class="iletisim-ikon">🔒</div>' +
+    '<h3>KVKK & Veri Güvenliği</h3>' +
+    '<p>Kişisel veri talepleri ve güvenlik bildirimleri</p>' +
+    '<a href="mailto:guvenlik@lexbase.app" class="iletisim-link">guvenlik@lexbase.app</a>' +
     '</div>' +
 
     '</div>' +
@@ -858,7 +865,7 @@ function sayfaCerezAyarlari() {
     '<li>6698 sayılı KVKK kapsamındaki tüm haklarınız saklıdır. Detaylar için <a href="javascript:void(0)" onclick="yasalBelgeAc(\'kvkk\')" style="color:var(--gold)">KVKK Aydınlatma Metni</a>\'ni inceleyebilirsiniz.</li>' +
     '</ul>' +
 
-    '<div class="yasal-iletisim" style="margin-top:24px"><strong>Çerez politikamız hakkında sorularınız için:</strong><br>info@lexbase.app</div>' +
+    '<div class="yasal-iletisim" style="margin-top:24px"><strong>Çerez politikamız hakkında sorularınız için:</strong><br>guvenlik@lexbase.app</div>' +
     '</div>';
 }
 
