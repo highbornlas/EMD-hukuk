@@ -149,7 +149,7 @@ function planSecildi(planId) {
 }
 
 // Lisans kodu doğrulama — Supabase'den kontrol eder
-async function lisansKoduDogrula() {
+var lisansKoduDogrula = async function() {
   var kodInput = document.getElementById('upg-lisans-kod');
   var kod = (kodInput.value || '').trim().toUpperCase();
   var sonucEl = document.getElementById('upg-lisans-sonuc');
@@ -407,3 +407,8 @@ function uid() {
     (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
   );
 }
+
+// ── Global scope'a aç (onclick handler'lar için) ──
+window.lisansKoduDogrula = lisansKoduDogrula;
+window.planSecildi = planSecildi;
+window.upgradeGoster = upgradeGoster;
