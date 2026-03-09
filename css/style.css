@@ -3648,7 +3648,6 @@ body.is-offline .offline-indicator { display: block; }
 .gm-oauth-btn:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);}
 .gm-oauth-btn svg{width:18px;height:18px;flex-shrink:0;}
 .gm-oauth-google:hover{border-color:rgba(66,133,244,.4);}
-.gm-oauth-apple:hover{border-color:rgba(255,255,255,.3);}
 
 /* Divider */
 .gm-divider{display:flex;align-items:center;gap:12px;margin:14px 0;}
