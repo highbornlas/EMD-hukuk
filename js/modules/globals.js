@@ -39,6 +39,13 @@ let state = {
   finansIslemler:[], // Birleşik işlem defteri — finans_islemler tablosu
   ucretAnlasmalari:[], // Dosya bazlı ücret sözleşmeleri — ucret_anlasmalari tablosu
   buroGiderleri:[], // Büro operasyonel giderleri: {id,tarih,kategori,tutar,aciklama,tekrar,kdvOran,kdvTutar}
+  // ── Plan / Lisans alanları (saveData ile korunur) ──
+  planId: 'deneme',
+  planKullanici: '',
+  planGuncellemeTarih: '',
+  lisansBitis: '',
+  lisansTur: '',
+  olusturmaTarih: '',
 };
 
 let aktivMuvId=null, aktivDavaId=null, aktivIcraId=null;

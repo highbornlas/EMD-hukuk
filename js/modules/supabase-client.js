@@ -113,8 +113,11 @@ function sbAuthDinle() {
         delete state._finansMigrated;
         delete state._belgelerMigrated;
         delete state.plan;
-        delete state.planId;
-        delete state.planKullanici;
+        // Plan alanlarını varsayılana döndür (delete yerine — state'te tanımlı kalmalı)
+        state.planId = 'deneme';
+        state.planKullanici = '';
+        state.lisansBitis = '';
+        state.lisansTur = '';
       }
       // Global değişkenleri sıfırla
       if (typeof aktivMuvId !== 'undefined') aktivMuvId = null;
@@ -151,8 +154,11 @@ async function sbVeriYukle() {
       delete state._finansMigrated;
       delete state._belgelerMigrated;
       delete state.plan;
-      delete state.planId;
-      delete state.planKullanici;
+      // Plan alanlarını varsayılana döndür (delete yerine — saveData koruması için)
+      state.planId = 'deneme';
+      state.planKullanici = '';
+      state.lisansBitis = '';
+      state.lisansTur = '';
     }
 
     // ── Kullanıcı veri izolasyonu: bu kullanıcının yerel verilerini geri yükle ──
@@ -208,23 +214,23 @@ async function sbVeriYukle() {
       currentUser.buro_mail = buro.email || '';
       currentUser.buro_adres = buro.adres || '';
 
-      // Plan bilgisini Supabase'den oku → localStorage'a yaz (kalıcılık)
-      if (buro.plan && buro.plan !== 'deneme') {
-        try {
-          var lsData = JSON.parse(localStorage.getItem(SK) || '{}');
-          lsData.planId = buro.plan;
-          if (buro.lisans_bitis) lsData.lisansBitis = buro.lisans_bitis;
-          if (buro.lisans_tur) lsData.lisansTur = buro.lisans_tur;
-          lsData.planKullanici = kul.email;
-          localStorage.setItem(SK, JSON.stringify(lsData));
-        } catch(e) {}
-      }
+      // Plan bilgisini Supabase'den oku → state + localStorage'a yaz
+      // ÖNEMLİ: state.planId doğrudan set edilmeli — saveData() state'i localStorage'a
+      // yazar, eğer state.planId yoksa localStorage'daki planId ezilir!
+      state.planId = buro.plan || 'deneme';
+      state.planKullanici = kul.email || '';
+      if (buro.lisans_bitis) state.lisansBitis = buro.lisans_bitis;
+      if (buro.lisans_tur) state.lisansTur = buro.lisans_tur;
     }
 
     // ensure arrays
     ['davalar','icra'].forEach(k => {
       state[k].forEach(d => ensureArrays(d, ['evraklar','notlar','harcamalar','tahsilatlar']));
     });
+
+    // State'i localStorage'a yaz (plan bilgisi dahil) — saveData'dan önce tamamla
+    try { localStorage.setItem(SK, JSON.stringify(state)); } catch(e) {}
+    console.log('[LexBase] Plan durumu:', state.planId, '| Kullanıcı:', state.planKullanici);
 
     showYukleniyor(false);
     // Snapshot al (diff engine için)

@@ -8,7 +8,8 @@ function mevcutPlan() {
     const d = localStorage.getItem(SK);
     if (d) {
       const p = JSON.parse(d);
-      const planId = p.planId || 'deneme';
+      // planId: localStorage > state > varsayılan
+      const planId = p.planId || (typeof state !== 'undefined' && state.planId) || 'deneme';
 
       // Farklı kullanıcıya plan sızmasını engelle
       if (planId !== 'deneme' && p.planKullanici) {
@@ -289,7 +290,13 @@ var lisansKoduDogrula = async function() {
       if (typeof sb !== 'undefined' && currentBuroId) {
         // Önce sadece plan sütununu güncelle (kesinlikle mevcut)
         var buroRes = await sb.from('burolar').update({ plan: planId }).eq('id', currentBuroId).select();
-        console.log('[Plan] burolar.plan güncelleme:', buroRes.error ? 'HATA: ' + buroRes.error.message : 'OK');
+        if (buroRes.error) {
+          console.warn('[Plan] burolar.plan güncelleme HATA:', buroRes.error.message);
+        } else if (!buroRes.data || buroRes.data.length === 0) {
+          console.warn('[Plan] burolar.plan güncelleme BAŞARISIZ: RLS izni yok veya satır bulunamadı. buro_id=' + currentBuroId);
+        } else {
+          console.log('[Plan] burolar.plan güncelleme OK:', buroRes.data[0].plan);
+        }
         // Ek sütunları dene (yoksa zararsız hata)
         try {
           await sb.from('burolar').update({
