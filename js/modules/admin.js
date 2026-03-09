@@ -163,3 +163,104 @@ async function duyurulariYukle() {
     });
   } catch(e) {}
 }
+
+// ── Destek Talebi Gönder ────────────────────────────────────
+// Kullanıcı arayüzünden (page-destek) çağrılır
+async function destekTalebiGonder() {
+  var konu = document.getElementById('destek-konu').value.trim();
+  var mesaj = document.getElementById('destek-mesaj').value.trim();
+  var tur = document.getElementById('destek-tur').value;
+  var oncelik = document.getElementById('destek-oncelik').value;
+
+  if (!konu || !mesaj) {
+    notify('Konu ve açıklama zorunludur.', true);
+    return;
+  }
+
+  var btn = document.getElementById('destek-gonder-btn');
+  btn.disabled = true;
+  btn.textContent = 'Gönderiliyor...';
+
+  // Kullanıcı bilgilerini topla
+  var email = '';
+  var musteriId = '';
+  try {
+    if (typeof currentBuroId !== 'undefined' && currentBuroId) musteriId = currentBuroId;
+    if (typeof state !== 'undefined' && state.ayarlar) email = state.ayarlar.email || '';
+    if (!email && typeof state !== 'undefined' && state.profil) email = state.profil.email || '';
+  } catch(e) {}
+
+  var turEmoji = { sorun: '🐛', ozellik: '💡', soru: '❓', oneri: '📝' };
+  var turLabel = { sorun: 'Hata', ozellik: 'Özellik', soru: 'Soru', oneri: 'Öneri' };
+
+  var data = {
+    id: (typeof uid === 'function') ? uid() : crypto.randomUUID(),
+    musteri_id: musteriId || null,
+    email: email,
+    konu: '[' + (turLabel[tur] || tur) + '] ' + konu,
+    mesaj: mesaj + '\n\n— Öncelik: ' + oncelik + '\n— Tür: ' + (turLabel[tur] || tur) + '\n— Versiyon: v2.1.0\n— Platform: ' + (navigator.userAgent.includes('Electron') ? 'Desktop' : 'Web'),
+    durum: 'bekliyor'
+  };
+
+  try {
+    await adminSbPost('destek_talepleri', data);
+    // Formu temizle
+    document.getElementById('destek-konu').value = '';
+    document.getElementById('destek-mesaj').value = '';
+    document.getElementById('destek-tur').value = 'sorun';
+    document.getElementById('destek-oncelik').value = 'normal';
+    notify('✅ Destek talebiniz gönderildi! En kısa sürede size dönüş yapacağız.');
+    // Geçmiş talepleri yenile
+    destekGecmisiYukle();
+  } catch(e) {
+    notify('Talep gönderilemedi. Lütfen tekrar deneyin.', true);
+    console.warn('[Destek] Gönderme hatası:', e.message);
+  }
+
+  btn.disabled = false;
+  btn.textContent = '📨 Talebi Gönder';
+}
+
+// ── Geçmiş Destek Taleplerini Yükle ─────────────────────────
+async function destekGecmisiYukle() {
+  if (!ADMIN_SB_URL || !ADMIN_SB_KEY) return;
+
+  var musteriId = '';
+  try {
+    if (typeof currentBuroId !== 'undefined' && currentBuroId) musteriId = currentBuroId;
+  } catch(e) {}
+  if (!musteriId) return;
+
+  var el = document.getElementById('destek-gecmis');
+  if (!el) return;
+
+  try {
+    var talepler = await adminSbGet('destek_talepleri', 'musteri_id=eq.' + musteriId + '&order=created_at.desc&limit=10');
+    if (!talepler || !talepler.length) {
+      el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-dim);font-size:13px">Henüz destek talebiniz yok</div>';
+      return;
+    }
+
+    var durumBadge = {
+      bekliyor:    '<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;background:rgba(230,126,34,.12);color:#e67e22">Bekliyor</span>',
+      inceleniyor: '<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;background:rgba(52,152,219,.12);color:#3498db">İnceleniyor</span>',
+      cozuldu:     '<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;background:rgba(39,174,96,.12);color:#27ae60">Çözüldü</span>'
+    };
+
+    el.innerHTML = talepler.map(function(t) {
+      var tarih = t.created_at ? new Date(t.created_at).toLocaleDateString('tr-TR') : '';
+      return '<div style="padding:12px 0;border-bottom:1px solid var(--border)">' +
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">' +
+          '<div style="min-width:0">' +
+            '<div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px">' + (t.konu || '—') + '</div>' +
+            '<div style="font-size:11px;color:var(--text-muted)">' + tarih + '</div>' +
+          '</div>' +
+          '<div style="flex-shrink:0">' + (durumBadge[t.durum] || durumBadge.bekliyor) + '</div>' +
+        '</div>' +
+        (t.admin_notu ? '<div style="margin-top:8px;padding:8px 10px;background:var(--gold-dim);border-radius:var(--radius);font-size:12px;color:var(--gold)">📝 ' + t.admin_notu + '</div>' : '') +
+      '</div>';
+    }).join('');
+  } catch(e) {
+    console.warn('[Destek] Geçmiş yüklenemedi:', e.message);
+  }
+}

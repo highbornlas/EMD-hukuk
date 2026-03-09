@@ -853,6 +853,7 @@
     <div class="nav-sep"></div>
     <div class="nav-bottom">
       <div class="nav-item" onclick="showPage('ayarlar',this)" id="ni-ayarlar"><span class="nav-icon">⚙️</span>Ayarlar</div>
+      <div class="nav-item" onclick="showPage('destek',this)" id="ni-destek"><span class="nav-icon">🎧</span>Destek</div>
       <div class="nav-version">v2.1.0</div>
     </div>
   </nav>
@@ -1949,6 +1950,92 @@
     </div>
   </div>
 
+</div>
+
+<!-- ===== DESTEK & GERİ BİLDİRİM ===== -->
+<div class="page" id="page-destek">
+  <div class="page-title">Destek & Geri Bildirim</div>
+  <div class="page-sub">Sorun bildirin, özellik talep edin veya geri bildirimde bulunun</div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+    <!-- SOL: Form -->
+    <div>
+      <div class="ayar-section">
+        <div class="ayar-section-header">
+          <span class="ayar-section-icon">📨</span>
+          <div><div class="ayar-section-title">Yeni Talep Oluştur</div><div class="ayar-section-sub">Ekibimiz en kısa sürede size dönüş yapacaktır</div></div>
+        </div>
+        <div style="padding:20px">
+          <div class="form-group">
+            <label>Talep Türü</label>
+            <select id="destek-tur">
+              <option value="sorun">🐛 Sorun / Hata Bildirimi</option>
+              <option value="ozellik">💡 Yeni Özellik Talebi</option>
+              <option value="soru">❓ Soru / Yardım</option>
+              <option value="oneri">📝 Öneri / Geri Bildirim</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Konu *</label>
+            <input id="destek-konu" placeholder="Kısa bir başlık yazın...">
+          </div>
+          <div class="form-group">
+            <label>Açıklama *</label>
+            <textarea id="destek-mesaj" rows="5" placeholder="Sorununuzu veya talebinizi detaylı açıklayın...&#10;&#10;Hata bildirimi ise: Hangi adımları yaptığınızda sorun oluşuyor?&#10;Özellik talebi ise: Ne tür bir özellik istiyorsunuz ve neden?"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Öncelik</label>
+            <select id="destek-oncelik">
+              <option value="normal">Normal</option>
+              <option value="yuksek">⚡ Yüksek — İş akışımı engelliyor</option>
+              <option value="dusuk">Düşük — Acil değil</option>
+            </select>
+          </div>
+          <button class="btn btn-gold" id="destek-gonder-btn" onclick="destekTalebiGonder()" style="width:100%;justify-content:center;padding:11px">
+            📨 Talebi Gönder
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SAĞ: Bilgi + Geçmiş -->
+    <div>
+      <!-- Bilgi Kartı -->
+      <div class="ayar-section">
+        <div class="ayar-section-header">
+          <span class="ayar-section-icon">💬</span>
+          <div><div class="ayar-section-title">Nasıl Çalışır?</div><div class="ayar-section-sub">Destek süreci hakkında</div></div>
+        </div>
+        <div style="padding:20px;font-size:13px;color:var(--text-muted);line-height:1.8">
+          <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:14px">
+            <span style="font-size:20px;flex-shrink:0">1️⃣</span>
+            <div><strong style="color:var(--text)">Formu doldurun</strong> — Sorununuzu veya talebinizi detaylı açıklayın</div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:14px">
+            <span style="font-size:20px;flex-shrink:0">2️⃣</span>
+            <div><strong style="color:var(--text)">Ekibimiz inceler</strong> — Talebiniz teknik ekibimize iletilir</div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:14px">
+            <span style="font-size:20px;flex-shrink:0">3️⃣</span>
+            <div><strong style="color:var(--text)">Size dönüş yaparız</strong> — Gelişmeler uygulama içi duyuru olarak iletilir</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Geçmiş Talepler -->
+      <div class="ayar-section">
+        <div class="ayar-section-header">
+          <span class="ayar-section-icon">📋</span>
+          <div><div class="ayar-section-title">Taleplerim</div><div class="ayar-section-sub">Önceki destek talepleriniz</div></div>
+        </div>
+        <div id="destek-gecmis" style="padding:20px">
+          <div style="text-align:center;padding:20px;color:var(--text-dim);font-size:13px">
+            Henüz destek talebiniz yok
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- ============================================================ MODALS -->

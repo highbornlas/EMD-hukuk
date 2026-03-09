@@ -24,6 +24,8 @@ function showPage(id,el){
     setTimeout(yedekIstatistikGoster, 100);
   } else if(id==='personel'){
     renderPersonelSayfasi();
+  } else if(id==='destek'){
+    if(typeof destekGecmisiYukle==='function') destekGecmisiYukle();
   } else if(map[id]){map[id]();}
 }
 
