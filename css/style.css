@@ -420,22 +420,22 @@ th.sort-th.desc::after{content:' ▼';font-size:8px;color:var(--gold);}
 .card-value.green{color:var(--green);}
 .card-value.gold{color:var(--gold);}
 
-/* ── Dashboard Ana Container ── */
-.dash-container{width:100%;max-width:1600px;margin:0 auto;display:flex;flex-direction:column;gap:24px;}
+/* ── Dashboard: Fluid Layout (sidebar sonrasını %100 doldurur, ortalama YOK) ── */
+.dash-container{width:100%;display:flex;flex-direction:column;gap:24px;align-items:flex-start;justify-content:flex-start;}
 
-/* ── Dashboard KPI Grid (4 kolon, tam genişlik) ── */
+/* ── Dashboard KPI Grid (masaüstünde kesinlikle 4 kolon) ── */
 .dash-kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;width:100%;}
 .dash-kpi .card{position:relative;overflow:hidden;}
 .dash-kpi .card .card-deco{position:absolute;right:-6px;bottom:-4px;font-size:38px;opacity:.06;pointer-events:none;line-height:1;}
 
-/* ── Dashboard Widget'lar: Sol %66 + Sağ %33 ── */
+/* ── Dashboard Widget'lar: Fluid asimetrik (Sol 2fr + Sağ 1fr) ── */
 .dash-widgets{display:grid;grid-template-columns:2fr 1fr;gap:18px;width:100%;align-items:start;}
-.dash-main{display:flex;flex-direction:column;gap:18px;}
-.dash-side{display:flex;flex-direction:column;gap:18px;}
+.dash-main{display:flex;flex-direction:column;gap:18px;width:100%;}
+.dash-side{display:flex;flex-direction:column;gap:18px;width:100%;}
 
-/* ── Dashboard Panel: içerik kadar yükseklik (esnemez) ── */
-.dash-panel{margin-bottom:0;height:fit-content;}
-.dash-panel-body{padding:12px;overflow-y:auto;max-height:320px;}
+/* ── Dashboard Panel: sadece içerik kadar yükseklik, ASLA esneme ── */
+.dash-panel{margin-bottom:0;height:auto;}
+.dash-panel-body{padding:12px;overflow-y:auto;}
 
 /* ── Dashboard Panel Renkli Sol Kenar ── */
 .dash-panel.dp-blue{border-left:3px solid var(--blue);}
