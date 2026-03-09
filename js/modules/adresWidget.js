@@ -334,6 +334,7 @@ var AdresWidget = (function() {
 
   // ── SIFIRLA ────────────────────────────────────────────────────
   function sifirla(prefix) {
+    init(prefix);
     _version[prefix] = (_version[prefix] || 0) + 1;
 
     var ulkeSel = _el(prefix, 'ulke');
