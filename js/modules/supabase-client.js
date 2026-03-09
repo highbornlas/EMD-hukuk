@@ -83,6 +83,19 @@ function sbAuthDinle() {
       // TOKEN_REFRESHED bazen SIGNED_IN tetikler — currentBuroId kontrolü bunu önler
       await sbVeriYukle();
     } else if (event === 'SIGNED_OUT') {
+      // ── Kullanıcı veri izolasyonu: çıkış/timeout'ta veriyi koru ──
+      // cikisYap() zaten yedeklemiş olabilir, ama session timeout durumunda
+      // burası da yedekler (idempotent — zararsız tekrar)
+      try {
+        if (currentUser && currentUser.email) {
+          var mevcutVeri = localStorage.getItem(SK);
+          if (mevcutVeri && mevcutVeri.length > 10) {
+            localStorage.setItem(SK + '_user_' + currentUser.email, mevcutVeri);
+          }
+        }
+        localStorage.removeItem(SK);
+      } catch(e) {}
+
       currentBuroId = null;
       currentUser = null;
       _sbYukleniyor = false;
@@ -111,6 +124,15 @@ async function sbVeriYukle() {
 
     currentUser = { id: kul.id, ad: kul.ad, ad_soyad: kul.ad, email: kul.email, rol: kul.rol, buro_ad: '' };
     currentBuroId = kul.buro_id;
+
+    // ── Kullanıcı veri izolasyonu: bu kullanıcının yerel verilerini geri yükle ──
+    try {
+      var userKey = SK + '_user_' + kul.email;
+      var userLocalData = localStorage.getItem(userKey);
+      if (userLocalData) {
+        localStorage.setItem(SK, userLocalData);
+      }
+    } catch(e) { console.warn('[LexBase] Kullanıcı verisi geri yükleme hatası:', e.message); }
 
     // Büro kaydı henüz oluşmamışsa (yeni kayıt e-posta doğrulanmamış vs.) landing'e dön
     if (!currentBuroId) {
@@ -337,6 +359,12 @@ window.addEventListener('beforeunload', function() {
 
   // localStorage zaten güncel (saveData'da yazıldı)
   try { localStorage.setItem(SK, JSON.stringify(state)); } catch(e) {}
+  // Kullanıcıya özel anahtarı da güncelle (izolasyon)
+  try {
+    if (currentUser && currentUser.email) {
+      localStorage.setItem(SK + '_user_' + currentUser.email, JSON.stringify(state));
+    }
+  } catch(e) {}
 
   // Supabase REST API üzerinden doğrudan keepalive fetch
   // sb client yerine doğrudan REST endpoint kullanıyoruz çünkü

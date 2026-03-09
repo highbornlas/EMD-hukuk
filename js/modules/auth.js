@@ -70,15 +70,19 @@ function sifreSifirla() {
 
 async function cikisYap() {
   if (typeof adminCikisLog === "function") adminCikisLog();
-  // Plan verisini temizle (farklı kullanıcıya sızmasını önle)
+  // ── Kullanıcı veri izolasyonu ──
+  // Mevcut kullanıcının TÜM verilerini kendi anahtarına yedekle,
+  // sonra ana anahtarı temizle → yeni giren kullanıcı hiçbir veriyi göremez
   try {
-    var d = JSON.parse(localStorage.getItem(SK) || '{}');
-    delete d.planId;
-    delete d.planKullanici;
-    delete d.lisansBitis;
-    delete d.lisansTur;
-    delete d.planGuncellemeTarih;
-    localStorage.setItem(SK, JSON.stringify(d));
+    var email = (typeof currentUser !== 'undefined' && currentUser) ? currentUser.email : '';
+    if (email) {
+      var mevcutVeri = localStorage.getItem(SK);
+      if (mevcutVeri) {
+        localStorage.setItem(SK + '_user_' + email, mevcutVeri);
+      }
+    }
+    // Ana anahtarı tamamen temizle
+    localStorage.removeItem(SK);
   } catch(e) {}
   await sbCikisYap();
   // onAuthStateChange SIGNED_OUT eventi gerisini halleder
