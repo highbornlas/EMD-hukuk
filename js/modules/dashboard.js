@@ -48,7 +48,7 @@ function renderDashSureler() {
 
   const el = document.getElementById('dash-sureler');
   if (!el) return;
-  if (!items.length) { el.innerHTML = '<div class="dash-empty-state"><div class="dash-empty-icon">📅</div><div class="dash-empty-title">30 gün içinde kritik işlem yok</div><div class="dash-empty-sub">Yaklaşan süreler ve son günler burada görünecek</div><button class="dash-empty-cta" onclick="showPage(\'takvim\',document.getElementById(\'ni-takvim\'))">📅 Takvime Git</button></div>'; return; }
+  if (!items.length) { el.innerHTML = '<div class="dash-empty-compact"><span>📅</span><span>30 gün içinde kritik işlem yok</span><a onclick="showPage(\'takvim\',document.getElementById(\'ni-takvim\'))">Takvim ›</a></div>'; return; }
 
   el.innerHTML = items.map(i => {
     const acil = i.gun <= 3 ? 'background:rgba(231,76,60,.08);border-left:3px solid #e74c3c;' : i.gun <= 7 ? 'border-left:3px solid #e67e22;' : 'border-left:3px solid var(--border);';
@@ -71,7 +71,7 @@ function renderDashboard(){
   var t = today();
   var now = new Date();
   var yil = now.getFullYear().toString();
-  var ay = now.getMonth(); // 0-indexed
+  var ay = now.getMonth();
 
   // ── Hoşgeldin mesajı ──
   var saat = now.getHours();
@@ -79,74 +79,92 @@ function renderDashboard(){
   var hgEl = document.getElementById('dash-hosgeldin');
   if (hgEl) {
     var tarihStr = new Date().toLocaleDateString('tr-TR', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
-    var ozetParcalar = [];
-    var _aktifD = state.davalar.filter(function(d){return d.durum === 'Aktif' || d.durum === 'Devam Ediyor';}).length;
-    var _aktifI = state.icra.filter(function(i){return i.durum !== 'Kapandı';}).length;
-    if (_aktifD) ozetParcalar.push(_aktifD + ' aktif dava');
-    if (_aktifI) ozetParcalar.push(_aktifI + ' icra takibi');
-    var ozetMetin = ozetParcalar.length ? ' · ' + ozetParcalar.join(', ') : '';
-    hgEl.textContent = selamlama + (currentUser ? ', ' + (currentUser.ad || currentUser.ad_soyad || '') : '') + ' — ' + tarihStr + ozetMetin;
+    hgEl.textContent = selamlama + (currentUser ? ', ' + (currentUser.ad || currentUser.ad_soyad || '') : '') + ' — ' + tarihStr;
   }
 
-  // ── KPI hesaplamaları ──
+  // ── KPI Hesaplamaları ──
   var muvSayi = state.muvekkillar.length;
-  var aktifDava = state.davalar.filter(function(d){return d.durum === 'Aktif' || d.durum === 'Devam Ediyor';}).length;
-  var aktifIcra = state.icra.filter(function(i){return i.durum !== 'Kapandı';}).length;
-  var aktifArab = (state.arabuluculuk||[]).filter(function(a){return a.durum !== 'Uzlaşma Sağlandı' && a.durum !== 'Dava Açıldı';}).length;
-  var aktifDan = state.danismanlik.filter(function(d){return d.durum !== 'Tamamlandı' && d.durum !== 'İptal';}).length;
-  var bekGorev = (state.todolar||[]).filter(function(td){return td.durum === 'Bekliyor' || td.durum === 'Devam Ediyor';}).length;
+  var gercekKisi = state.muvekkillar.filter(function(m){return !m.tip || m.tip === 'gercek';}).length;
+  var tuzelKisi = state.muvekkillar.filter(function(m){return m.tip === 'tuzel';}).length;
+  var derdestDava = state.davalar.filter(function(d){return d.durum === 'Aktif' || d.durum === 'Devam Ediyor';}).length;
+  var derdestIcra = state.icra.filter(function(i){return i.durum !== 'Kapandı';}).length;
 
-  // Finansal — merkezi hesaplama (tüm kaynaklar: bütçe + dava/icra harcamaları + tahsilatlar + danışmanlık)
-  var yilFinans = typeof tumFinansHesapla === 'function' ? tumFinansHesapla({yil: yil}) : {gelir:0, gider:0, net:0};
-  var yilG = yilFinans.gelir;
-  var yilD = yilFinans.gider;
-  var yilNet = yilFinans.net;
-
-  // Geçen ay karşılaştırma (trend)
-  var gecenAy = ay > 0 ? ay - 1 : 11;
-  var gecenAyYil = ay > 0 ? yil : (parseInt(yil)-1).toString();
-  var gecenFinans = typeof tumFinansHesapla === 'function' ? tumFinansHesapla({yil: gecenAyYil, ay: gecenAy}) : {gelir:0, gider:0};
-  var buAyFinans = typeof tumFinansHesapla === 'function' ? tumFinansHesapla({yil: yil, ay: ay}) : {gelir:0, gider:0};
-  function _trendHtml(buAy, gecen) {
-    if (!gecen || gecen === 0) return '';
-    var fark = buAy - gecen;
-    var yuzde = Math.round(Math.abs(fark) / gecen * 100);
-    if (yuzde === 0) return '';
-    var renk = fark >= 0 ? 'var(--green)' : '#e74c3c';
-    var ok = fark >= 0 ? '↑' : '↓';
-    return '<div style="font-size:10px;color:' + renk + ';margin-top:4px;font-weight:600">' + ok + ' %' + yuzde + '</div>';
-  }
-
-  // İcra toplam alacak/tahsil
-  var topAlacak = state.icra.reduce(function(s,i){return s+(i.alacak||0);},0);
-  var topTahsil = state.icra.reduce(function(s,i){return s+(i.tahsil||0);},0);
-  var topKalan = topAlacak - topTahsil;
-  var tahsilOran = topAlacak > 0 ? Math.round(topTahsil / topAlacak * 100) : 0;
-
-  // Bekleyen alacaklar
-  var beklAlacak = (state.avanslar||[]).filter(function(a){return a.durum==='Bekliyor';}).reduce(function(s,a){return s+(a.tutar||0);},0);
-
-  // Yaklaşan duruşma sayısı (7 gün)
+  // Bu hafta duruşma
   var haftaSonu = new Date(); haftaSonu.setDate(haftaSonu.getDate()+7);
   var haftaS = haftaSonu.toISOString().split('T')[0];
   var yakDurusma = state.etkinlikler.filter(function(e){return e.tarih >= t && e.tarih <= haftaS && (e.tur==='Duruşma'||e.baslik.includes('Duruşma'));}).length;
   yakDurusma += state.davalar.filter(function(d){return d.durusma && d.durusma >= t && d.durusma <= haftaS;}).length;
 
-  // ── KPI KARTLARI (dekoratif ikonlarla) ──
-  document.getElementById('dash-cards').innerHTML =
-    '<div class="card"><div class="card-label">Müvekkil</div><div class="card-value gold">' + muvSayi + '</div><div class="card-deco">👥</div></div>' +
-    '<div class="card"><div class="card-label">Aktif Dava</div><div class="card-value gold">' + aktifDava + '</div><div class="card-deco">📁</div></div>' +
-    '<div class="card"><div class="card-label">Aktif İcra</div><div class="card-value" style="color:#e74c3c">' + aktifIcra + '</div><div class="card-deco">⚡</div></div>' +
-    '<div class="card" style="border:1px solid rgba(41,128,185,.3)"><div class="card-label">Bu Hafta Duruşma</div><div class="card-value" style="color:#2980b9">' + yakDurusma + '</div><div class="card-deco">⚖️</div></div>' +
-    '<div class="card"><div class="card-label">' + yil + ' Gelir</div><div class="card-value green">' + fmt(yilG) + '</div>' + _trendHtml(buAyFinans.gelir, gecenFinans.gelir) + '<div class="card-deco">📈</div></div>' +
-    '<div class="card"><div class="card-label">' + yil + ' Gider</div><div class="card-value red">' + fmt(yilD) + '</div>' + _trendHtml(buAyFinans.gider, gecenFinans.gider) + '<div class="card-deco">📉</div></div>' +
-    '<div class="card"><div class="card-label">' + yil + ' Net</div><div class="card-value" style="color:' + (yilNet>=0?'var(--green)':'#e74c3c') + '">' + fmt(yilNet) + '</div><div class="card-deco">💎</div></div>' +
-    '<div class="card"><div class="card-label">İcra Tahsilat</div><div class="card-value green">' + fmt(topTahsil) + '<div class="progress-bar" style="margin-top:4px"><div class="progress-fill" style="width:' + tahsilOran + '%"></div></div><div style="font-size:9px;color:var(--text-dim)">%' + tahsilOran + ' — Kalan: ' + fmt(topKalan) + '</div></div><div class="card-deco">🏦</div></div>' +
-    (beklAlacak > 0 ? '<div class="card" style="border:1px solid rgba(231,76,60,.3)"><div class="card-label">Bekleyen Alacak</div><div class="card-value" style="color:#e74c3c">' + fmt(beklAlacak) + '</div><div class="card-deco">⏳</div></div>' : '') +
-    (bekGorev > 0 ? '<div class="card"><div class="card-label">Açık Görev</div><div class="card-value" style="color:#e67e22">' + bekGorev + '</div><div class="card-deco">✅</div></div>' : '');
+  // Net gelir
+  var yilFinans = typeof tumFinansHesapla === 'function' ? tumFinansHesapla({yil: yil}) : {gelir:0, gider:0, net:0};
+  var yilNet = yilFinans.net;
 
-  // ── HOŞGELDİN BANNER (ilk kullanım — KPI kartlarının üstünde) ──
-  if (muvSayi === 0 && aktifDava === 0) {
+  // Bu hafta yapılacaklar
+  var dayOfWeek = now.getDay();
+  var pazartesi = new Date(now); pazartesi.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+  var pazar = new Date(pazartesi); pazar.setDate(pazartesi.getDate() + 6);
+  var pztStr = pazartesi.toISOString().split('T')[0];
+  var pazStr = pazar.toISOString().split('T')[0];
+  var buHaftaGorevler = (state.todolar||[]).filter(function(td) {
+    if (td.durum === 'Tamamlandı') return false;
+    if (td.sonTarih && td.sonTarih >= pztStr && td.sonTarih <= pazStr) return true;
+    if (!td.sonTarih && (td.oncelik === 'Yüksek' || td.oncelik === 'Acil')) return true;
+    return false;
+  });
+
+  // ── KPI STRİP (kompakt) ──
+  document.getElementById('dash-cards').innerHTML =
+    '<div class="kpi-item">' +
+      '<div class="kpi-icon">👥</div>' +
+      '<div class="kpi-content">' +
+        '<div class="kpi-value gold">' + muvSayi + '</div>' +
+        '<div class="kpi-label">Müvekkiller</div>' +
+        '<div class="kpi-detail">' + gercekKisi + ' Gerçek · ' + tuzelKisi + ' Tüzel</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="kpi-item">' +
+      '<div class="kpi-icon">📁</div>' +
+      '<div class="kpi-content">' +
+        '<div class="kpi-value gold">' + derdestDava + '</div>' +
+        '<div class="kpi-label">Derdest Dava</div>' +
+        '<div class="kpi-detail">' + derdestDava + ' dosya</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="kpi-item">' +
+      '<div class="kpi-icon">⚡</div>' +
+      '<div class="kpi-content">' +
+        '<div class="kpi-value" style="color:#e74c3c">' + derdestIcra + '</div>' +
+        '<div class="kpi-label">Derdest İcra</div>' +
+        '<div class="kpi-detail">' + derdestIcra + ' dosya</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="kpi-item">' +
+      '<div class="kpi-icon">⚖️</div>' +
+      '<div class="kpi-content">' +
+        '<div class="kpi-value" style="color:#2980b9">' + yakDurusma + '</div>' +
+        '<div class="kpi-label">Bu Hafta Duruşma</div>' +
+        '<div class="kpi-detail">' + yakDurusma + ' adet</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="kpi-item">' +
+      '<div class="kpi-icon">💎</div>' +
+      '<div class="kpi-content">' +
+        '<div class="kpi-value" style="color:' + (yilNet>=0?'var(--green)':'#e74c3c') + '">' + fmt(yilNet) + '</div>' +
+        '<div class="kpi-label">' + yil + ' Net Gelir</div>' +
+        '<div class="kpi-detail">' + (yilNet >= 0 ? 'Kâr' : 'Zarar') + '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="kpi-item">' +
+      '<div class="kpi-icon">✅</div>' +
+      '<div class="kpi-content">' +
+        '<div class="kpi-value" style="color:#e67e22">' + buHaftaGorevler.length + '</div>' +
+        '<div class="kpi-label">Bu Hafta Yapılacaklar</div>' +
+        '<div class="kpi-detail">' + buHaftaGorevler.length + ' iş</div>' +
+      '</div>' +
+    '</div>';
+
+  // ── HOŞGELDİN BANNER (ilk kullanım) ──
+  if (muvSayi === 0 && derdestDava === 0) {
     var bannerEl = document.getElementById('dash-welcome-banner');
     if (!bannerEl) {
       bannerEl = document.createElement('div');
@@ -169,56 +187,11 @@ function renderDashboard(){
     if (existingBanner) existingBanner.remove();
   }
 
-  // ── YAKLAŞAN DURUŞMALAR ──
-  var durusmalar = [];
-  state.etkinlikler.filter(function(e){return e.tarih >= t && (e.tur==='Duruşma'||e.baslik.toLowerCase().includes('duruşma'));}).forEach(function(e) {
-    durusmalar.push({tarih:e.tarih, saat:e.saat||'', baslik:e.baslik, muv:e.muvId?getMuvAd(e.muvId):'', yer:e.yer||e.not||''});
-  });
-  state.davalar.filter(function(d){return d.durusma && d.durusma >= t && d.durum==='Aktif';}).forEach(function(d) {
-    if (!durusmalar.some(function(x){return x.tarih===d.durusma && x.baslik.includes(d.konu);})) {
-      durusmalar.push({tarih:d.durusma, saat:'', baslik:d.no+' — '+d.konu, muv:getMuvAd(d.muvId), yer:[d.il,d.mno].filter(Boolean).join(' ')});
-    }
-  });
-  durusmalar.sort(function(a,b){return a.tarih.localeCompare(b.tarih);});
-  var durEl = document.getElementById('dash-durusmalar');
-  if (durEl) {
-    if (!durusmalar.length) {
-      durEl.innerHTML = '<div class="dash-empty-state"><div class="dash-empty-icon">⚖️</div><div class="dash-empty-title">Yaklaşan duruşma yok</div><div class="dash-empty-sub">Aktif davalarınıza duruşma tarihi eklediğinizde burada görünecek</div><button class="dash-empty-cta" onclick="showPage(\'davalar\',document.getElementById(\'ni-davalar\'))">📁 Davalara Git</button></div>';
-    } else {
-      durEl.innerHTML = durusmalar.slice(0,8).map(function(d) {
-        var gun = Math.ceil((new Date(d.tarih) - now) / 86400000);
-        var acil = gun <= 1 ? 'background:rgba(231,76,60,.06);border-left:3px solid #e74c3c;' : gun <= 3 ? 'border-left:3px solid #e67e22;' : 'border-left:3px solid #2980b9;';
-        var gunLabel = gun <= 0 ? '<b style="color:#e74c3c">BUGÜN</b>' : gun === 1 ? '<b style="color:#e74c3c">YARIN</b>' : '<span style="color:' + (gun<=3?'#e67e22':'var(--text-muted)') + '">' + gun + ' gün</span>';
-        return '<div style="padding:8px 10px;margin-bottom:4px;border-radius:6px;' + acil + '">' +
-          '<div style="display:flex;justify-content:space-between;align-items:center">' +
-          '<div style="font-size:12px;font-weight:600">' + d.baslik + '</div>' +
-          '<div style="text-align:right;flex-shrink:0;margin-left:10px">' + gunLabel + '<div style="font-size:10px;color:var(--text-dim)">' + fmtD(d.tarih) + (d.saat ? ' ' + d.saat : '') + '</div></div></div>' +
-          '<div style="font-size:10px;color:var(--text-muted);margin-top:2px">' + d.muv + (d.yer ? ' · ' + d.yer : '') + '</div></div>';
-      }).join('');
-    }
-  }
+  // ── GÜNDEM (Bugünkü Ajanda + Yaklaşan Duruşmalar birleşik) ──
+  renderGundem();
 
-  // ── ACİL GÖREVLER ──
-  var gorevler = (state.todolar||[]).filter(function(td){return td.durum !== 'Tamamlandı';}).sort(function(a,b) {
-    var pa = {Yüksek:0,Acil:0,Normal:1,Orta:1,Düşük:2}; return (pa[a.oncelik]||1) - (pa[b.oncelik]||1) || (a.sonTarih||'9').localeCompare(b.sonTarih||'9');
-  });
-  var grvEl = document.getElementById('dash-gorevler');
-  if (grvEl) {
-    if (!gorevler.length) {
-      grvEl.innerHTML = '<div class="dash-empty-state"><div class="dash-empty-icon">🎉</div><div class="dash-empty-title">Tüm görevler tamamlandı!</div><div class="dash-empty-sub">Yeni görev ekleyerek işlerinizi takip edin</div><button class="dash-empty-cta" onclick="showPage(\'todo\',document.getElementById(\'ni-todo\'))">✅ Yeni Görev Ekle</button></div>';
-    } else {
-      grvEl.innerHTML = gorevler.slice(0,6).map(function(td) {
-        var gecikme = td.sonTarih && td.sonTarih < t;
-        var oncelikR = {Yüksek:'#e74c3c',Acil:'#e74c3c',Normal:'#e67e22',Orta:'#e67e22',Düşük:'var(--text-muted)'}[td.oncelik] || 'var(--text-muted)';
-        return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">' +
-          '<span style="width:6px;height:6px;border-radius:50%;background:' + oncelikR + ';flex-shrink:0"></span>' +
-          '<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis' + (gecikme?';color:#e74c3c':'') + '">' + td.baslik + '</div>' +
-          '<div style="font-size:10px;color:var(--text-muted)">' + (td.muvId?getMuvAd(td.muvId):'') + (td.sonTarih?' · '+fmtD(td.sonTarih):'') + '</div></div>' +
-          (gecikme ? '<span style="font-size:9px;background:rgba(231,76,60,.1);color:#e74c3c;padding:2px 6px;border-radius:3px;font-weight:700;flex-shrink:0">GECİKTİ</span>' : '') +
-          '</div>';
-      }).join('');
-    }
-  }
+  // ── BU HAFTA YAPILACAKLAR ──
+  renderBuHaftaGorevler(buHaftaGorevler);
 
   // ── AYLIK PERFORMANS GRAFİĞİ ──
   var perfEl = document.getElementById('dash-performans');
@@ -252,12 +225,12 @@ function renderDashboard(){
     perfEl.innerHTML = grafik;
   }
 
-  // ── FİNANSAL UYARILAR (FinansMotoru + vadesi geçen alacaklar) ──
+  // ── FİNANSAL UYARILAR ──
   var vgEl = document.getElementById('dash-vadesi-gecen');
   if (vgEl) {
     var uyarilar = typeof FinansMotoru !== 'undefined' ? FinansMotoru.hesaplaUyarilar() : [];
     if (!uyarilar.length) {
-      vgEl.innerHTML = '<div class="dash-empty-state"><div class="dash-empty-icon">✅</div><div class="dash-empty-title">Finansal uyarı yok</div><div class="dash-empty-sub">Vadesi geçen alacaklar veya uyarılar olduğunda burada bilgilendirilirsiniz</div><button class="dash-empty-cta" onclick="showPage(\'butce\',document.getElementById(\'ni-butce\'))">💰 Finans</button></div>';
+      vgEl.innerHTML = '<div class="dash-empty-compact"><span>✅</span><span>Finansal uyarı yok</span><a onclick="showPage(\'butce\',document.getElementById(\'ni-butce\'))">Finans ›</a></div>';
     } else {
       var kritikSayi = uyarilar.filter(function(u) { return u.oncelik === 'yuksek'; }).length;
       vgEl.innerHTML = (kritikSayi > 0 ? '<div style="text-align:center;padding:6px 0;margin-bottom:8px;background:rgba(231,76,60,.06);border-radius:6px"><div style="font-size:18px;font-weight:800;color:#e74c3c">' + kritikSayi + ' Kritik</div><div style="font-size:10px;color:var(--text-muted)">' + uyarilar.length + ' toplam uyarı</div></div>' : '') +
@@ -279,7 +252,7 @@ function renderDashboard(){
   if (aktEl) {
     var log = (state.aktiviteLog||[]).slice(-10).reverse();
     if (!log.length) {
-      aktEl.innerHTML = '<div class="dash-empty-state"><div class="dash-empty-icon">📋</div><div class="dash-empty-title">Henüz aktivite yok</div><div class="dash-empty-sub">Müvekkil, dava ve işlemleriniz eklendikçe aktiviteler burada görünecek</div><button class="dash-empty-cta" onclick="showPage(\'muvekkillar\',document.getElementById(\'ni-muvekkillar\'))">👤 İlk Müvekkilinizi Ekleyin</button></div>';
+      aktEl.innerHTML = '<div class="dash-empty-compact"><span>📋</span><span>Henüz aktivite yok</span><a onclick="showPage(\'muvekkillar\',document.getElementById(\'ni-muvekkillar\'))">Müvekkil Ekle ›</a></div>';
     } else {
       aktEl.innerHTML = log.map(function(l) {
         var ikon = {'Giriş':'🔑','Dava':'📁','İcra':'⚡','Finans':'💰','İhtarname':'📩','Avans':'🏦','Müvekkil':'👤','Personel':'👥','Genel':'📋'}[l.module||''] || '📋';
@@ -292,7 +265,7 @@ function renderDashboard(){
     }
   }
 
-  // ── KRİTİK SÜRELER (mevcut) ──
+  // ── KRİTİK SÜRELER ──
   renderDashSureler();
   // ── MENFAAT ÇAKIŞMASI ──
   if (typeof renderDashMenfaat === 'function') renderDashMenfaat();
@@ -300,10 +273,7 @@ function renderDashboard(){
   var dd = document.getElementById('dash-danismanlik');
   if (dd) dd.innerHTML = typeof renderDashDanismanlik === 'function' ? renderDashDanismanlik() : '';
 
-  // ── BUGÜNKÜ AJANDA ──
-  renderBugunAjanda();
-
-  // ── HAVA DURUMU ──
+  // ── HAVA DURUMU (badge) ──
   renderHavaDurumu();
 
   // ── Drag & Drop başlat ──
@@ -326,83 +296,103 @@ function renderHizliIslemler() {
 }
 
 // ================================================================
-// BUGÜNKÜ AJANDA WİDGET
+// GÜNDEM WİDGET (Bugünkü Ajanda + Yaklaşan Duruşmalar birleşik)
 // ================================================================
-function renderBugunAjanda() {
-  var el = document.getElementById('dash-bugun');
+function renderGundem() {
+  var el = document.getElementById('dash-gundem');
   if (!el) return;
   var t = today();
-  var bugunEtkinlikler = [];
+  var now = new Date();
+  var gundem = [];
 
-  // Etkinliklerden bugünkü olanlar
+  var turRenk = {
+    'Duruşma': '#e74c3c', 'Son Gün': '#e67e22', 'Görev Son Gün': '#e67e22',
+    'Toplantı': '#2980b9', 'Randevu': '#16a085', 'Etkinlik': '#C9A84C'
+  };
+
+  // Bugünkü etkinlikler
   state.etkinlikler.forEach(function(e) {
     if (e.tarih === t) {
-      bugunEtkinlikler.push({
-        saat: e.saat || '',
-        baslik: e.baslik || '',
-        tur: e.tur || 'Etkinlik',
-        muv: e.muvId ? getMuvAd(e.muvId) : ''
-      });
+      gundem.push({ tarih: t, saat: e.saat || '', baslik: e.baslik || '', tur: e.tur || 'Etkinlik', muv: e.muvId ? getMuvAd(e.muvId) : '', bugun: true });
     }
   });
 
-  // Dava duruşmaları (bugünkü)
+  // Bugünkü duruşmalar (davalardan)
   state.davalar.forEach(function(d) {
-    if (d.durusma === t || d.sonDurusma === t) {
-      bugunEtkinlikler.push({
-        saat: d.durusmaSaat || '',
-        baslik: (d.no || '') + ' — ' + (d.konu || ''),
-        tur: 'Duruşma',
-        muv: d.muvId ? getMuvAd(d.muvId) : ''
-      });
+    if ((d.durusma === t || d.sonDurusma === t) && (d.durum === 'Aktif' || d.durum === 'Devam Ediyor')) {
+      gundem.push({ tarih: t, saat: d.durusmaSaat || '', baslik: (d.no || '') + ' — ' + (d.konu || ''), tur: 'Duruşma', muv: d.muvId ? getMuvAd(d.muvId) : '', bugun: true });
     }
   });
 
-  // Görevler (bugün son tarih)
+  // Bugünkü görev son tarihleri
   (state.todolar || []).forEach(function(td) {
     if (td.sonTarih === t && td.durum !== 'Tamamlandı') {
-      bugunEtkinlikler.push({
-        saat: '',
-        baslik: td.baslik || '',
-        tur: 'Görev Son Gün',
-        muv: td.muvId ? getMuvAd(td.muvId) : ''
-      });
+      gundem.push({ tarih: t, saat: '', baslik: td.baslik || '', tur: 'Görev Son Gün', muv: td.muvId ? getMuvAd(td.muvId) : '', bugun: true });
     }
   });
 
-  // Saate göre sırala
-  bugunEtkinlikler.sort(function(a, b) {
-    return (a.saat || '99:99').localeCompare(b.saat || '99:99');
+  // Yaklaşan duruşmalar (gelecek 30 gün)
+  state.etkinlikler.filter(function(e){return e.tarih > t && (e.tur==='Duruşma'||e.baslik.toLowerCase().indexOf('duruşma')!==-1);}).forEach(function(e) {
+    gundem.push({ tarih: e.tarih, saat: e.saat||'', baslik: e.baslik, tur: 'Duruşma', muv: e.muvId?getMuvAd(e.muvId):'', bugun: false });
+  });
+  state.davalar.filter(function(d){return d.durusma && d.durusma > t && (d.durum==='Aktif'||d.durum==='Devam Ediyor');}).forEach(function(d) {
+    if (!gundem.some(function(x){return x.tarih===d.durusma && x.baslik.indexOf(d.konu)!==-1;})) {
+      gundem.push({ tarih: d.durusma, saat: '', baslik: d.no+' — '+d.konu, tur: 'Duruşma', muv: getMuvAd(d.muvId), bugun: false });
+    }
   });
 
-  if (!bugunEtkinlikler.length) {
-    el.innerHTML = '<div class="dash-empty-state"><div class="dash-empty-icon">☀️</div><div class="dash-empty-title">Bugün için planlanmış etkinlik yok</div><div class="dash-empty-sub">Etkinlik ve duruşmalar eklendikçe bugünkü ajandanız burada görünecek</div><button class="dash-empty-cta" onclick="showPage(\'takvim\',document.getElementById(\'ni-takvim\'))">📅 Etkinlik Ekle</button></div>';
+  gundem.sort(function(a,b) { return a.tarih.localeCompare(b.tarih) || (a.saat||'99').localeCompare(b.saat||'99'); });
+
+  if (!gundem.length) {
+    el.innerHTML = '<div class="dash-empty-compact"><span>☀️</span><span>Gündemde etkinlik yok</span><a onclick="showPage(\'takvim\',document.getElementById(\'ni-takvim\'))">Ekle ›</a></div>';
     return;
   }
 
-  var turRenk = {
-    'Duruşma': '#e74c3c',
-    'Son Gün': '#e67e22',
-    'Görev Son Gün': '#e67e22',
-    'Toplantı': '#2980b9',
-    'Randevu': '#16a085',
-    'Etkinlik': '#C9A84C'
-  };
-
-  el.innerHTML = bugunEtkinlikler.map(function(e) {
+  el.innerHTML = gundem.slice(0, 8).map(function(e) {
     var renk = turRenk[e.tur] || '#7f8c8d';
-    return '<div class="ajanda-satir">' +
-      '<div class="ajanda-saat">' + (e.saat || '—') + '</div>' +
-      '<div class="ajanda-tur-dot" style="background:' + renk + '"></div>' +
-      '<div class="ajanda-icerik">' +
-        '<div class="ajanda-baslik">' + e.baslik + '</div>' +
-        '<div class="ajanda-meta">' +
-          '<span class="ajanda-tur-badge" style="background:' + renk + '22;color:' + renk + '">' + e.tur + '</span>' +
-          (e.muv ? '<span class="ajanda-muv">' + e.muv + '</span>' : '') +
-        '</div>' +
+    var gun = Math.ceil((new Date(e.tarih) - now) / 86400000);
+    var gunLabel = e.bugun ? '<b style="color:#e74c3c;font-size:9px">BUGÜN</b>' : gun === 1 ? '<span style="color:#e67e22;font-size:9px">YARIN</span>' : '<span style="font-size:9px;color:var(--text-dim)">' + fmtD(e.tarih) + '</span>';
+    return '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)">' +
+      '<div style="width:6px;height:6px;border-radius:50%;background:' + renk + ';flex-shrink:0"></div>' +
+      '<div style="flex:1;min-width:0">' +
+        '<div style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + e.baslik + '</div>' +
+        '<div style="font-size:10px;color:var(--text-muted)">' + (e.saat ? e.saat + ' · ' : '') + (e.muv || '') + '</div>' +
       '</div>' +
+      '<div style="flex-shrink:0;text-align:right">' + gunLabel + '<div style="font-size:9px;padding:1px 6px;border-radius:3px;background:' + renk + '18;color:' + renk + '">' + e.tur + '</div></div>' +
     '</div>';
-  }).join('');
+  }).join('') +
+  (gundem.length > 8 ? '<div style="font-size:10px;color:var(--gold);text-align:center;padding:6px;cursor:pointer" onclick="showPage(\'takvim\',document.getElementById(\'ni-takvim\'))">+' + (gundem.length-8) + ' daha ›</div>' : '');
+}
+
+// ================================================================
+// BU HAFTA YAPILACAKLAR WİDGET
+// ================================================================
+function renderBuHaftaGorevler(gorevler) {
+  var el = document.getElementById('dash-gorevler');
+  if (!el) return;
+  var t = today();
+
+  if (!gorevler || !gorevler.length) {
+    el.innerHTML = '<div class="dash-empty-compact"><span>🎉</span><span>Bu hafta tüm işler tamam!</span><a onclick="showPage(\'todo\',document.getElementById(\'ni-todo\'))">Görevler ›</a></div>';
+    return;
+  }
+
+  gorevler.sort(function(a,b) {
+    var pa = {Yüksek:0,Acil:0,Normal:1,Orta:1,Düşük:2};
+    return (pa[a.oncelik]||1) - (pa[b.oncelik]||1) || (a.sonTarih||'9').localeCompare(b.sonTarih||'9');
+  });
+
+  el.innerHTML = gorevler.slice(0,8).map(function(td) {
+    var gecikme = td.sonTarih && td.sonTarih < t;
+    var oncelikR = {Yüksek:'#e74c3c',Acil:'#e74c3c',Normal:'#e67e22',Orta:'#e67e22',Düşük:'var(--text-muted)'}[td.oncelik] || 'var(--text-muted)';
+    return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">' +
+      '<span style="width:6px;height:6px;border-radius:50%;background:' + oncelikR + ';flex-shrink:0"></span>' +
+      '<div style="flex:1;min-width:0"><div style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis' + (gecikme?';color:#e74c3c':'') + '">' + td.baslik + '</div>' +
+      '<div style="font-size:10px;color:var(--text-muted)">' + (td.muvId?getMuvAd(td.muvId):'') + (td.sonTarih?' · '+fmtD(td.sonTarih):'') + '</div></div>' +
+      (gecikme ? '<span style="font-size:9px;background:rgba(231,76,60,.1);color:#e74c3c;padding:2px 6px;border-radius:3px;font-weight:700;flex-shrink:0">GECİKTİ</span>' : '') +
+      '</div>';
+  }).join('') +
+  (gorevler.length > 8 ? '<div style="font-size:10px;color:var(--gold);text-align:center;padding:6px;cursor:pointer" onclick="showPage(\'todo\',document.getElementById(\'ni-todo\'))">+' + (gorevler.length-8) + ' daha ›</div>' : '');
 }
 
 // ================================================================
@@ -666,13 +656,13 @@ function renderDashMenfaat() {
 }
 
 // ================================================================
-// HAVA DURUMU WİDGET (Open-Meteo API — ücretsiz, API key gereksiz)
+// HAVA DURUMU BADGE (hoşgeldin satırı — inline)
 // ================================================================
 var _havaCache = null;
 var _havaCacheT = 0;
 
 function renderHavaDurumu() {
-  var el = document.getElementById('dash-hava');
+  var el = document.getElementById('dash-hava-badge');
   if (!el) return;
 
   // 30dk cache
@@ -681,123 +671,43 @@ function renderHavaDurumu() {
     return;
   }
 
-  el.innerHTML = '<div style="padding:14px;text-align:center;font-size:11px;color:var(--text-dim)">Hava durumu yükleniyor...</div>';
-
-  // Konum al
   if (!navigator.geolocation) {
-    _havaFallback(el, 41.01, 28.98, 'İstanbul');
+    _havaFetch(el, 41.01, 28.98);
     return;
   }
 
   navigator.geolocation.getCurrentPosition(
-    function(pos) { _havaFetch(el, pos.coords.latitude, pos.coords.longitude, ''); },
-    function() { _havaFallback(el, 41.01, 28.98, 'İstanbul'); },
+    function(pos) { _havaFetch(el, pos.coords.latitude, pos.coords.longitude); },
+    function() { _havaFetch(el, 41.01, 28.98); },
     { timeout: 5000, maximumAge: 600000 }
   );
 }
 
-function _havaFallback(el, lat, lon, sehir) {
-  _havaFetch(el, lat, lon, sehir);
-}
-
-function _havaFetch(el, lat, lon, sehir) {
-  var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon +
-    '&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m' +
-    '&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=auto&forecast_days=3';
-
-  fetch(url)
+function _havaFetch(el, lat, lon) {
+  fetch('https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon + '&current=temperature_2m,weather_code&timezone=auto')
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      if (!data.current) { el.innerHTML = ''; return; }
-      var c = data.current;
-      var d = data.daily || {};
-      var wc = _havaKod(c.weather_code);
-
-      // Şehir adı (reverse geocode) — basit
-      if (!sehir) {
-        _havaReverseGeo(lat, lon, function(ad) {
-          _havaRender(el, c, d, wc, ad);
-        });
-      } else {
-        _havaRender(el, c, d, wc, sehir);
-      }
+      if (!data.current) return;
+      var wc = _havaKod(data.current.weather_code);
+      var html = '<span class="hava-badge">' + wc.ikon + ' ' + Math.round(data.current.temperature_2m) + '°C <span style="color:var(--text-dim)">' + wc.aciklama + '</span></span>';
+      el.innerHTML = html;
+      _havaCache = html;
+      _havaCacheT = Date.now();
     })
-    .catch(function() {
-      el.innerHTML = '';
-    });
-}
-
-function _havaReverseGeo(lat, lon, cb) {
-  fetch('https://geocoding-api.open-meteo.com/v1/search?name=_&count=1&language=tr&latitude=' + lat + '&longitude=' + lon)
-    .then(function() { cb(''); })
-    .catch(function() { cb(''); });
-  // Open-Meteo doesn't have reverse geocoding, use simple approach
-  cb('');
-}
-
-function _havaRender(el, c, d, wc, sehir) {
-  var gunler = '';
-  if (d.time && d.time.length > 1) {
-    for (var i = 1; i < Math.min(d.time.length, 3); i++) {
-      var gWc = _havaKod(d.weather_code[i]);
-      var gun = new Date(d.time[i]).toLocaleDateString('tr-TR', {weekday:'short'});
-      gunler += '<div style="text-align:center;flex:1">' +
-        '<div style="font-size:9px;color:var(--text-muted)">' + gun + '</div>' +
-        '<div style="font-size:16px">' + gWc.ikon + '</div>' +
-        '<div style="font-size:10px;font-weight:600">' + Math.round(d.temperature_2m_max[i]) + '°</div>' +
-        '<div style="font-size:9px;color:var(--text-dim)">' + Math.round(d.temperature_2m_min[i]) + '°</div>' +
-        '</div>';
-    }
-  }
-
-  var html = '<div style="padding:14px 16px">' +
-    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">' +
-      '<div style="font-size:32px;line-height:1">' + wc.ikon + '</div>' +
-      '<div style="flex:1">' +
-        '<div style="font-size:22px;font-weight:700;color:var(--text)">' + Math.round(c.temperature_2m) + '°C</div>' +
-        '<div style="font-size:11px;color:var(--text-muted)">' + wc.aciklama + (sehir ? ' · ' + sehir : '') + '</div>' +
-      '</div>' +
-    '</div>' +
-    '<div style="display:flex;gap:12px;font-size:10px;color:var(--text-dim);margin-bottom:10px">' +
-      '<span>💧 %' + c.relative_humidity_2m + '</span>' +
-      '<span>💨 ' + Math.round(c.wind_speed_10m) + ' km/s</span>' +
-    '</div>' +
-    (gunler ? '<div style="display:flex;gap:4px;border-top:1px solid var(--border);padding-top:8px">' + gunler + '</div>' : '') +
-    '</div>';
-
-  el.innerHTML = html;
-  _havaCache = html;
-  _havaCacheT = Date.now();
+    .catch(function() {});
 }
 
 function _havaKod(code) {
   var kodlar = {
-    0:  {ikon:'☀️', aciklama:'Açık'},
-    1:  {ikon:'🌤️', aciklama:'Az bulutlu'},
-    2:  {ikon:'⛅', aciklama:'Parçalı bulutlu'},
-    3:  {ikon:'☁️', aciklama:'Bulutlu'},
-    45: {ikon:'🌫️', aciklama:'Sisli'},
-    48: {ikon:'🌫️', aciklama:'Kırağılı sis'},
-    51: {ikon:'🌦️', aciklama:'Hafif çisenti'},
-    53: {ikon:'🌦️', aciklama:'Çisenti'},
-    55: {ikon:'🌦️', aciklama:'Yoğun çisenti'},
-    61: {ikon:'🌧️', aciklama:'Hafif yağmur'},
-    63: {ikon:'🌧️', aciklama:'Yağmur'},
-    65: {ikon:'🌧️', aciklama:'Şiddetli yağmur'},
-    66: {ikon:'🌧️', aciklama:'Dondurucu yağmur'},
-    67: {ikon:'🌧️', aciklama:'Şiddetli dondurucu yağmur'},
-    71: {ikon:'🌨️', aciklama:'Hafif kar'},
-    73: {ikon:'🌨️', aciklama:'Kar yağışı'},
-    75: {ikon:'🌨️', aciklama:'Yoğun kar'},
-    77: {ikon:'🌨️', aciklama:'Kar taneleri'},
-    80: {ikon:'🌦️', aciklama:'Hafif sağanak'},
-    81: {ikon:'🌧️', aciklama:'Sağanak yağmur'},
-    82: {ikon:'🌧️', aciklama:'Şiddetli sağanak'},
-    85: {ikon:'🌨️', aciklama:'Kar sağanağı'},
-    86: {ikon:'🌨️', aciklama:'Yoğun kar sağanağı'},
-    95: {ikon:'⛈️', aciklama:'Gök gürültülü fırtına'},
-    96: {ikon:'⛈️', aciklama:'Dolu ile fırtına'},
-    99: {ikon:'⛈️', aciklama:'Şiddetli dolu fırtınası'}
+    0:{ikon:'☀️',aciklama:'Açık'}, 1:{ikon:'🌤️',aciklama:'Az bulutlu'}, 2:{ikon:'⛅',aciklama:'Parçalı bulutlu'},
+    3:{ikon:'☁️',aciklama:'Bulutlu'}, 45:{ikon:'🌫️',aciklama:'Sisli'}, 48:{ikon:'🌫️',aciklama:'Kırağılı sis'},
+    51:{ikon:'🌦️',aciklama:'Hafif çisenti'}, 53:{ikon:'🌦️',aciklama:'Çisenti'}, 55:{ikon:'🌦️',aciklama:'Yoğun çisenti'},
+    61:{ikon:'🌧️',aciklama:'Hafif yağmur'}, 63:{ikon:'🌧️',aciklama:'Yağmur'}, 65:{ikon:'🌧️',aciklama:'Şiddetli yağmur'},
+    66:{ikon:'🌧️',aciklama:'Dondurucu yağmur'}, 67:{ikon:'🌧️',aciklama:'Şiddetli dondurucu yağmur'},
+    71:{ikon:'🌨️',aciklama:'Hafif kar'}, 73:{ikon:'🌨️',aciklama:'Kar yağışı'}, 75:{ikon:'🌨️',aciklama:'Yoğun kar'},
+    77:{ikon:'🌨️',aciklama:'Kar taneleri'}, 80:{ikon:'🌦️',aciklama:'Hafif sağanak'}, 81:{ikon:'🌧️',aciklama:'Sağanak yağmur'},
+    82:{ikon:'🌧️',aciklama:'Şiddetli sağanak'}, 85:{ikon:'🌨️',aciklama:'Kar sağanağı'}, 86:{ikon:'🌨️',aciklama:'Yoğun kar sağanağı'},
+    95:{ikon:'⛈️',aciklama:'Gök gürültülü fırtına'}, 96:{ikon:'⛈️',aciklama:'Dolu ile fırtına'}, 99:{ikon:'⛈️',aciklama:'Şiddetli dolu fırtınası'}
   };
-  return kodlar[code] || {ikon:'🌡️', aciklama:'Bilinmiyor'};
+  return kodlar[code] || {ikon:'🌡️',aciklama:'Bilinmiyor'};
 }

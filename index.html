@@ -921,87 +921,84 @@
 <div class="page active" id="page-anasayfa">
   <div class="dash-container">
 
-    <!-- BAŞLIK -->
-    <div>
-      <div class="page-title">Genel Bakış</div>
-      <div class="page-sub" id="dash-hosgeldin" style="margin-bottom:0">Büronuzun anlık durumu</div>
+    <!-- BAŞLIK + HAVA DURUMU BADGE -->
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px">
+      <div>
+        <div class="page-title">Genel Bakış</div>
+        <div class="page-sub" id="dash-hosgeldin" style="margin-bottom:0">Büronuzun anlık durumu</div>
+      </div>
+      <div id="dash-hava-badge"></div>
     </div>
 
-    <!-- 1. ONBOARDING BANNER (tam genişlik, JS ile eklenir) -->
+    <!-- KPI STRİP (kompakt, tek satır) -->
+    <div class="kpi-strip" id="dash-cards"></div>
 
-    <!-- 2. İSTATİSTİK KARTLARI (tam genişlik, 4 kolon) -->
-    <div class="dash-kpi" id="dash-cards"></div>
-
-    <!-- 3. ALT WIDGET'LAR: Sol %66 + Sağ %33 -->
-    <div class="dash-widgets" id="dash-grid-main">
-
-      <!-- SOL TARAF (Ana İçerik) -->
-      <div class="dash-main">
-        <div class="section dash-panel dp-green" id="dp-performans">
-          <div class="section-header">
-            <div class="section-title">💰 Aylık Performans</div>
-            <a onclick="showPage('butce',document.getElementById('ni-butce'))" style="font-size:11px;color:var(--gold);cursor:pointer">Finans ›</a>
-          </div>
-          <div class="section-body dash-panel-body"><div id="dash-performans"></div></div>
+    <!-- BENTO GRİD: Satır 1 — 3 eşit sütun -->
+    <div class="bento-grid" id="dash-grid-main">
+      <div class="section dash-panel dp-green" id="dp-performans">
+        <div class="section-header">
+          <div class="section-title">💰 Aylık Performans</div>
+          <a onclick="showPage('butce',document.getElementById('ni-butce'))" style="font-size:11px;color:var(--gold);cursor:pointer">Finans ›</a>
         </div>
-        <div class="section dash-panel dp-blue" id="dp-bugun-ajanda">
-          <div class="section-header">
-            <div class="section-title">📋 Bugünkü Ajanda</div>
-            <a onclick="showPage('takvim',document.getElementById('ni-takvim'))" style="font-size:11px;color:var(--gold);cursor:pointer">Takvim ›</a>
-          </div>
-          <div class="section-body dash-panel-body"><div id="dash-bugun"></div></div>
-        </div>
-        <div class="section dash-panel dp-blue" id="dp-durusmalar">
-          <div class="section-header">
-            <div class="section-title">⚖️ Yaklaşan Duruşmalar</div>
-            <a onclick="showPage('takvim',document.getElementById('ni-takvim'))" style="font-size:11px;color:var(--gold);cursor:pointer">Takvim ›</a>
-          </div>
-          <div class="section-body dash-panel-body"><div id="dash-durusmalar"></div></div>
-        </div>
-        <div class="section dash-panel dp-gold" id="dp-danismanlik">
-          <div class="section-header">
-            <div class="section-title">⚖️ Devam Eden Hizmetler</div>
-            <a onclick="showPage('danismanlik',document.getElementById('ni-danismanlik'))" style="font-size:11px;color:var(--gold);cursor:pointer">Tümü ›</a>
-          </div>
-          <div class="section-body dash-panel-body"><div id="dash-danismanlik"></div></div>
-        </div>
+        <div class="section-body dash-panel-body"><div id="dash-performans"></div></div>
       </div>
-
-      <!-- SAĞ TARAF (Yan Panel — Uyarılar) -->
-      <div class="dash-side">
-        <div class="section dash-panel dp-blue" id="dp-hava" style="min-height:auto">
-          <div class="section-body dash-panel-body" style="padding:0"><div id="dash-hava"></div></div>
+      <div class="section dash-panel dp-blue" id="dp-gundem">
+        <div class="section-header">
+          <div class="section-title">📋 Gündem</div>
+          <a onclick="showPage('takvim',document.getElementById('ni-takvim'))" style="font-size:11px;color:var(--gold);cursor:pointer">Takvim ›</a>
         </div>
-        <div class="section dash-panel dp-purple" id="dp-gorevler">
-          <div class="section-header">
-            <div class="section-title">✅ Acil Görevler</div>
-            <a onclick="showPage('todo',document.getElementById('ni-todo'))" style="font-size:11px;color:var(--gold);cursor:pointer">Tümü ›</a>
-          </div>
-          <div class="section-body dash-panel-body"><div id="dash-gorevler"></div></div>
-        </div>
-        <div class="section dash-panel dp-gold" id="dp-sureler">
-          <div class="section-header">
-            <div class="section-title">⚠️ Kritik Süreler <span style="font-size:11px;color:var(--text-muted);font-weight:400">(30 gün)</span></div>
-          </div>
-          <div class="section-body dash-panel-body"><div id="dash-sureler"></div></div>
-        </div>
-        <div class="section dash-panel dp-red" id="dp-vadesi-gecen">
-          <div class="section-header">
-            <div class="section-title">🔴 Finansal Uyarılar</div>
-            <a onclick="showPage('butce',document.getElementById('ni-butce'))" style="font-size:11px;color:var(--gold);cursor:pointer">Finans ›</a>
-          </div>
-          <div class="section-body dash-panel-body"><div id="dash-vadesi-gecen"></div></div>
-        </div>
-        <div class="section dash-panel dp-red" id="dp-menfaat">
-          <div class="section-header">
-            <div class="section-title">🔍 Menfaat Çakışması</div>
-            <button class="btn btn-outline btn-sm" onclick="MenfaatKontrol.raporGoster()" style="border-color:var(--red);color:var(--red);font-size:10px;padding:2px 8px">Tara</button>
-          </div>
-          <div class="section-body dash-panel-body"><div id="dash-menfaat"></div></div>
-        </div>
+        <div class="section-body dash-panel-body"><div id="dash-gundem"></div></div>
       </div>
-
+      <div class="section dash-panel dp-purple" id="dp-gorevler">
+        <div class="section-header">
+          <div class="section-title">✅ Bu Hafta Yapılacaklar</div>
+          <a onclick="showPage('todo',document.getElementById('ni-todo'))" style="font-size:11px;color:var(--gold);cursor:pointer">Tümü ›</a>
+        </div>
+        <div class="section-body dash-panel-body"><div id="dash-gorevler"></div></div>
+      </div>
     </div>
+
+    <!-- BENTO GRİD: Satır 2 — 3 eşit sütun -->
+    <div class="bento-grid">
+      <div class="section dash-panel dp-gold" id="dp-sureler">
+        <div class="section-header">
+          <div class="section-title">⚠️ Kritik Süreler <span style="font-size:11px;color:var(--text-muted);font-weight:400">(30 gün)</span></div>
+        </div>
+        <div class="section-body dash-panel-body"><div id="dash-sureler"></div></div>
+      </div>
+      <div class="section dash-panel dp-red" id="dp-vadesi-gecen">
+        <div class="section-header">
+          <div class="section-title">🔴 Finansal Uyarılar</div>
+          <a onclick="showPage('butce',document.getElementById('ni-butce'))" style="font-size:11px;color:var(--gold);cursor:pointer">Finans ›</a>
+        </div>
+        <div class="section-body dash-panel-body"><div id="dash-vadesi-gecen"></div></div>
+      </div>
+      <div class="section dash-panel dp-red" id="dp-menfaat">
+        <div class="section-header">
+          <div class="section-title">🔍 Menfaat Çakışması</div>
+          <button class="btn btn-outline btn-sm" onclick="MenfaatKontrol.raporGoster()" style="border-color:var(--red);color:var(--red);font-size:10px;padding:2px 8px">Tara</button>
+        </div>
+        <div class="section-body dash-panel-body"><div id="dash-menfaat"></div></div>
+      </div>
+    </div>
+
+    <!-- BENTO GRİD: Satır 3 — 2 sütun -->
+    <div class="bento-grid bento-2col">
+      <div class="section dash-panel dp-gold" id="dp-danismanlik">
+        <div class="section-header">
+          <div class="section-title">⚖️ Devam Eden Hizmetler</div>
+          <a onclick="showPage('danismanlik',document.getElementById('ni-danismanlik'))" style="font-size:11px;color:var(--gold);cursor:pointer">Tümü ›</a>
+        </div>
+        <div class="section-body dash-panel-body"><div id="dash-danismanlik"></div></div>
+      </div>
+      <div class="section dash-panel dp-blue" id="dp-aktivite">
+        <div class="section-header">
+          <div class="section-title">📋 Son Aktiviteler</div>
+        </div>
+        <div class="section-body dash-panel-body"><div id="dash-aktivite"></div></div>
+      </div>
+    </div>
+
   </div>
 </div>
 

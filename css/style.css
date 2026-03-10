@@ -436,15 +436,29 @@ th.sort-th.desc::after{content:' ▼';font-size:8px;color:var(--gold);}
 /* ── Dashboard: Fluid Layout (sidebar sonrasını %100 doldurur, ortalama YOK) ── */
 .dash-container{width:100%;display:flex;flex-direction:column;gap:24px;align-items:flex-start;justify-content:flex-start;}
 
-/* ── Dashboard KPI Grid (masaüstünde kesinlikle 4 kolon) ── */
-.dash-kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;width:100%;}
-.dash-kpi .card{position:relative;overflow:hidden;}
-.dash-kpi .card .card-deco{position:absolute;right:-6px;bottom:-4px;font-size:42px;opacity:.08;pointer-events:none;line-height:1;}
+/* ── KPI Strip (kompakt tek satır) ── */
+.kpi-strip{display:flex;gap:12px;width:100%;overflow-x:auto;padding-bottom:4px;}
+.kpi-strip::-webkit-scrollbar{height:4px;}
+.kpi-strip::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+.kpi-item{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,var(--surface) 0%,var(--surface2) 100%);border:1px solid var(--border);border-radius:10px;padding:12px 16px;min-width:155px;flex:1;transition:all .2s;}
+.kpi-item:hover{border-color:rgba(201,168,76,0.25);box-shadow:0 2px 12px rgba(0,0,0,0.2);}
+.kpi-icon{font-size:20px;flex-shrink:0;}
+.kpi-content{min-width:0;}
+.kpi-value{font-size:18px;font-weight:700;font-family:'Playfair Display',serif;line-height:1.2;}
+.kpi-label{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;}
+.kpi-detail{font-size:9px;color:var(--text-dim);}
 
-/* ── Dashboard Widget'lar: Fluid asimetrik (Sol 2fr + Sağ 1fr) ── */
-.dash-widgets{display:grid;grid-template-columns:2fr 1fr;gap:18px;width:100%;align-items:start;}
-.dash-main{display:flex;flex-direction:column;gap:18px;width:100%;}
-.dash-side{display:flex;flex-direction:column;gap:18px;width:100%;}
+/* ── Bento Grid Layout ── */
+.bento-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;width:100%;}
+.bento-grid.bento-2col{grid-template-columns:repeat(2,1fr);}
+
+/* ── Hava Durumu Badge ── */
+.hava-badge{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--text-muted);background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:4px 10px;}
+
+/* ── Kompakt Boş State ── */
+.dash-empty-compact{display:flex;align-items:center;gap:8px;padding:14px 16px;font-size:12px;color:var(--text-dim);}
+.dash-empty-compact span:first-child{font-size:16px;opacity:0.6;}
+.dash-empty-compact a{color:var(--gold);font-size:11px;margin-left:auto;cursor:pointer;white-space:nowrap;}
 
 /* ── Dashboard Panel: sadece içerik kadar yükseklik, ASLA esneme ── */
 .dash-panel{margin-bottom:0;height:auto;border-radius:12px;}
@@ -2306,8 +2320,8 @@ select:focus, textarea:focus {
   }
 
   /* Dashboard layout küçük ekran */
-  .dash-widgets { grid-template-columns: 3fr 2fr; }
-  .dash-kpi { grid-template-columns: repeat(4, 1fr); }
+  .bento-grid { grid-template-columns: repeat(2, 1fr); }
+  .bento-grid.bento-2col { grid-template-columns: 1fr; }
   .header-yeni-btn span.yeni-btn-text { display: none; }
   .header-yeni-btn { padding: 7px 10px; }
 
@@ -2395,8 +2409,9 @@ select:focus, textarea:focus {
   #page-anasayfa > div[style*="grid-template-columns"] {
     grid-template-columns: 1fr !important;
   }
-  .dash-widgets { grid-template-columns: 1fr !important; }
-  .dash-kpi { grid-template-columns: repeat(2, 1fr) !important; }
+  .bento-grid { grid-template-columns: 1fr !important; }
+  .kpi-strip { gap: 8px; }
+  .kpi-item { min-width: 140px; }
 
   /* Form row'ları stack */
   .form-row,
