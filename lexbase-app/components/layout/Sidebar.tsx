@@ -8,9 +8,11 @@ const menuItems = [
   { href: '/muvekkillar', icon: '👥', label: 'Müvekkiller' },
   { href: '/davalar', icon: '⚖️', label: 'Davalar' },
   { href: '/icra', icon: '📋', label: 'İcra Dosyaları' },
+  { href: '/danismanlik', icon: '📑', label: 'Danışmanlık' },
   { href: '/finans', icon: '💰', label: 'Finans' },
   { href: '/takvim', icon: '📅', label: 'Takvim' },
   { href: '/gorevler', icon: '✅', label: 'Görevler' },
+  { href: '/personel', icon: '🧑‍💼', label: 'Personel' },
   { href: '/ayarlar', icon: '⚙️', label: 'Ayarlar' },
 ];
 
