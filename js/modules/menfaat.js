@@ -394,9 +394,26 @@ const MenfaatKontrol = (function () {
     document.body.appendChild(modal);
   }
 
+  // ── RPC Wrapper (server-first, local fallback) ──────────────
+  async function kontrolEtRpc(kisi, yon) {
+    if (typeof sb !== 'undefined' && sb && typeof currentBuroId !== 'undefined' && currentBuroId) {
+      try {
+        var res = await sb.rpc('menfaat_kontrol', {
+          p_buro_id: currentBuroId,
+          p_ad: kisi.ad || '',
+          p_tc: kisi.tc || null,
+          p_yon: yon || 'muvekkil'
+        });
+        if (!res.error && res.data) return res.data;
+      } catch(e) { /* fallback */ }
+    }
+    return kontrolEt(kisi, yon);
+  }
+
   // ── Public API ──────────────────────────────────────────────
   return {
     kontrolEt,
+    kontrolEtRpc,
     tumSistemiTara,
     uyariGoster,
     raporGoster,
