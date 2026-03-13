@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Capacitor native projects (platformlar)
+# Not: android/ ve ios/ commit edilir — native ayarlar (permissions, icons vs.) korunmalı
+# Ancak build çıktıları ignore edilir
+/android/app/build/
+/android/.gradle/
+/android/build/
+/ios/App/Pods/
+/ios/DerivedData/

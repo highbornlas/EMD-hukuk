@@ -70,3 +70,47 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+
+/* ── Capacitor / Mobil uyumluluk ──────────────────────────── */
+
+/* iOS safe area padding */
+.safe-area-top { padding-top: env(safe-area-inset-top, 0px); }
+.safe-area-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+.safe-area-left { padding-left: env(safe-area-inset-left, 0px); }
+.safe-area-right { padding-right: env(safe-area-inset-right, 0px); }
+
+/* Klavye açıkken body shrink */
+body.keyboard-open {
+  height: calc(100vh - var(--keyboard-height, 0px));
+  overflow: hidden;
+}
+
+/* Mobil touch optimizasyon */
+@media (pointer: coarse) {
+  /* Dokunmatik ekranlar için daha büyük hit alanları */
+  button, a, input, select, textarea {
+    min-height: 44px;
+  }
+
+  /* Overscroll bounce devre dışı */
+  html, body {
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Sidebar mobilde gizle (responsive) */
+  .mobile-hide-sidebar {
+    display: none;
+  }
+}
+
+/* iOS rubber banding engelle */
+html {
+  overflow: hidden;
+  height: 100%;
+}
+body {
+  overflow: auto;
+  height: 100%;
+  -webkit-overflow-scrolling: touch;
+}

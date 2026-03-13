@@ -1,9 +1,9 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  // Cloudflare Pages uyumluluğu için
-  // @cloudflare/next-on-pages ile edge runtime
-  // output: 'export', // Capacitor için static export (Faz 6'da aktif edilecek)
+  // Capacitor mobil uygulama live URL mode kullanır
+  // (deployed web app'e bağlanır, static export gerekmez)
+  // Cloudflare Pages ile normal SSR/CSR devam eder
 };
 
 export default nextConfig;
