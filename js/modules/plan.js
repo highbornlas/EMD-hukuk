@@ -56,9 +56,39 @@ function planGuncelle(planId, ekVeri) {
 }
 
 // Limit kontrolü — true = izin ver, false = engelle
-function limitKontrol(tip) {
+// Supabase bağlantısı varsa DB'den kontrol eder (güvenli), yoksa local fallback
+async function limitKontrol(tip) {
   const plan = mevcutPlan();
   if (plan.sureDoldu) { upgradeGoster('sureDoldu'); return false; }
+
+  // Supabase bağlantısı varsa → sunucu tarafında kontrol (güvenli)
+  if (typeof sb !== 'undefined' && sb && currentBuroId) {
+    try {
+      const { data, error } = await sb.rpc('check_plan_limit', {
+        p_buro_id: currentBuroId,
+        p_tip: tip
+      });
+      if (error) {
+        console.warn('[Plan] RPC hatası, local fallback:', error.message);
+        return _localLimitKontrol(tip, plan);
+      }
+      if (!data || !data.izin) {
+        upgradeGoster(tip);
+        return false;
+      }
+      return true;
+    } catch(e) {
+      console.warn('[Plan] RPC çağrısı başarısız, local fallback:', e.message);
+      return _localLimitKontrol(tip, plan);
+    }
+  }
+
+  // Supabase yoksa → local fallback (eski davranış)
+  return _localLimitKontrol(tip, plan);
+}
+
+// Local fallback (Supabase bağlantısı olmadığında)
+function _localLimitKontrol(tip, plan) {
   const limit = plan.limitler[tip];
   if (limit === undefined || limit === Infinity) return true;
   const mevcutSayilar = {

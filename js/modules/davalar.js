@@ -3,18 +3,18 @@
 // js/modules/davalar.js
 // ================================================================
 
-function saveDava(){
+async function saveDava(){
   let no=document.getElementById('d-no').value.trim();
   const konu=document.getElementById('d-konu').value.trim(),muvId=document.getElementById('d-muv').value;
   const derdest=(document.getElementById('d-derdest')||{}).value||'';
   // Otomatik numara (boşsa üret)
-  if(!no){ no = autoNo('dava'); document.getElementById('d-no').value=no; }
+  if(!no){ no = await autoNoRPC('dava'); document.getElementById('d-no').value=no; }
   if(!zorunluKontrol([
     {id:'d-no', deger:no, label:'Dosya No'},
     {id:'d-konu', deger:konu, label:'Konu'},
     {id:'d-muv', deger:muvId, label:'Müvekkil'},
   ])){notify('⚠️ Zorunlu alanları doldurun.');return;}
-  if(!limitKontrol('dava')) return;
+  if(!await limitKontrol('dava')) return;
   const yeniDava={
     id:uid(),sira:nextSira('davalar'),no,konu,muvId,
     il:document.getElementById('d-il').value,adliye:document.getElementById('d-adliye').value,mtur:document.getElementById('d-mtur').value,

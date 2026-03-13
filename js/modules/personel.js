@@ -188,7 +188,7 @@ async function savePersonel() {
     } else {
       // Yeni personel — davet e-postası gönder
       if (!email) { notify('⚠️ Çalışanın e-posta adresi zorunlu.'); btn.disabled=false; btn.textContent='💾 Kaydet'; return; }
-      if (!limitKontrol('personel')) return;
+      if (!await limitKontrol('personel')) return;
 
       const davetSonuc = await sbCalisanDavet(email, ad, rol, yetkiler);
 

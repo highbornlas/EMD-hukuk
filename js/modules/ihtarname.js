@@ -203,7 +203,7 @@ async function saveIhtar() {
     muvId: muvId,
     karsiTarafId: (document.getElementById('ihtar-karsi-id')||{}).value || '',
     karsiTaraf: _getKarsiAdById((document.getElementById('ihtar-karsi-id')||{}).value),
-    konu: konu, no: no || autoNo('ihtarname'),
+    konu: konu, no: no || await autoNoRPC('ihtarname'),
     gonderimUsulu: gonderimUsulu, gonderimDetay: gonderimDetay,
     noterlik: gonderimDetay.noterAdi || '', yevmiyeNo: gonderimDetay.yevmiyeNo || '',
     tarih: (document.getElementById('ihtar-tarih')||{}).value || today(),

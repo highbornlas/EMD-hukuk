@@ -170,7 +170,7 @@ function muvModalDataDoldur(m){
   muvBankalar=JSON.parse(JSON.stringify(m.bankalar||[]));renderMuvBankalar();
 }
 
-function saveMuvekkil(){
+async function saveMuvekkil(){
   // m-soyad varsa birleştir
   const soyadEl=document.getElementById('m-soyad');
   if(soyadEl&&soyadEl.value.trim()){const adEl=document.getElementById('m-ad');if(adEl)adEl.value=(adEl.value.trim()+' '+soyadEl.value.trim()).trim();}
@@ -201,7 +201,7 @@ function saveMuvekkil(){
       });
     } else { closeModal('m-modal');saveData();openDetay(aktivMuvId);renderMuvekkillar();notify('✓ Güncellendi'); }
   } else {
-    if(!limitKontrol('muvekkil')) return;
+    if(!await limitKontrol('muvekkil')) return;
     // ── 1. Mükerrer kayıt kontrolü ──
     if (typeof MukerrerKontrol !== 'undefined') {
       const mukKontrol = MukerrerKontrol.kisiKontrol(d, state.muvekkillar);

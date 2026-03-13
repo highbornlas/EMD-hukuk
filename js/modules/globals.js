@@ -159,6 +159,7 @@ function ilSecDava(il){populateAdliyeSelect('d-adliye',il,'');}
 function ilSecIcra(il){populateAdliyeSelect('i-adliye',il,'');}
 
 
+// Local numara üretimi (sync — form açılırken öneri için)
 function autoNo(tur) {
   const yil = new Date().getFullYear();
   let prefix, koleksiyon, alan;
@@ -168,7 +169,6 @@ function autoNo(tur) {
   else if (tur === 'arabuluculuk') { prefix = 'AR'; koleksiyon = 'arabuluculuk'; alan = 'no'; }
   else return '';
   const arr = state[koleksiyon] || [];
-  // Mevcut en yüksek numarayı bul
   let maks = 0;
   arr.forEach(x => {
     const no = x[alan] || '';
@@ -177,6 +177,24 @@ function autoNo(tur) {
   });
   const sira = String(maks + 1).padStart(3, '0');
   return `${prefix}-${yil}-${sira}`;
+}
+
+// Atomic numara üretimi (async — kayıt sırasında, race condition güvenli)
+// Supabase varsa RPC kullanır (advisory lock), yoksa local fallback
+async function autoNoRPC(tur) {
+  if (typeof sb !== 'undefined' && sb && currentBuroId) {
+    try {
+      const { data, error } = await sb.rpc('generate_dosya_no', {
+        p_buro_id: currentBuroId,
+        p_tur: tur
+      });
+      if (!error && data) return data;
+      console.warn('[autoNoRPC] RPC hatası, local fallback:', error?.message);
+    } catch(e) {
+      console.warn('[autoNoRPC] RPC çağrısı başarısız, local fallback:', e.message);
+    }
+  }
+  return autoNo(tur);
 }
 
 const SK='hukuk_buro_v3';
