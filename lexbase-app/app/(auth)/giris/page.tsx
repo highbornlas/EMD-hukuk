@@ -23,7 +23,11 @@ export default function GirisPage() {
     });
 
     if (error) {
-      setHata('Giriş başarısız: ' + error.message);
+      if (error.message.includes('Invalid login credentials')) {
+        setHata('E-posta veya şifre hatalı.');
+      } else {
+        setHata('Giriş başarısız: ' + error.message);
+      }
       setYukleniyor(false);
       return;
     }

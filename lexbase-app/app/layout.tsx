@@ -26,8 +26,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="tr" className={`${dmSans.variable} ${playfair.variable}`}>
-      <body>
+    <html lang="tr" className={`${dmSans.variable} ${playfair.variable}`} suppressHydrationWarning>
+      <body suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>
