@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useIhtarnameler } from '@/lib/hooks/useIhtarname';
+import { useIhtarnameler, type Ihtarname } from '@/lib/hooks/useIhtarname';
 import { useMuvekkillar } from '@/lib/hooks/useMuvekkillar';
+import { IhtarnameModal } from '@/components/modules/IhtarnameModal';
 import { fmt, fmtTarih } from '@/lib/utils';
 
 const DURUM_RENK: Record<string, string> = {
@@ -27,6 +28,8 @@ export default function IhtarnamePage() {
   const { data: muvekkillar } = useMuvekkillar();
   const [arama, setArama] = useState('');
   const [durumFiltre, setDurumFiltre] = useState('hepsi');
+  const [modalAcik, setModalAcik] = useState(false);
+  const [secili, setSecili] = useState<Ihtarname | null>(null);
 
   const muvAdMap = useMemo(() => {
     const map: Record<string, string> = {};
@@ -71,7 +74,10 @@ export default function IhtarnamePage() {
           İhtarnameler
           {ihtarnameler && <span className="text-sm font-normal text-text-muted ml-2">({ihtarnameler.length})</span>}
         </h1>
-        <button className="px-4 py-2 bg-gold text-bg font-semibold rounded-lg text-xs hover:bg-gold-light transition-colors">
+        <button
+          onClick={() => { setSecili(null); setModalAcik(true); }}
+          className="px-4 py-2 bg-gold text-bg font-semibold rounded-lg text-xs hover:bg-gold-light transition-colors"
+        >
           + Yeni İhtarname
         </button>
       </div>
@@ -140,6 +146,7 @@ export default function IhtarnamePage() {
           {filtrelenmis.map((i) => (
             <div
               key={i.id}
+              onClick={() => { setSecili(i); setModalAcik(true); }}
               className="grid grid-cols-[60px_80px_1fr_1fr_1fr_100px_80px_80px] gap-2 px-4 py-3 border-b border-border/50 hover:bg-gold-dim transition-colors items-center cursor-pointer"
             >
               <span className="text-xs font-bold text-gold truncate">{i.no || '—'}</span>
@@ -192,6 +199,7 @@ export default function IhtarnamePage() {
           </div>
         </div>
       )}
+      <IhtarnameModal open={modalAcik} onClose={() => setModalAcik(false)} ihtarname={secili} />
     </div>
   );
 }

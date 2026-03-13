@@ -1,9 +1,19 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  // Capacitor mobil uygulama live URL mode kullanır
-  // (deployed web app'e bağlanır, static export gerekmez)
-  // Cloudflare Pages ile normal SSR/CSR devam eder
+  // Cloudflare Workers ile deploy (opennextjs/cloudflare)
 };
+
+// Dev ortamında Cloudflare bindings emülasyonu
+if (process.env.NODE_ENV === 'development') {
+  try {
+    const mod = require('@opennextjs/cloudflare');
+    if (mod.initOpenNextCloudflareForDev) {
+      mod.initOpenNextCloudflareForDev();
+    }
+  } catch {
+    // OpenNext dev helper yüklenemedi — sorun değil
+  }
+}
 
 export default nextConfig;

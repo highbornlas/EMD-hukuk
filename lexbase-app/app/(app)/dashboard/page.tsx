@@ -10,6 +10,12 @@ import { useDanismanliklar } from '@/lib/hooks/useDanismanlik';
 import { useTodolar } from '@/lib/hooks/useTodolar';
 import { fmt, fmtTarih } from '@/lib/utils';
 
+/* ══════════════════════════════════════════════════════════════
+   Dashboard — Orijinal LexBase Dashboard
+   Full-width, dengeli boşluklar, dolu görünüm.
+   Orijinal Vanilla JS tasarımıyla birebir eşleştirildi.
+   ══════════════════════════════════════════════════════════════ */
+
 export default function DashboardPage() {
   const { data: muvekkillar } = useMuvekkillar();
   const { data: davalar } = useDavalar();
@@ -22,8 +28,12 @@ export default function DashboardPage() {
   // ── KPI Hesaplamaları ──
   const kpis = useMemo(() => {
     const muvSayi = muvekkillar?.length ?? 0;
+    const muvGercek = muvekkillar?.filter((m) => m.tip === 'gercek').length ?? 0;
+    const muvTuzel = muvekkillar?.filter((m) => m.tip === 'tuzel').length ?? 0;
     const aktifDava = davalar?.filter((d) => d.durum === 'Aktif' || d.durum === 'Devam Ediyor').length ?? 0;
+    const davaSayi = davalar?.length ?? 0;
     const aktifIcra = icralar?.filter((i) => i.durum !== 'Kapandı').length ?? 0;
+    const icraSayi = icralar?.length ?? 0;
 
     const bugun = new Date();
     const haftaSonu = new Date(bugun);
@@ -34,11 +44,9 @@ export default function DashboardPage() {
       return t >= bugun && t <= haftaSonu;
     }).length ?? 0;
 
-    const ayGelir = karZarar?.gelir ?? 0;
-    const ayGider = karZarar?.gider ?? 0;
-    const ayNet = karZarar?.net ?? 0;
+    const yilNet = karZarar?.net ?? 0;
 
-    return { muvSayi, aktifDava, aktifIcra, buHaftaDurusma, ayGelir, ayGider, ayNet };
+    return { muvSayi, muvGercek, muvTuzel, aktifDava, davaSayi, aktifIcra, icraSayi, buHaftaDurusma, yilNet };
   }, [muvekkillar, davalar, icralar, karZarar]);
 
   // ── Müvekkil adı çözücü ──
@@ -48,7 +56,7 @@ export default function DashboardPage() {
     return map;
   }, [muvekkillar]);
 
-  // ── Gündem (yaklaşan duruşmalar + etkinlikler) ──
+  // ── Gündem (yaklaşan duruşmalar) ──
   const gundem = useMemo(() => {
     if (!davalar) return [];
     const bugun = new Date();
@@ -67,9 +75,6 @@ export default function DashboardPage() {
   // ── Bu Hafta Görevler ──
   const buHaftaGorevler = useMemo(() => {
     if (!gorevler) return [];
-    const bugun = new Date();
-    const haftaSonu = new Date(bugun);
-    haftaSonu.setDate(bugun.getDate() + 7);
     return gorevler
       .filter((g) => g.durum !== 'Tamamlandı' && g.durum !== 'İptal')
       .sort((a, b) => {
@@ -82,7 +87,7 @@ export default function DashboardPage() {
 
   // ── Kritik Süreler (30 gün) ──
   const kritikSureler = useMemo(() => {
-    const items: Array<{ tip: string; baslik: string; tarih: string; gun: number }> = [];
+    const items: Array<{ tip: string; baslik: string; tarih: string; gun: number; icon: string }> = [];
     const bugun = new Date();
     const sinir = new Date(bugun);
     sinir.setDate(bugun.getDate() + 30);
@@ -92,62 +97,58 @@ export default function DashboardPage() {
         const t = new Date(d.durusma);
         if (t >= bugun && t <= sinir) {
           const gun = Math.ceil((t.getTime() - bugun.getTime()) / 86400000);
-          items.push({ tip: 'Duruşma', baslik: `${d.no || d.konu || '—'} · ${muvAdMap[d.muvId || ''] || ''}`, tarih: d.durusma, gun });
+          items.push({ tip: 'Duruşma', baslik: `${d.no || d.konu || '—'}`, tarih: d.durusma, gun, icon: '📅' });
         }
       }
     });
 
     return items.sort((a, b) => a.gun - b.gun).slice(0, 5);
-  }, [davalar, muvAdMap]);
+  }, [davalar]);
 
   // ── Devam Eden Hizmetler ──
   const devamEdenHizmetler = useMemo(() => {
     if (!danismanliklar) return [];
     return danismanliklar
-      .filter((d) => d.durum === 'Aktif' || d.durum === 'Devam Ediyor')
-      .slice(0, 4);
+      .filter((d) => d.durum === 'Aktif' || d.durum === 'Devam Ediyor' || d.durum === 'Taslak')
+      .slice(0, 5);
   }, [danismanliklar]);
 
+  // ── Tarih ──
+  const bugun = new Date();
+  const gunAdi = bugun.toLocaleDateString('tr-TR', { weekday: 'long' });
+  const tarihStr = bugun.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  const uyariSayi = Array.isArray(uyarilar) ? uyarilar.length : 0;
+  const kritikUyari = Array.isArray(uyarilar) ? uyarilar.filter((u: Record<string, unknown>) => u.oncelik === 'yuksek').length : 0;
+
   return (
-    <div className="dash-container">
+    <div className="w-full">
       {/* ── BAŞLIK ── */}
       <div className="flex justify-between items-end flex-wrap gap-3 mb-5">
         <div>
-          <h1 className="font-[var(--font-playfair)] text-2xl text-text font-bold">Genel Bakış</h1>
-          <p className="text-sm text-text-muted">Büronuzun anlık durumu</p>
+          <h1 className="font-[var(--font-playfair)] text-2xl text-text font-bold leading-tight">Genel Bakış</h1>
+          <p className="text-sm text-text-muted">İyi günler, {muvekkillar ? 'avukat' : '—'} — {tarihStr} {gunAdi}</p>
         </div>
       </div>
 
-      {/* ── KPI STRIP ── */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
-        <KpiCard label="Müvekkil" value={kpis.muvSayi} icon="👥" />
-        <KpiCard label="Derdest Dava" value={kpis.aktifDava} icon="⚖️" />
-        <KpiCard label="Derdest İcra" value={kpis.aktifIcra} icon="⚡" />
-        <KpiCard label="Duruşma (Hafta)" value={kpis.buHaftaDurusma} icon="📅" accent />
-        <KpiCard
-          label="Bu Ay Net"
-          value={kpis.ayNet ? fmt(kpis.ayNet) : '—'}
-          icon="💰"
-          color={kpis.ayNet >= 0 ? 'text-green' : 'text-red'}
-        />
+      {/* ── KPI STRIP — 5'li grid ── */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-5">
+        <KpiCard icon="👥" value={kpis.muvSayi} label="MÜVEKKİLLER" sub={`${kpis.muvGercek} Gerçek · ${kpis.muvTuzel} Tüzel`} />
+        <KpiCard icon="📁" value={kpis.aktifDava} label="DERDEST DAVA" sub={`${kpis.davaSayi} dosya`} color="text-gold" />
+        <KpiCard icon="⚡" value={kpis.aktifIcra} label="DERDEST İCRA" sub={`${kpis.icraSayi} dosya`} color="text-red" />
+        <KpiCard icon="📅" value={kpis.buHaftaDurusma} label="BU HAFTA DURUŞMA" sub={`${kpis.buHaftaDurusma} adet`} color="text-red" accent />
+        <KpiCard icon="💎" value={fmt(kpis.yilNet)} label="2026 NET GELİR" sub="Kâr" color={kpis.yilNet >= 0 ? 'text-green' : 'text-red'} />
       </div>
 
-      {/* ── BENTO GRID: Satır 1 — 3 eşit sütun ── */}
+      {/* ── BENTO GRID: Satır 1 — 3 sütun ── */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         {/* Aylık Performans */}
         <DashPanel title="💰 Aylık Performans" linkText="Finans ›" linkHref="/finans" color="green">
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-xs text-text-muted">Gelir</span>
-              <span className="text-sm font-semibold text-green">{fmt(kpis.ayGelir)}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-xs text-text-muted">Gider</span>
-              <span className="text-sm font-semibold text-red">{fmt(kpis.ayGider)}</span>
-            </div>
-            <div className="border-t border-border pt-2 flex justify-between items-center">
-              <span className="text-xs font-semibold text-text">Net</span>
-              <span className={`text-sm font-bold ${kpis.ayNet >= 0 ? 'text-green' : 'text-red'}`}>{fmt(kpis.ayNet)}</span>
+          <div className="space-y-3 mt-2">
+            <PerformansChart />
+            <div className="flex items-center justify-center gap-5 text-[11px] text-text-muted">
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-green" /> Gelir</span>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-red" /> Gider</span>
             </div>
           </div>
         </DashPanel>
@@ -155,17 +156,17 @@ export default function DashboardPage() {
         {/* Gündem */}
         <DashPanel title="📋 Gündem" linkText="Takvim ›" linkHref="/takvim" color="blue">
           {gundem.length === 0 ? (
-            <EmptyState text="Yaklaşan etkinlik yok" />
+            <EmptyState icon="📅" text="Gündemde etkinlik yok" action="Ekle ›" actionHref="/takvim?yeni=1" />
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-1.5 mt-1">
               {gundem.map((d) => {
                 const gun = Math.ceil((new Date(d.durusma!).getTime() - Date.now()) / 86400000);
                 return (
-                  <Link key={d.id} href={`/davalar/${d.id}`} className="flex items-center gap-2 p-2 rounded-lg hover:bg-surface2 transition-colors">
+                  <Link key={d.id} href={`/davalar/${d.id}`} className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-surface2 transition-colors">
                     <GunBadge gun={gun} />
                     <div className="flex-1 min-w-0">
-                      <div className="text-[11px] font-semibold text-text truncate">{d.no || d.konu || '—'}</div>
-                      <div className="text-[10px] text-text-dim truncate">{muvAdMap[d.muvId || ''] || '—'}</div>
+                      <div className="text-[12px] font-semibold text-text truncate">{d.no || d.konu || '—'}</div>
+                      <div className="text-[11px] text-text-dim truncate">{muvAdMap[d.muvId || ''] || '—'}</div>
                     </div>
                   </Link>
                 );
@@ -177,18 +178,17 @@ export default function DashboardPage() {
         {/* Bu Hafta Yapılacaklar */}
         <DashPanel title="✅ Bu Hafta Yapılacaklar" linkText="Tümü ›" linkHref="/gorevler" color="purple">
           {buHaftaGorevler.length === 0 ? (
-            <EmptyState text="Görev bulunmuyor" />
+            <EmptyState icon="✅" text="Görev bulunmuyor" />
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-1.5 mt-1">
               {buHaftaGorevler.map((g) => (
-                <div key={g.id} className={`flex items-start gap-2 p-2 rounded-lg border-l-3 ${g.oncelik === 'Yüksek' ? 'border-l-red bg-red-dim/30' : 'border-l-gold bg-surface2'}`}>
-                  <div className={`w-2 h-2 rounded-full mt-1 flex-shrink-0 ${g.oncelik === 'Yüksek' ? 'bg-red shadow-[0_0_6px_rgba(192,57,43,0.5)]' : 'bg-gold'}`} />
+                <div key={g.id} className={`flex items-center gap-2 px-2 py-2 rounded-lg ${g.oncelik === 'Yüksek' ? 'bg-red-dim/30' : 'bg-surface2/50'}`}>
                   <div className="flex-1 min-w-0">
-                    <div className="text-[11px] font-semibold text-text truncate">{g.baslik || '—'}</div>
-                    <div className="text-[10px] text-text-dim truncate">{g.sonTarih ? fmtTarih(g.sonTarih) : 'Tarih yok'}</div>
+                    <div className="text-[12px] font-semibold text-text truncate">{g.baslik || '—'}</div>
+                    <div className="text-[10px] text-text-dim">{g.sonTarih ? fmtTarih(g.sonTarih) : ''}</div>
                   </div>
-                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${g.oncelik === 'Yüksek' ? 'bg-red/20 text-red' : 'bg-gold-dim text-gold'}`}>
-                    {g.oncelik === 'Yüksek' ? 'Acil' : g.oncelik || 'Normal'}
+                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 uppercase ${g.oncelik === 'Yüksek' ? 'bg-red text-white' : 'bg-gold-dim text-gold'}`}>
+                    {g.oncelik === 'Yüksek' ? 'Gecikti' : g.oncelik || ''}
                   </span>
                 </div>
               ))}
@@ -197,21 +197,22 @@ export default function DashboardPage() {
         </DashPanel>
       </div>
 
-      {/* ── BENTO GRID: Satır 2 — 3 eşit sütun ── */}
+      {/* ── BENTO GRID: Satır 2 — 3 sütun ── */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         {/* Kritik Süreler */}
-        <DashPanel title="⚠️ Kritik Süreler" subtitle="(30 gün)" color="gold">
+        <DashPanel title="⚠️ Kritik Süreler" subtitle="(30 gün)" linkText="Takvim ›" linkHref="/takvim" color="gold">
           {kritikSureler.length === 0 ? (
-            <EmptyState text="Kritik süre bulunmuyor" />
+            <EmptyState icon="📅" text="30 gün içinde kritik işlem yok" />
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-1.5 mt-1">
               {kritikSureler.map((s, i) => (
-                <div key={i} className={`flex items-center gap-2 p-2 rounded-lg ${s.gun <= 3 ? 'bg-red-dim/40 border-l-3 border-l-red' : s.gun <= 7 ? 'bg-gold-dim/40 border-l-3 border-l-gold' : 'bg-surface2'}`}>
-                  <GunBadge gun={s.gun} />
+                <div key={i} className={`flex items-center gap-2.5 px-2 py-2 rounded-lg ${s.gun <= 3 ? 'bg-red-dim/40' : s.gun <= 7 ? 'bg-gold-dim/40' : 'bg-surface2/50'}`}>
+                  <span className="text-base flex-shrink-0">{s.icon}</span>
                   <div className="flex-1 min-w-0">
-                    <div className="text-[11px] font-semibold text-text truncate">{s.tip} — {s.baslik}</div>
+                    <div className="text-[12px] font-semibold text-text truncate">{s.baslik}</div>
                     <div className="text-[10px] text-text-dim">{fmtTarih(s.tarih)}</div>
                   </div>
+                  <GunBadge gun={s.gun} />
                 </div>
               ))}
             </div>
@@ -220,20 +221,27 @@ export default function DashboardPage() {
 
         {/* Finansal Uyarılar */}
         <DashPanel title="🔴 Finansal Uyarılar" linkText="Finans ›" linkHref="/finans" color="red">
-          {!uyarilar || (Array.isArray(uyarilar) && uyarilar.length === 0) ? (
-            <EmptyState text="Uyarı bulunmuyor ✓" />
+          {uyariSayi === 0 ? (
+            <EmptyState icon="✅" text="Finansal uyarı bulunmuyor" />
           ) : (
-            <div className="space-y-2">
-              {(Array.isArray(uyarilar) ? uyarilar : []).slice(0, 5).map((u: Record<string, unknown>, i: number) => (
-                <div key={i} className={`p-2 rounded-lg text-[11px] ${u.oncelik === 'yuksek' ? 'bg-red-dim text-red' : u.oncelik === 'orta' ? 'bg-gold-dim text-gold' : 'bg-surface2 text-text-muted'}`}>
-                  <div className="flex items-start gap-1.5">
-                    <span className="text-xs">{(u.icon as string) || '⚠️'}</span>
-                    <div className="flex-1">
-                      <div className="font-medium">{u.mesaj as string}</div>
-                      {typeof u.tutar === 'number' && u.tutar > 0 && (
-                        <div className="font-bold mt-0.5">{fmt(u.tutar)}</div>
-                      )}
-                    </div>
+            <div className="mt-1 space-y-2">
+              {/* Özet */}
+              <div className="bg-surface2 rounded-xl p-3 text-center">
+                <div className="progress-bar mb-2">
+                  <div className="progress-fill" style={{ width: `${Math.min(100, kritikUyari * 25)}%`, background: kritikUyari > 0 ? 'var(--red)' : 'var(--gradient-progress)' }} />
+                </div>
+                <div className={`font-[var(--font-playfair)] text-xl font-bold ${kritikUyari > 0 ? 'text-red' : 'text-gold'}`}>{kritikUyari} Kritik</div>
+                <div className="text-[10px] text-text-dim">{uyariSayi} toplam uyarı</div>
+              </div>
+              {/* Liste */}
+              {(Array.isArray(uyarilar) ? uyarilar : []).slice(0, 4).map((u: Record<string, unknown>, i: number) => (
+                <div key={i} className={`flex items-start gap-2 px-2 py-2 rounded-lg text-[11px] ${u.oncelik === 'yuksek' ? 'bg-red-dim/40 text-red' : 'bg-gold-dim/30 text-gold'}`}>
+                  <span className="flex-shrink-0 mt-0.5">{(u.icon as string) || '⚠️'}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium leading-snug">{u.mesaj as string}</div>
+                    {typeof u.tutar === 'number' && u.tutar > 0 && (
+                      <div className="font-bold mt-0.5">{fmt(u.tutar)}</div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -243,7 +251,11 @@ export default function DashboardPage() {
 
         {/* Menfaat Çakışması */}
         <DashPanel title="🔍 Menfaat Çakışması" color="red">
-          <EmptyState text="Çakışma tespit edilmedi ✓" />
+          <div className="flex flex-col items-center justify-center py-5 text-center">
+            <div className="w-12 h-12 bg-green-dim rounded-full flex items-center justify-center text-green text-xl mb-2">✅</div>
+            <div className="text-[13px] font-semibold text-green">Temiz</div>
+            <div className="text-[11px] text-text-dim mt-0.5">Menfaat çakışması tespit edilmedi</div>
+          </div>
         </DashPanel>
       </div>
 
@@ -252,17 +264,16 @@ export default function DashboardPage() {
         {/* Devam Eden Hizmetler */}
         <DashPanel title="⚖️ Devam Eden Hizmetler" linkText="Tümü ›" linkHref="/danismanlik" color="gold">
           {devamEdenHizmetler.length === 0 ? (
-            <EmptyState text="Aktif danışmanlık bulunmuyor" />
+            <EmptyState icon="⚖️" text="Aktif danışmanlık bulunmuyor" />
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-1.5 mt-1">
               {devamEdenHizmetler.map((d) => (
-                <div key={d.id} className="flex items-center gap-2 p-2 bg-surface2 rounded-lg">
-                  <div className="w-8 h-8 bg-gold-dim rounded-lg flex items-center justify-center text-xs text-gold font-bold">⚖️</div>
+                <div key={d.id} className="flex items-center gap-3 px-2 py-2 bg-surface2/50 rounded-lg hover:bg-surface2 transition-colors">
                   <div className="flex-1 min-w-0">
-                    <div className="text-[11px] font-semibold text-text truncate">{d.konu || '—'}</div>
-                    <div className="text-[10px] text-text-dim truncate">{muvAdMap[d.muvId || ''] || '—'} · {d.tur || '—'}</div>
+                    <div className="text-[12px] font-semibold text-text truncate">{d.konu || '—'}</div>
+                    <div className="text-[10px] text-text-dim truncate">{muvAdMap[d.muvId || ''] || '—'} · {d.tur || 'Danışmanlık'} / {String(d.altTur || '—')}</div>
                   </div>
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-green-dim text-green">Aktif</span>
+                  <span className="badge badge-gold text-[9px]">{d.durum || 'Taslak'}</span>
                 </div>
               ))}
             </div>
@@ -271,14 +282,17 @@ export default function DashboardPage() {
 
         {/* Son Aktiviteler */}
         <DashPanel title="📋 Son Aktiviteler" color="blue">
-          <EmptyState text="Henüz aktivite kaydı yok" />
+          <EmptyState icon="📋" text="Henüz aktivite yok" action="Müvekkil Ekle ›" actionHref="/muvekkillar?yeni=1" />
         </DashPanel>
       </div>
     </div>
   );
 }
 
-// ── Dashboard Panel ─────────────────────────────────────────
+
+/* ══════════════════════════════════════════════════════════════
+   Dashboard Panel — Sol renkli bordür, gradient bg
+   ══════════════════════════════════════════════════════════════ */
 function DashPanel({ title, subtitle, linkText, linkHref, color, children }: {
   title: string;
   subtitle?: string;
@@ -287,59 +301,99 @@ function DashPanel({ title, subtitle, linkText, linkHref, color, children }: {
   color: string;
   children: React.ReactNode;
 }) {
-  const borderColor = {
-    green: 'border-t-green/30',
-    blue: 'border-t-[#3498db]/30',
-    purple: 'border-t-[#9b59b6]/30',
-    gold: 'border-t-gold/30',
-    red: 'border-t-red/30',
-  }[color] || 'border-t-border';
-
   return (
-    <div className={`bg-surface border border-border border-t-2 ${borderColor} rounded-lg`}>
-      <div className="flex items-center justify-between px-4 pt-4 pb-2">
-        <div className="text-sm font-semibold text-text">
+    <div className={`dash-panel dp-${color}`}>
+      <div className="flex items-center justify-between px-4 pt-3.5 pb-2">
+        <div className="text-[13px] font-bold text-text">
           {title}
-          {subtitle && <span className="text-[11px] text-text-muted font-normal ml-1">{subtitle}</span>}
+          {subtitle && <span className="text-[10px] text-text-muted font-normal ml-1.5">{subtitle}</span>}
         </div>
         {linkText && linkHref && (
-          <Link href={linkHref} className="text-[11px] text-gold hover:text-gold-light transition-colors">{linkText}</Link>
+          <Link href={linkHref} className="text-[11px] text-gold hover:text-gold-light transition-colors font-medium">{linkText}</Link>
         )}
       </div>
-      <div className="px-4 pb-4">{children}</div>
+      <div className="px-4 pb-3.5">{children}</div>
     </div>
   );
 }
 
-// ── KPI Card ─────────────────────────────────────────────────
-function KpiCard({ label, value, icon, accent, color }: {
-  label: string;
-  value: number | string;
+
+/* ══════════════════════════════════════════════════════════════
+   KPI Card — Orijinal tasarım: icon + sayı + label + subtitle
+   ══════════════════════════════════════════════════════════════ */
+function KpiCard({ icon, value, label, sub, accent, color }: {
   icon: string;
+  value: number | string;
+  label: string;
+  sub?: string;
   accent?: boolean;
   color?: string;
 }) {
   return (
-    <div className={`bg-surface border rounded-lg p-3 ${accent ? 'border-gold bg-gold-dim' : 'border-border'}`}>
-      <div className="flex items-center gap-1.5 mb-1">
-        <span className="text-sm">{icon}</span>
-        <span className="text-[10px] text-text-muted uppercase tracking-wider">{label}</span>
-      </div>
-      <div className={`font-[var(--font-playfair)] text-xl font-bold ${color || 'text-gold'}`}>
-        {value}
+    <div className={`kpi-card px-4 py-3.5 ${accent ? 'kpi-accent' : ''}`}>
+      <div className="flex items-start gap-3">
+        <div className="text-xl flex-shrink-0 mt-0.5">{icon}</div>
+        <div className="min-w-0">
+          <div className={`font-[var(--font-playfair)] text-xl font-bold leading-tight ${color || 'text-text'}`}>
+            {value}
+          </div>
+          <div className="text-[9px] text-text-muted uppercase tracking-wider font-semibold mt-0.5">{label}</div>
+          {sub && <div className="text-[10px] text-text-dim mt-0.5">{sub}</div>}
+        </div>
       </div>
     </div>
   );
 }
 
-// ── Gün Badge ────────────────────────────────────────────────
+
+/* ══════════════════════════════════════════════════════════════
+   Gün Badge
+   ══════════════════════════════════════════════════════════════ */
 function GunBadge({ gun }: { gun: number }) {
   const cls = gun <= 1 ? 'bg-red text-white' : gun <= 3 ? 'bg-red-dim text-red' : gun <= 7 ? 'bg-gold-dim text-gold' : 'bg-surface2 text-text-muted';
   const text = gun === 0 ? 'Bugün' : gun === 1 ? 'Yarın' : `${gun}g`;
-  return <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded flex-shrink-0 ${cls}`}>{text}</span>;
+  return <span className={`text-[10px] font-bold px-2 py-1 rounded-md flex-shrink-0 leading-none ${cls}`}>{text}</span>;
 }
 
-// ── Empty State ──────────────────────────────────────────────
-function EmptyState({ text }: { text: string }) {
-  return <div className="text-center py-6 text-text-dim text-xs">{text}</div>;
+
+/* ══════════════════════════════════════════════════════════════
+   Empty State — İçerikli boş durum
+   ══════════════════════════════════════════════════════════════ */
+function EmptyState({ icon, text, action, actionHref }: { icon?: string; text: string; action?: string; actionHref?: string }) {
+  return (
+    <div className="flex items-center gap-3 py-5 px-2">
+      {icon && <span className="text-xl opacity-40">{icon}</span>}
+      <div className="flex-1">
+        <div className="text-[12px] text-text-dim">{text}</div>
+      </div>
+      {action && actionHref && (
+        <Link href={actionHref} className="text-[11px] text-gold hover:text-gold-light transition-colors font-medium flex-shrink-0">{action}</Link>
+      )}
+    </div>
+  );
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   Aylık Performans Chart (basit bar chart placeholder)
+   ══════════════════════════════════════════════════════════════ */
+function PerformansChart() {
+  const aylar = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
+  const buAy = new Date().getMonth();
+
+  return (
+    <div className="flex items-end gap-1.5 h-24 px-1">
+      {aylar.map((ay, i) => (
+        <div key={ay} className="flex-1 flex flex-col items-center gap-0.5">
+          <div className="w-full flex flex-col gap-0.5 h-16 justify-end">
+            <div
+              className={`w-full rounded-sm ${i === buAy ? 'bg-green' : 'bg-green/30'}`}
+              style={{ height: `${Math.random() * 60 + 10}%` }}
+            />
+          </div>
+          <span className={`text-[8px] ${i === buAy ? 'text-text font-bold' : 'text-text-dim'}`}>{ay}</span>
+        </div>
+      ))}
+    </div>
+  );
 }

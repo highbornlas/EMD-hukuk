@@ -63,7 +63,6 @@ export function Topbar() {
     function handleKeyDown(e: KeyboardEvent) {
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
         e.preventDefault();
-        // TODO: Open spotlight search modal
         console.log('Spotlight search triggered');
       }
     }
@@ -81,7 +80,6 @@ export function Topbar() {
   /* ── Toggle mobile sidebar ──────────────────────────────── */
   function toggleSidebar() {
     setSidebarOpen((prev) => !prev);
-    // Dispatch custom event so Sidebar can listen
     window.dispatchEvent(new CustomEvent('toggle-sidebar'));
   }
 
@@ -113,12 +111,11 @@ export function Topbar() {
       {/* ── Search Bar (center, hidden on mobile) ────────── */}
       <div
         onClick={() => {
-          // TODO: Open spotlight search
           console.log('Open search');
         }}
-        className="hidden md:flex items-center gap-2 flex-1 max-w-md mx-auto cursor-pointer
-                   bg-surface2 border border-border rounded-lg px-3 py-2
-                   hover:border-text-dim transition-colors group"
+        className="topbar-search hidden md:flex items-center gap-2 flex-1 max-w-md mx-auto cursor-pointer
+                   bg-surface2 border border-border rounded-[10px] px-3 py-2
+                   hover:border-text-dim group"
         title="Ctrl+K"
       >
         <span className="text-text-dim text-sm">🔍</span>
@@ -134,33 +131,29 @@ export function Topbar() {
       {/* ── Right Group ──────────────────────────────────── */}
       <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 ml-auto">
 
-        {/* ── + Yeni Olustur ────────────────────────────── */}
+        {/* ── + Yeni Olustur ── Premium Gradient Button ── */}
         <div className="relative" ref={yeniMenuRef}>
           <button
             onClick={() => {
               setYeniMenuOpen((prev) => !prev);
               setBildirimOpen(false);
             }}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold
-                       bg-gold-dim text-gold border border-gold/30
-                       hover:bg-gold/20 transition-colors"
+            className="btn-header-gold flex items-center gap-1"
           >
             <span>+</span>
             <span className="hidden sm:inline">Yeni Oluştur</span>
           </button>
 
-          {/* Dropdown */}
+          {/* Dropdown — Premium Shadow */}
           {yeniMenuOpen && (
-            <div className="absolute right-0 top-full mt-1.5 w-48
-                           bg-surface border border-border rounded-xl shadow-xl
-                           py-1.5 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+            <div className="dropdown-menu absolute right-0 top-full mt-1.5 w-48 py-1.5 z-50 animate-fade-in-up">
               {yeniMenuItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
                   onClick={() => setYeniMenuOpen(false)}
-                  className="flex items-center gap-2.5 px-3 py-2 text-sm text-text-muted
-                             hover:bg-surface2 hover:text-text transition-colors"
+                  className="dropdown-item flex items-center gap-2.5 px-3 py-2 text-sm text-text-muted
+                             hover:text-text"
                 >
                   <span className="text-base w-5 text-center">{item.icon}</span>
                   <span>{item.label}</span>
@@ -178,7 +171,7 @@ export function Topbar() {
               setYeniMenuOpen(false);
             }}
             className="relative w-9 h-9 flex items-center justify-center rounded-lg
-                       text-text-muted hover:bg-surface2 hover:text-text transition-colors text-base"
+                       text-text-muted hover:bg-surface2 hover:text-text transition-all duration-200 text-base"
             title="Bildirimler"
           >
             🔔
@@ -190,13 +183,11 @@ export function Topbar() {
             )}
           </button>
 
-          {/* Notification Panel */}
+          {/* Notification Panel — Premium Shadow */}
           {bildirimOpen && (
-            <div className="absolute right-0 top-full mt-1.5 w-80
-                           bg-surface border border-border rounded-xl shadow-xl
-                           z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+            <div className="dropdown-menu absolute right-0 top-full mt-1.5 w-80 z-50 animate-fade-in-up">
               {/* Header */}
-              <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
                 <span className="text-sm font-bold text-text">🔔 Bildirimler</span>
                 <button className="text-xs text-text-muted hover:text-gold transition-colors">
                   ✓ Tümü
@@ -211,7 +202,7 @@ export function Topbar() {
               </div>
 
               {/* Footer */}
-              <div className="px-4 py-2 border-t border-border text-center">
+              <div className="px-4 py-2 border-t border-border/50 text-center">
                 <Link
                   href="/ayarlar"
                   onClick={() => setBildirimOpen(false)}
@@ -246,7 +237,7 @@ export function Topbar() {
         <Link
           href="/ayarlar"
           className="w-8 h-8 flex items-center justify-center rounded-lg border border-border
-                     text-text-muted hover:bg-surface2 hover:text-text transition-colors text-[11px]"
+                     text-text-muted hover:bg-surface2 hover:text-text hover:border-gold/30 transition-all duration-200 text-[11px]"
           title="Ayarlar"
         >
           ⚙️
@@ -256,7 +247,7 @@ export function Topbar() {
         <button
           onClick={handleLogout}
           className="w-8 h-8 flex items-center justify-center rounded-lg border border-border
-                     text-text-muted hover:bg-surface2 hover:text-red transition-colors text-[11px]"
+                     text-text-muted hover:bg-surface2 hover:text-red hover:border-red/30 transition-all duration-200 text-[11px]"
           title="Çıkış Yap"
         >
           🚪
@@ -265,12 +256,11 @@ export function Topbar() {
         {/* ── WhatsApp ──────────────────────────────────── */}
         <button
           onClick={() => {
-            // TODO: Open WhatsApp quick-send modal
             console.log('WhatsApp modal');
           }}
           className="w-8 h-8 flex items-center justify-center rounded-lg
                      bg-[#25D366] text-white text-[11px] font-semibold
-                     hover:bg-[#20bd5a] transition-colors"
+                     hover:bg-[#20bd5a] hover:shadow-[0_4px_12px_rgba(37,211,102,0.3)] transition-all duration-200"
           title="WhatsApp Gönder"
         >
           📱

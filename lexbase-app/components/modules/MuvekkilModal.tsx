@@ -70,7 +70,7 @@ export function MuvekkilModal({ open, onClose, muvekkil }: MuvekkilModalProps) {
     >
       <div className="space-y-4">
         {hata && (
-          <div className="bg-red-dim border border-red/20 rounded-lg px-3 py-2 text-xs text-red">
+          <div className="bg-red-dim border border-red/20 rounded-[10px] px-3 py-2 text-xs text-red">
             {hata}
           </div>
         )}
@@ -83,10 +83,10 @@ export function MuvekkilModal({ open, onClose, muvekkil }: MuvekkilModalProps) {
                 key={tip}
                 type="button"
                 onClick={() => handleChange('tip', tip)}
-                className={`flex-1 py-2.5 rounded-lg text-sm font-medium border transition-colors ${
+                className={`flex-1 py-2.5 rounded-[10px] text-sm font-medium border transition-all duration-200 ${
                   form.tip === tip
-                    ? 'bg-gold text-bg border-gold'
-                    : 'bg-surface2 text-text-muted border-border hover:border-gold/50'
+                    ? 'bg-gold text-bg border-gold shadow-[0_2px_8px_rgba(201,168,76,0.25)]'
+                    : 'bg-surface2 text-text-muted border-border hover:border-gold/50 hover:bg-gold-dim/30'
                 }`}
               >
                 {tip === 'gercek' ? '👤 Gerçek Kişi' : '🏢 Tüzel Kişi'}

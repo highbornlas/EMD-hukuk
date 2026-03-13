@@ -1,542 +1,751 @@
-import Link from 'next/link';
+'use client';
 
-/* ═══════════════════════════════════════════════════════════
-   Orijinal Vanilla JS landing page'in birebir Next.js karşılığı.
-   Yapı: Topbar → Nav → Split Hero → Mockup → Sticky Scroll →
-         Nasıl Çalışır → 4 Plan → CTA → 4-Sütun Footer
-   ═══════════════════════════════════════════════════════════ */
+import { useState, useRef } from 'react';
+import { motion, useInView } from 'framer-motion';
+import { AuthModal } from '@/components/auth/AuthModal';
+import { InfoModal } from '@/components/ui/InfoModal';
+import {
+  KullanimKosullari,
+  GizlilikPolitikasi,
+  KvkkAydinlatma,
+  VeriGuvenligi,
+  Hakkimizda,
+  SurumNotlari,
+  Iletisim,
+  YardimMerkezi,
+  CerezAyarlari,
+} from '@/lib/legal-content';
 
-const STICKY_FEATURES = [
+/* ═══════════════════════════════════════════════════════════════
+   LexBase Landing Page — Full-Width Premium Tasarım
+   • Full-screen hero (min-h-screen, gradient bg)
+   • Z-Pattern özellik bölümü (sol görsel/sağ metin → ters)
+   • Framer Motion scroll animasyonları (fade-in-up)
+   • AuthModal + InfoModal entegrasyonu
+   ═══════════════════════════════════════════════════════════════ */
+
+type AuthTab = 'giris' | 'kayit';
+type InfoPage =
+  | 'kullanim'
+  | 'gizlilik'
+  | 'kvkk'
+  | 'veri'
+  | 'hakkimizda'
+  | 'surum'
+  | 'iletisim'
+  | 'yardim'
+  | 'cerez'
+  | null;
+
+const INFO_TITLES: Record<string, string> = {
+  kullanim: 'Kullanım Koşulları',
+  gizlilik: 'Gizlilik Politikası',
+  kvkk: 'KVKK Aydınlatma Metni',
+  veri: 'Veri Güvenliği',
+  hakkimizda: 'Hakkımızda',
+  surum: 'Sürüm Notları',
+  iletisim: 'İletişim',
+  yardim: 'Yardım Merkezi',
+  cerez: 'Çerez Ayarları',
+};
+
+const INFO_COMPONENTS: Record<string, React.FC> = {
+  kullanim: KullanimKosullari,
+  gizlilik: GizlilikPolitikasi,
+  kvkk: KvkkAydinlatma,
+  veri: VeriGuvenligi,
+  hakkimizda: Hakkimizda,
+  surum: SurumNotlari,
+  iletisim: Iletisim,
+  yardim: YardimMerkezi,
+  cerez: CerezAyarlari,
+};
+
+/* ── Özellikler (Z-Pattern) ── */
+const FEATURES = [
   {
-    num: '01',
-    tag: 'En Onemli Modul',
-    title: 'Tum muvekkilleriniz,\ntek bir merkezde.',
-    desc: 'Gercek ve tuzel kisi profillerini eksiksiz tutun. TC kimlik, vergi no, MERSIS, IBAN ve iletisim bilgilerinden dava gecmisine, belgelerden WhatsApp yazismalarina kadar her sey elinizin altinda.',
-    list: [
-      'Gercek & tuzel kisi profilleri, tam bilgi yonetimi',
-      'Bagli dava, icra ve arabuluculuk dosyalari',
-      'Belge arsivi & WhatsApp entegrasyonu',
-    ],
+    tag: 'Müvekkil Yönetimi',
+    title: 'Tüm müvekkilleriniz, tek merkezde.',
+    desc: 'Gerçek ve tüzel kişi profillerini eksiksiz yönetin. TC kimlik, vergi no, MERSİS, IBAN bilgilerinden dava geçmişine kadar her şey elinizin altında.',
+    list: ['Gerçek & tüzel kişi profilleri', 'Bağlı dava, icra ve arabuluculuk dosyaları', 'Belge arşivi & WhatsApp entegrasyonu'],
+    icon: '📒',
   },
   {
-    num: '02',
-    tag: 'Dava Yonetimi',
-    title: 'Davalariniz ve her\nkurus, kontrol altinda.',
-    desc: '50+ mahkeme turu, asama takibi ve durusma takviminin yani sira dava bazli finansal takip.',
-    list: [
-      '50+ mahkeme turu, karsi taraf & vekil yonetimi',
-      'Dava harcamalari: harc, bilirkisi, tebligat takibi',
-      'Hakedilen & anlasilan vekalet ucreti takibi',
-    ],
+    tag: 'Dava Yönetimi',
+    title: 'Davalarınız ve her kuruş, kontrol altında.',
+    desc: '50+ mahkeme türü, aşama takibi ve duruşma takvimi. Dava bazlı finansal takiple her harcama ve vekâlet ücreti kayıt altında.',
+    list: ['50+ mahkeme türü & vekil yönetimi', 'Harç, bilirkişi, tebligat takibi', 'Vekâlet ücreti & tahsilat yönetimi'],
+    icon: '📁',
   },
   {
-    num: '03',
-    tag: 'Icra Takibi',
-    title: 'Icra dosyalarinizi\nkayipsiz yonetin.',
-    desc: 'Ilamli, ilamsiz, kambiyo ve haciz takiplerinizi 8 farkli icra turu destegiyle yonetin.',
-    list: [
-      '8 icra turu: ilamli, ilamsiz, kambiyo, haciz...',
-      'Icra dairesi, dosya no & asama takibi',
-      'Alacak, tahsilat & kalan bakiye takibi',
-    ],
+    tag: 'İcra Takibi',
+    title: 'İcra dosyalarınızı kayıpsız yönetin.',
+    desc: 'İlamlı, ilamsız, kambiyo ve haciz takiplerinizi 8 farklı icra türü desteğiyle yönetin. Alacak ve tahsilat bakiyeniz her zaman güncel.',
+    list: ['8 icra türü desteği', 'İcra dairesi & dosya no takibi', 'Alacak, tahsilat & kalan bakiye'],
+    icon: '⚡',
   },
   {
-    num: '04',
-    tag: 'Arabuluculuk',
-    title: 'Arabuluculuk surecleri\nduzenli ve izlenebilir.',
-    desc: 'Zorunlu ve ihtiyari arabuluculuk dosyalarinizi ayri ayri takip edin.',
-    list: [
-      'Zorunlu & ihtiyari arabuluculuk ayrimi',
-      'Arabulucu bilgileri, sicil no & toplanti takibi',
-      'Anlasma tutari & arabuluculuk ucreti yonetimi',
-    ],
+    tag: 'Finans & Raporlama',
+    title: 'Büronuzun mali tablosu anlık ve net.',
+    desc: 'Gelir, gider, avans ve vekâlet ücretlerini kategorize edin. Müvekkil bazlı kârlılık analizi ve beklenen gelir tahminleri.',
+    list: ['Gelir & gider kategorileri', 'Müvekkil kârlılık analizi', 'Fatura & makbuz oluşturma'],
+    icon: '💰',
   },
   {
-    num: '05',
-    tag: 'Personel & Ekip',
-    title: 'Ekibinizi yonetin,\nyetkileri belirleyin.',
-    desc: 'Avukat, stajyer ve sekreter icin farkli yetki seviyeleri tanimlayin.',
-    list: [
-      'Avukat, stajyer, sekreter rol ayrimi',
-      'Modul bazli yetki & erisim kontrolu',
-      'Gorev atamasi & aktivite loglari',
-    ],
+    tag: 'Takvim & Uyarılar',
+    title: 'Hiçbir kritik süre gözden kaçmasın.',
+    desc: 'Duruşma tarihleri, itiraz süreleri, temyiz son günleri — hepsi renk kodlu uyarılarla karşınızda. Görevlerinizi öncelikle yönetin.',
+    list: ['Renk kodlu öncelik sistemi', 'Otomatik duruşma takvimi', 'Görev atama & takip'],
+    icon: '📅',
   },
   {
-    num: '06',
-    tag: 'Gorev Yonetimi',
-    title: 'Yapilacaklar listeniz\noncelikli ve duzenli.',
-    desc: 'Buro gorevlerini oncelik ve son tarihe gore listeleyin.',
-    list: [
-      'Acil / Normal oncelik renk kodlari',
-      'Dava & muvekkil bazli gorev atama',
-      'Son tarih hatirlaticilari & tamamlanma takibi',
-    ],
-  },
-  {
-    num: '07',
-    tag: 'Uyari Sistemi',
-    title: 'Hicbir kritik sure\ngozden kacmasin.',
-    desc: 'Itiraz son gunleri, temyiz tarihleri, durusmalar ve icra sureleri — hepsi renk kodlu uyarilarla onunuzde.',
-    list: [
-      'Kirmizi / Sari / Yesil renk kodlu oncelik sistemi',
-      'Dava, icra, gorev bazli sure takibi',
-      'Dashboard entegre kritik uyari merkezi',
-    ],
-  },
-  {
-    num: '08',
-    tag: 'Butce & Finans',
-    title: 'Buronuzun mali tablosu\nanlik ve net.',
-    desc: 'Gelir, gider, avans ve vekalet ucretlerini kategoriye gore takip edin.',
-    list: [
-      'Gelir & gider kategorileri, aylik/yillik rapor',
-      'Muvekkil avans yonetimi & vekalet ucreti takibi',
-      'Fatura & makbuz olusturma',
-    ],
+    tag: 'Ekip & Yetki',
+    title: 'Ekibinizi yönetin, yetkileri belirleyin.',
+    desc: 'Avukat, stajyer ve sekreter için farklı yetki seviyeleri. Modül bazlı erişim kontrolü ile veri güvenliğini sağlayın.',
+    list: ['Rol bazlı yetki yönetimi', 'Modül bazlı erişim kontrolü', 'Aktivite logları & denetim'],
+    icon: '👥',
   },
 ];
 
+/* ── Fiyat Planları ── */
 const PLANLAR = [
   {
-    icon: '🌱',
-    ad: 'Baslangic',
-    aciklama: 'Tanisma donemi',
-    fiyat: 'Ucretsiz',
-    periyot: '/ 30 gun',
+    icon: '🌱', ad: 'Başlangıç', aciklama: 'Tanışma dönemi', fiyat: 'Ücretsiz', periyot: '/ 30 gün',
     ozellikler: [
-      { text: '25 Muvekkil', var: true },
-      { text: '30 Dava, 15 Icra', var: true },
-      { text: 'Arabuluculuk', var: true },
-      { text: 'WhatsApp', var: false },
-      { text: 'Finans & Fatura', var: false },
-      { text: 'Personel hesabi', var: false },
+      { text: '25 Müvekkil', var: true }, { text: '30 Dava, 15 İcra', var: true },
+      { text: 'Arabuluculuk', var: true }, { text: 'WhatsApp', var: false },
+      { text: 'Finans & Fatura', var: false }, { text: 'Personel hesabı', var: false },
     ],
-    vurgu: false,
-    btnText: 'Ucretsiz Basla',
+    vurgu: false, btnText: 'Ücretsiz Başla',
   },
   {
-    icon: '⚡',
-    ad: 'Profesyonel',
-    aciklama: 'Tek avukat icin ideal',
-    fiyat: '₺399',
-    periyot: '/ ay',
+    icon: '⚡', ad: 'Profesyonel', aciklama: 'Tek avukat için ideal', fiyat: '₺399', periyot: '/ ay',
     ozellikler: [
-      { text: '150 Muvekkil', var: true },
-      { text: '200 Dava, 100 Icra', var: true },
-      { text: 'WhatsApp', var: true },
-      { text: 'Finans & Fatura', var: true },
-      { text: 'Arac Kutusu', var: true },
-      { text: 'Personel hesabi', var: false },
+      { text: '150 Müvekkil', var: true }, { text: '200 Dava, 100 İcra', var: true },
+      { text: 'WhatsApp', var: true }, { text: 'Finans & Fatura', var: true },
+      { text: 'Araç Kutusu', var: true }, { text: 'Personel hesabı', var: false },
     ],
-    vurgu: false,
-    btnText: 'Plani Sec',
+    vurgu: false, btnText: 'Planı Seç',
   },
   {
-    icon: '🏛',
-    ad: 'Buro',
-    aciklama: '2-5 kisilik burolar',
-    fiyat: '₺699',
-    periyot: '/ ay',
+    icon: '🏛', ad: 'Büro', aciklama: '2-5 kişilik bürolar', fiyat: '₺699', periyot: '/ ay',
     ozellikler: [
-      { text: '500 Muvekkil', var: true },
-      { text: '750 Dava, 400 Icra', var: true },
-      { text: 'WhatsApp & Finans', var: true },
-      { text: 'Arac Kutusu', var: true },
-      { text: '5 Personel Hesabi', var: true },
-      { text: 'Bulut Yedek', var: false },
+      { text: '500 Müvekkil', var: true }, { text: '750 Dava, 400 İcra', var: true },
+      { text: 'WhatsApp & Finans', var: true }, { text: 'Araç Kutusu', var: true },
+      { text: '5 Personel Hesabı', var: true }, { text: 'Bulut Yedek', var: false },
     ],
-    vurgu: true,
-    btnText: 'Plani Sec',
+    vurgu: true, btnText: 'Planı Seç',
   },
   {
-    icon: '🏢',
-    ad: 'Kurumsal',
-    aciklama: 'Buyuk burolar icin',
-    fiyat: '₺999',
-    periyot: '/ ay',
+    icon: '🏢', ad: 'Kurumsal', aciklama: 'Büyük bürolar için', fiyat: '₺999', periyot: '/ ay',
     ozellikler: [
-      { text: 'Sinirsiz Muvekkil', var: true },
-      { text: 'Sinirsiz Dava & Icra', var: true },
-      { text: 'Tum Ozellikler', var: true },
-      { text: 'Sinirsiz Personel', var: true },
-      { text: 'Bulut Yedekleme', var: true },
-      { text: 'Ozel Destek Hatti', var: true },
+      { text: 'Sınırsız Müvekkil', var: true }, { text: 'Sınırsız Dava & İcra', var: true },
+      { text: 'Tüm Özellikler', var: true }, { text: 'Sınırsız Personel', var: true },
+      { text: 'Bulut Yedekleme', var: true }, { text: 'Özel Destek Hattı', var: true },
     ],
-    vurgu: false,
-    btnText: 'Plani Sec',
+    vurgu: false, btnText: 'Planı Seç',
   },
 ];
 
-export default function Home() {
+/* ── Scroll Animation Wrapper ── */
+function FadeInUp({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: '-80px' });
   return (
-    <div className="min-h-screen bg-bg">
-      {/* ─── Ust Iletisim Bandi ─── */}
-      <div className="bg-surface border-b border-border/50">
-        <div className="max-w-7xl mx-auto px-6 py-2 flex items-center justify-center gap-8 text-xs text-text-muted">
-          <span>📧 info@lexbase.app</span>
-          <span>📞 +90 (212) 000 00 00</span>
-          <span className="hidden sm:inline">🕐 Pzt–Cum 09:00–18:00</span>
-        </div>
-      </div>
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 40 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+      transition={{ duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
 
-      {/* ─── Navbar ─── */}
-      <nav className="border-b border-border/50 bg-bg/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="font-[var(--font-playfair)] text-xl font-bold tracking-tight">
-            <span className="text-gold">L</span><span className="text-text">ex</span><span className="text-gold">B</span><span className="text-text">ase</span>
+function FadeInLeft({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: '-80px' });
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, x: -60 }}
+      animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -60 }}
+      transition={{ duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+function FadeInRight({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: '-80px' });
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, x: 60 }}
+      animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: 60 }}
+      transition={{ duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════ */
+
+export default function Home() {
+  const [authOpen, setAuthOpen] = useState(false);
+  const [authTab, setAuthTab] = useState<AuthTab>('giris');
+  const [infoPage, setInfoPage] = useState<InfoPage>(null);
+
+  const openAuth = (tab: AuthTab) => { setAuthTab(tab); setAuthOpen(true); };
+  const openInfo = (page: InfoPage) => setInfoPage(page);
+  const closeInfo = () => setInfoPage(null);
+  const InfoContent = infoPage ? INFO_COMPONENTS[infoPage] : null;
+
+  return (
+    <div className="min-h-screen bg-[#0B0F19] text-white overflow-x-hidden">
+      {/* ── Modals ── */}
+      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} defaultTab={authTab} />
+      <InfoModal open={!!infoPage} onClose={closeInfo} title={infoPage ? INFO_TITLES[infoPage] : ''}>
+        {InfoContent && <InfoContent />}
+      </InfoModal>
+
+      {/* ════════════════════════════════════════════════════
+          NAVBAR — Transparent + blur, full width
+          ════════════════════════════════════════════════════ */}
+      <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-[#0B0F19]/70 border-b border-white/[0.06]">
+        <div className="max-w-[1400px] mx-auto px-8 md:px-12 h-[72px] flex items-center justify-between">
+          {/* Logo */}
+          <div className="font-[var(--font-playfair)] text-2xl font-bold tracking-tight">
+            <span className="text-[#D4AF37]">Lex</span><span className="text-white">Base</span>
           </div>
-          <div className="hidden md:flex items-center gap-8">
-            <a href="#ozellikler" className="text-sm text-text-muted hover:text-text transition-colors">Ozellikler</a>
-            <a href="#fiyatlar" className="text-sm text-text-muted hover:text-text transition-colors">Fiyatlar</a>
-            <a href="#nasil" className="text-sm text-text-muted hover:text-text transition-colors">Nasil Calisir</a>
+
+          {/* Nav links */}
+          <div className="hidden md:flex items-center gap-10">
+            <a href="#ozellikler" className="text-[15px] text-white/50 hover:text-white transition-colors duration-300">Özellikler</a>
+            <a href="#nasil" className="text-[15px] text-white/50 hover:text-white transition-colors duration-300">Nasıl Çalışır</a>
+            <a href="#fiyatlar" className="text-[15px] text-white/50 hover:text-white transition-colors duration-300">Fiyatlar</a>
           </div>
-          <div className="flex items-center gap-3">
-            <Link href="/giris" className="px-5 py-2 text-sm text-text-muted hover:text-text transition-colors font-medium border border-border rounded-lg hover:border-gold/50">
-              Giris Yap
-            </Link>
-            <Link href="/kayit" className="px-5 py-2 bg-gold text-bg font-semibold rounded-lg text-sm hover:bg-gold-light transition-colors">
-              Ucretsiz Basla
-            </Link>
+
+          {/* Auth buttons */}
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => openAuth('giris')}
+              className="text-[15px] text-white/60 hover:text-white transition-colors duration-300"
+            >
+              Giriş Yap
+            </button>
+            <button
+              onClick={() => openAuth('kayit')}
+              className="px-6 py-2.5 bg-gradient-to-r from-[#D4AF37] to-[#E8C64A] text-[#0B0F19] text-sm font-bold rounded-xl hover:shadow-[0_0_30px_rgba(212,175,55,0.3)] transition-all duration-300"
+            >
+              Ücretsiz Başla
+            </button>
           </div>
         </div>
       </nav>
 
-      {/* ─── Hero (Split Layout) ─── */}
-      <section className="relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 py-20 md:py-28 grid md:grid-cols-2 gap-12 items-center">
-          {/* Sol: Metin */}
-          <div>
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-gold-dim border border-gold/20 rounded-full text-xs text-gold font-medium mb-6">
-              <span className="w-1.5 h-1.5 bg-gold rounded-full animate-pulse" />
-              Turkiye&apos;nin hukuk burolari icin tasarlandi
+      {/* ════════════════════════════════════════════════════
+          HERO — Full-screen, gradient bg, büyük başlık
+          ════════════════════════════════════════════════════ */}
+      <section className="relative min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-[#0B0F19] via-[#101726] to-[#131A2B] overflow-hidden">
+        {/* Dekoratif arka plan elementleri */}
+        <div className="absolute inset-0 pointer-events-none">
+          {/* Gold glow orb — üst sağ */}
+          <div className="absolute top-[15%] right-[10%] w-[500px] h-[500px] bg-[#D4AF37]/[0.04] rounded-full blur-[120px]" />
+          {/* Blue glow orb — alt sol */}
+          <div className="absolute bottom-[10%] left-[5%] w-[400px] h-[400px] bg-blue-500/[0.03] rounded-full blur-[100px]" />
+          {/* Grid overlay */}
+          <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
+          {/* Radial vignette */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,#0B0F19_75%)]" />
+        </div>
+
+        {/* Hero içerik */}
+        <div className="relative z-10 max-w-[1400px] mx-auto px-8 md:px-12 w-full pt-[72px]">
+          <div className="grid lg:grid-cols-2 gap-16 items-center min-h-[calc(100vh-72px)] py-16">
+            {/* Sol — Metin */}
+            <div>
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <div className="inline-flex items-center gap-2.5 px-5 py-2 bg-[#D4AF37]/10 border border-[#D4AF37]/20 rounded-full text-[13px] text-[#D4AF37] font-medium mb-8 tracking-wide">
+                  <span className="w-2 h-2 bg-[#D4AF37] rounded-full animate-pulse" />
+                  Türkiye&apos;nin Hukuk Büroları İçin
+                </div>
+              </motion.div>
+
+              <motion.h1
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                className="font-[var(--font-playfair)] text-[3.2rem] md:text-[4rem] lg:text-[4.8rem] font-bold leading-[1.08] mb-7 tracking-tight"
+              >
+                Hukuk Büronuzu{' '}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] to-[#E8C64A]">
+                  Dijitale Taşıyın.
+                </span>
+              </motion.h1>
+
+              <motion.p
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                className="text-lg md:text-xl text-white/50 mb-10 leading-relaxed max-w-xl"
+              >
+                Müvekkil yönetiminden dava takibine, icra dosyalarından finansal raporlara — tüm iş akışlarınız tek platformda.
+              </motion.p>
+
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                className="flex flex-wrap gap-4 mb-14"
+              >
+                <button
+                  onClick={() => openAuth('kayit')}
+                  className="group px-10 py-4 bg-gradient-to-r from-[#D4AF37] to-[#E8C64A] text-[#0B0F19] text-base font-bold rounded-xl shadow-[0_0_40px_rgba(212,175,55,0.2)] hover:shadow-[0_0_60px_rgba(212,175,55,0.35)] transition-all duration-500 hover:scale-[1.03]"
+                >
+                  30 Gün Ücretsiz Dene
+                  <span className="inline-block ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
+                </button>
+                <a
+                  href="#ozellikler"
+                  className="px-10 py-4 border border-white/15 text-white/70 text-base font-semibold rounded-xl hover:bg-white/5 hover:border-white/25 hover:text-white transition-all duration-300"
+                >
+                  Özellikleri Keşfet
+                </a>
+              </motion.div>
+
+              {/* İstatistikler */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 1, ease: [0.22, 1, 0.36, 1] }}
+                className="flex items-center gap-10"
+              >
+                {[
+                  { n: '12+', l: 'Modül' },
+                  { n: '100%', l: 'Veri Güvenliği' },
+                  { n: '30', l: 'Gün Ücretsiz' },
+                ].map((s) => (
+                  <div key={s.l}>
+                    <div className="font-[var(--font-playfair)] text-2xl md:text-3xl text-[#D4AF37] font-bold">{s.n}</div>
+                    <div className="text-xs text-white/30 mt-0.5">{s.l}</div>
+                  </div>
+                ))}
+              </motion.div>
             </div>
-            <h1 className="font-[var(--font-playfair)] text-4xl md:text-5xl lg:text-6xl text-text font-bold leading-tight mb-6">
-              Hukuk Buronuzu<br />
-              <em className="text-gold not-italic">Dijitale Tasiyin.</em>
-            </h1>
-            <p className="text-base md:text-lg text-text-muted mb-8 leading-relaxed max-w-lg">
-              Muvekkil yonetiminden dava takibine, icra dosyalarindan finansal raporlara — tum is akislariniz tek platformda.
-            </p>
-            <div className="flex flex-wrap gap-3 mb-10">
-              <Link href="/kayit" className="px-7 py-3.5 bg-[#0097A7] text-white font-bold rounded-lg text-sm hover:bg-[#00ACC1] transition-all shadow-lg">
-                30 Gun Ucretsiz Dene →
-              </Link>
-              <a href="#ozellikler" className="px-7 py-3.5 border border-border text-text-muted font-semibold rounded-lg text-sm hover:border-gold hover:text-gold transition-colors">
-                Ozellikleri Kesfet
-              </a>
-            </div>
-            {/* Istatistikler */}
-            <div className="grid grid-cols-4 gap-4">
+
+            {/* Sağ — Dashboard Preview (placeholder) */}
+            <motion.div
+              initial={{ opacity: 0, x: 80, scale: 0.95 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              transition={{ duration: 1, delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
+              className="relative hidden lg:block"
+            >
+              <div className="relative rounded-2xl overflow-hidden border border-white/[0.08] shadow-[0_60px_140px_rgba(0,0,0,0.6),0_0_60px_rgba(212,175,55,0.04)]">
+                {/* Browser chrome */}
+                <div className="bg-[#131820] px-4 py-3 flex items-center gap-3 border-b border-white/[0.06]">
+                  <div className="flex gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-full bg-[#e74c3c]/70" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-[#f39c12]/70" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-[#2ecc71]/70" />
+                  </div>
+                  <div className="flex-1 text-center text-[10px] text-white/20">lexbase.app — Yönetim Paneli</div>
+                </div>
+                {/* Dashboard mockup content */}
+                <div className="bg-gradient-to-br from-[#0D1117] to-[#131A25] aspect-[16/10] p-6">
+                  {/* Mini sidebar */}
+                  <div className="flex gap-4 h-full">
+                    <div className="w-36 bg-white/[0.02] rounded-xl border border-white/[0.04] p-3 hidden xl:block">
+                      <div className="font-[var(--font-playfair)] text-xs text-[#D4AF37] font-bold mb-4 px-1">LexBase</div>
+                      {['📊 Anasayfa', '📒 Rehber', '📁 Davalar', '⚡ İcra', '💰 Finans', '📅 Takvim'].map((item, idx) => (
+                        <div key={item} className={`text-[9px] px-2 py-1.5 rounded-md mb-0.5 ${idx === 0 ? 'bg-[#D4AF37]/10 text-[#D4AF37]' : 'text-white/25'}`}>
+                          {item}
+                        </div>
+                      ))}
+                    </div>
+                    {/* Main content */}
+                    <div className="flex-1">
+                      <div className="text-[11px] font-semibold text-white/60 mb-3">Genel Bakış</div>
+                      <div className="grid grid-cols-4 gap-2 mb-4">
+                        {[
+                          { v: '148', l: 'Aktif Dava', c: '#D4AF37' },
+                          { v: '₺284K', l: 'Gelir', c: '#2ecc71' },
+                          { v: '27', l: 'Müvekkil', c: '#fff' },
+                          { v: '5', l: 'Kritik', c: '#e74c3c' },
+                        ].map((kpi) => (
+                          <div key={kpi.l} className="bg-white/[0.03] rounded-lg p-2.5 border border-white/[0.04]">
+                            <div className="font-[var(--font-playfair)] text-sm font-bold" style={{ color: kpi.c }}>{kpi.v}</div>
+                            <div className="text-[7px] text-white/25 uppercase tracking-wider mt-0.5">{kpi.l}</div>
+                          </div>
+                        ))}
+                      </div>
+                      {/* Table rows */}
+                      <div className="bg-white/[0.02] rounded-lg border border-white/[0.04] overflow-hidden">
+                        <div className="grid grid-cols-4 gap-2 text-[7px] text-white/20 uppercase tracking-wider px-3 py-2 border-b border-white/[0.04]">
+                          <span>Dosya No</span><span>Müvekkil</span><span>Duruşma</span><span>Durum</span>
+                        </div>
+                        {[
+                          { no: '2024/1247', ad: 'K. Yılmaz', tarih: '15.03', durum: 'Aktif', cls: 'bg-emerald-500/20 text-emerald-400' },
+                          { no: '2024/0934', ad: 'Altın Yapı', tarih: '22.03', durum: 'Bekleme', cls: 'bg-[#D4AF37]/20 text-[#D4AF37]' },
+                          { no: '2023/2108', ad: 'L. Sönmez', tarih: '—', durum: 'Kapandı', cls: 'bg-red-500/20 text-red-400' },
+                        ].map((row) => (
+                          <div key={row.no} className="grid grid-cols-4 gap-2 text-[8px] px-3 py-2 border-b border-white/[0.03] last:border-0">
+                            <span className="text-white/20">{row.no}</span>
+                            <span className="text-white/40">{row.ad}</span>
+                            <span className="text-white/25">{row.tarih}</span>
+                            <span><span className={`px-1.5 py-0.5 rounded text-[7px] ${row.cls}`}>{row.durum}</span></span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {/* Glow behind the mockup */}
+              <div className="absolute -inset-8 bg-[#D4AF37]/[0.03] rounded-3xl blur-3xl -z-10" />
+            </motion.div>
+          </div>
+        </div>
+
+        {/* Scroll indicator */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.5 }}
+          className="absolute bottom-8 left-1/2 -translate-x-1/2"
+        >
+          <div className="w-6 h-10 border-2 border-white/15 rounded-full flex items-start justify-center p-1">
+            <motion.div
+              animate={{ y: [0, 12, 0] }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+              className="w-1.5 h-1.5 bg-[#D4AF37] rounded-full"
+            />
+          </div>
+        </motion.div>
+      </section>
+
+      {/* ════════════════════════════════════════════════════
+          SOSYAL KANIT — Güven strip
+          ════════════════════════════════════════════════════ */}
+      <section className="relative py-20 border-y border-white/[0.04] bg-[#0D1117]">
+        <div className="max-w-[1400px] mx-auto px-8 md:px-12">
+          <FadeInUp>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-16">
               {[
-                { n: '12+', l: 'Modul' },
-                { n: '100%', l: 'Veri Guvenligi' },
-                { n: '30', l: 'Gun Ucretsiz' },
-                { n: '4', l: 'Abonelik Plani' },
+                { n: '12+', l: 'Profesyonel Modül', icon: '📦' },
+                { n: '100%', l: 'Veri Güvenliği', icon: '🔒' },
+                { n: '7/24', l: 'Bulut Erişim', icon: '☁️' },
+                { n: '4', l: 'Esnek Plan', icon: '⚡' },
               ].map((s) => (
-                <div key={s.l} className="text-center">
-                  <div className="font-[var(--font-playfair)] text-xl md:text-2xl text-gold font-bold">{s.n}</div>
-                  <div className="text-[11px] text-text-dim">{s.l}</div>
+                <div key={s.l} className="flex items-center gap-4">
+                  <div className="w-14 h-14 bg-[#D4AF37]/[0.08] border border-[#D4AF37]/15 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0">
+                    {s.icon}
+                  </div>
+                  <div>
+                    <div className="font-[var(--font-playfair)] text-2xl text-white font-bold">{s.n}</div>
+                    <div className="text-sm text-white/35">{s.l}</div>
+                  </div>
                 </div>
               ))}
             </div>
-          </div>
-
-          {/* Sag: Gorsel Placeholder */}
-          <div className="relative hidden md:block">
-            <div className="relative rounded-2xl overflow-hidden bg-surface border border-border">
-              <div className="aspect-[4/3] bg-gradient-to-br from-gold/10 via-surface to-surface2 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="text-6xl mb-4 opacity-50">⚖️</div>
-                  <div className="font-[var(--font-playfair)] text-2xl text-gold/50 font-bold">LexBase</div>
-                  <div className="text-xs text-text-dim mt-1">Dashboard</div>
-                </div>
-              </div>
-            </div>
-            <div className="absolute -inset-4 bg-gold/5 rounded-3xl blur-3xl -z-10" />
-          </div>
+          </FadeInUp>
         </div>
       </section>
 
-      {/* ─── Browser Mockup ─── */}
-      <section className="pb-20">
-        <div className="max-w-5xl mx-auto px-6">
-          <div className="bg-surface border border-border rounded-xl overflow-hidden shadow-2xl shadow-black/30">
-            {/* Tarayici Bar */}
-            <div className="bg-surface2 px-4 py-3 flex items-center gap-3 border-b border-border">
-              <div className="flex gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-[#e74c3c]/80" />
-                <div className="w-3 h-3 rounded-full bg-[#f39c12]/80" />
-                <div className="w-3 h-3 rounded-full bg-[#2ecc71]/80" />
-              </div>
-              <div className="flex-1 text-center text-[11px] text-text-dim/40">LexBase — Yonetim Paneli</div>
-            </div>
-            {/* Icerik */}
-            <div className="flex min-h-[320px]">
-              {/* Sidebar */}
-              <div className="w-44 bg-[#0c0f14] border-r border-border/50 p-3 space-y-1 hidden sm:block">
-                <div className="font-[var(--font-playfair)] text-sm text-gold font-bold mb-4 px-2">LexBase</div>
-                {[
-                  { icon: '📊', label: 'Anasayfa', active: true },
-                  { icon: '👥', label: 'Muvekkillar', active: false },
-                  { icon: '📁', label: 'Davalar', active: false },
-                  { icon: '⚡', label: 'Icra Takip', active: false },
-                  { icon: '💰', label: 'Butce', active: false },
-                  { icon: '📅', label: 'Takvim', active: false },
-                  { icon: '🧰', label: 'Arac Kutusu', active: false },
-                  { icon: '📱', label: 'WhatsApp', active: false },
-                  { icon: '🤝', label: 'Arabuluculuk', active: false },
-                ].map((item) => (
-                  <div key={item.label} className={`flex items-center gap-2 px-2 py-1.5 rounded text-[11px] ${item.active ? 'bg-gold/15 text-gold font-semibold' : 'text-text-dim/60'}`}>
-                    <span className="text-xs">{item.icon}</span>
-                    {item.label}
-                  </div>
-                ))}
-              </div>
-              {/* Ana Icerik */}
-              <div className="flex-1 p-5">
-                <div className="text-sm font-semibold text-text mb-4">Genel Bakis</div>
-                <div className="grid grid-cols-4 gap-3 mb-5">
-                  {[
-                    { v: '148', l: 'Aktif Dava', c: 'text-gold' },
-                    { v: '₺284K', l: 'Bu Ay Gelir', c: 'text-[#2ecc71]' },
-                    { v: '27', l: 'Muvekkil', c: 'text-text' },
-                    { v: '5', l: 'Kritik Sure', c: 'text-[#e74c3c]' },
-                  ].map((kpi) => (
-                    <div key={kpi.l} className="bg-surface2 border border-border/50 rounded-lg p-3 text-center">
-                      <div className={`font-[var(--font-playfair)] text-lg font-bold ${kpi.c}`}>{kpi.v}</div>
-                      <div className="text-[9px] text-text-dim uppercase tracking-wider mt-0.5">{kpi.l}</div>
-                    </div>
-                  ))}
-                </div>
-                {/* Tablo */}
-                <div className="space-y-0">
-                  <div className="grid grid-cols-4 gap-3 text-[10px] text-text-dim uppercase tracking-wider px-3 py-2">
-                    <span>Dosya No</span><span>Muvekkil</span><span>Durusma</span><span>Durum</span>
-                  </div>
-                  {[
-                    { no: '2024/1247', ad: 'Kadir Yilmaz', tarih: '15.03.2026', durum: 'Aktif', renk: 'bg-[#2ecc71]/15 text-[#2ecc71]' },
-                    { no: '2024/0934', ad: 'Altin Yapi A.S.', tarih: '22.03.2026', durum: 'Bekliyor', renk: 'bg-[#f39c12]/15 text-[#f39c12]' },
-                    { no: '2023/2108', ad: 'Leyla Sonmez', tarih: '—', durum: 'Kapandi', renk: 'bg-[#e74c3c]/15 text-[#e74c3c]' },
-                    { no: '2024/0512', ad: 'Berrak Su Ltd.', tarih: '01.04.2026', durum: 'Aktif', renk: 'bg-[#2ecc71]/15 text-[#2ecc71]' },
-                  ].map((row) => (
-                    <div key={row.no} className="grid grid-cols-4 gap-3 text-[11px] px-3 py-2 border-t border-border/30">
-                      <span className="text-text-dim/50">{row.no}</span>
-                      <span className="text-text/80">{row.ad}</span>
-                      <span className="text-text/60">{row.tarih}</span>
-                      <span><span className={`px-2 py-0.5 rounded text-[9px] font-bold ${row.renk}`}>{row.durum}</span></span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ─── Sticky Scroll Features ─── */}
-      <section id="ozellikler" className="py-20">
-        <div className="max-w-7xl mx-auto px-6">
-          {/* Baslik */}
-          <div className="text-center mb-16">
-            <div className="text-xs font-bold uppercase tracking-widest text-gold mb-3">Platform Ozellikleri</div>
-            <h2 className="font-[var(--font-playfair)] text-3xl md:text-4xl text-text font-bold mb-3">
-              Buronuzun ihtiyaci olan<br />her sey, tek platformda
+      {/* ════════════════════════════════════════════════════
+          ÖZELLİKLER — Z-Pattern Layout
+          ════════════════════════════════════════════════════ */}
+      <section id="ozellikler" className="py-28 bg-[#0B0F19]">
+        <div className="max-w-[1400px] mx-auto px-8 md:px-12">
+          {/* Bölüm başlığı */}
+          <FadeInUp className="text-center mb-24">
+            <div className="text-sm font-bold uppercase tracking-[0.2em] text-[#D4AF37] mb-4">Platform Özellikleri</div>
+            <h2 className="font-[var(--font-playfair)] text-3xl md:text-[2.8rem] text-white font-bold leading-tight">
+              Büronuzun ihtiyacı olan her şey,<br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] to-[#E8C64A]">tek platformda.</span>
             </h2>
-            <p className="text-text-muted">8 guclu modul — gercek veri, gercek akis</p>
-          </div>
+          </FadeInUp>
 
-          {/* Ozellik Listesi */}
-          <div className="space-y-24 md:space-y-32">
-            {STICKY_FEATURES.map((feat, i) => (
-              <div key={feat.num} className={`grid md:grid-cols-2 gap-12 items-center ${i % 2 === 1 ? 'md:[direction:rtl]' : ''}`}>
-                <div className={i % 2 === 1 ? 'md:[direction:ltr]' : ''}>
-                  <div className="text-5xl font-[var(--font-playfair)] text-gold/20 font-bold mb-2">{feat.num}</div>
-                  <div className="text-xs font-bold uppercase tracking-widest text-gold mb-3">{feat.tag}</div>
-                  <h3 className="font-[var(--font-playfair)] text-2xl md:text-3xl text-text font-bold mb-4 leading-tight whitespace-pre-line">{feat.title}</h3>
-                  <p className="text-sm text-text-muted mb-5 leading-relaxed">{feat.desc}</p>
-                  <ul className="space-y-2">
-                    {feat.list.map((item) => (
-                      <li key={item} className="flex items-start gap-2 text-sm text-text-muted">
-                        <span className="text-gold font-bold mt-0.5">✔</span>
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
+          {/* Z-Pattern Özellik Blokları */}
+          <div className="space-y-32">
+            {FEATURES.map((feat, i) => {
+              const isReversed = i % 2 === 1;
+              return (
+                <div key={feat.tag} className={`grid lg:grid-cols-2 gap-16 xl:gap-24 items-center ${isReversed ? 'lg:[direction:rtl]' : ''}`}>
+                  {/* Görsel placeholder */}
+                  {isReversed ? (
+                    <FadeInRight className="lg:[direction:ltr]">
+                      <FeatureVisual icon={feat.icon} tag={feat.tag} />
+                    </FadeInRight>
+                  ) : (
+                    <FadeInLeft>
+                      <FeatureVisual icon={feat.icon} tag={feat.tag} />
+                    </FadeInLeft>
+                  )}
+
+                  {/* Metin */}
+                  {isReversed ? (
+                    <FadeInLeft className="lg:[direction:ltr]">
+                      <FeatureText feat={feat} />
+                    </FadeInLeft>
+                  ) : (
+                    <FadeInRight>
+                      <FeatureText feat={feat} />
+                    </FadeInRight>
+                  )}
                 </div>
-                {/* Gorsel Placeholder */}
-                <div className={`bg-surface border border-border rounded-xl p-8 min-h-[250px] flex items-center justify-center ${i % 2 === 1 ? 'md:[direction:ltr]' : ''}`}>
-                  <div className="text-center opacity-40">
-                    <div className="text-4xl mb-2">{['👥', '📁', '⚡', '🤝', '👥', '✅', '🚨', '💰'][i]}</div>
-                    <div className="text-xs text-text-dim">{feat.tag}</div>
-                  </div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* ─── Nasil Calisir ─── */}
-      <section id="nasil" className="py-20 bg-surface/30">
-        <div className="max-w-5xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <div className="text-xs font-bold uppercase tracking-widest text-gold mb-3">Nasil Calisir</div>
-            <h2 className="font-[var(--font-playfair)] text-3xl text-text font-bold">Dakikalar icinde hazir olun</h2>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+      {/* ════════════════════════════════════════════════════
+          NASIL ÇALIŞIR — 4 Adım
+          ════════════════════════════════════════════════════ */}
+      <section id="nasil" className="py-28 bg-[#0D1117] border-y border-white/[0.04]">
+        <div className="max-w-[1200px] mx-auto px-8 md:px-12">
+          <FadeInUp className="text-center mb-20">
+            <div className="text-sm font-bold uppercase tracking-[0.2em] text-[#D4AF37] mb-4">Nasıl Çalışır</div>
+            <h2 className="font-[var(--font-playfair)] text-3xl md:text-[2.8rem] text-white font-bold">
+              Dakikalar içinde hazır olun
+            </h2>
+          </FadeInUp>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             {[
-              { n: '1', t: 'Kaydolun', d: '30 saniyelik kayit formuyla buronuzu olusturun. Kart bilgisi gerekmez.' },
-              { n: '2', t: 'Muvekkilleri Ekleyin', d: 'Gercek veya tuzel kisi profillerini hizlica girin.' },
-              { n: '3', t: 'Davalari Acin', d: 'Her muvekkil icin dava ve icra dosyalari olusturun. Takvim otomatik guncellenir.' },
-              { n: '4', t: 'Buronuzu Yonetin', d: 'Dashboard\'dan tum is akislarinizi izleyin. Raporlarla karar alin.' },
-            ].map((step) => (
-              <div key={step.n} className="bg-surface border border-border rounded-xl p-6 text-center">
-                <div className="w-10 h-10 bg-gold-dim rounded-full flex items-center justify-center text-gold font-bold text-lg mx-auto mb-4">{step.n}</div>
-                <h4 className="text-sm font-semibold text-text mb-2">{step.t}</h4>
-                <p className="text-xs text-text-muted leading-relaxed">{step.d}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── Fiyatlandirma (4 Plan) ─── */}
-      <section id="fiyatlar" className="py-20">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <div className="text-xs font-bold uppercase tracking-widest text-gold mb-3">Fiyatlandirma</div>
-            <h2 className="font-[var(--font-playfair)] text-3xl text-text font-bold mb-3">Her buro icin dogru plan</h2>
-            <p className="text-text-muted">30 gun ucretsiz deneyin, begenirseniz devam edin</p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {PLANLAR.map((plan) => (
-              <div
-                key={plan.ad}
-                className={`rounded-xl p-6 flex flex-col relative transition-all ${
-                  plan.vurgu
-                    ? 'bg-gold-dim border-2 border-gold shadow-lg shadow-gold/10'
-                    : 'bg-surface border border-border hover:border-gold/30'
-                }`}
-              >
-                {plan.vurgu && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-gold text-bg text-[10px] font-bold rounded-full uppercase tracking-wider whitespace-nowrap">
-                    EN POPULER
-                  </div>
-                )}
-                <div className="text-2xl mb-2">{plan.icon}</div>
-                <h3 className="text-base font-bold text-text">{plan.ad}</h3>
-                <p className="text-xs text-text-dim mb-3">{plan.aciklama}</p>
-                <div className="mb-4">
-                  <span className="font-[var(--font-playfair)] text-2xl text-gold font-bold">{plan.fiyat}</span>
-                  <span className="text-xs text-text-dim ml-1">{plan.periyot}</span>
-                </div>
-                <div className="border-t border-border/50 pt-4 space-y-2.5 flex-1 mb-5">
-                  {plan.ozellikler.map((oz) => (
-                    <div key={oz.text} className="flex items-center gap-2 text-xs">
-                      <span className={oz.var ? 'text-gold' : 'text-text-dim/40'}>
-                        {oz.var ? '✓' : '✗'}
-                      </span>
-                      <span className={oz.var ? 'text-text-muted' : 'text-text-dim/40'}>{oz.text}</span>
+              { n: '1', t: 'Kaydolun', d: '30 saniyelik kayıt formuyla büronuzu oluşturun. Kart bilgisi gerekmez.', icon: '📝' },
+              { n: '2', t: 'Müvekkil Ekleyin', d: 'Gerçek veya tüzel kişi profillerini hızlıca girin.', icon: '👤' },
+              { n: '3', t: 'Davaları Açın', d: 'Dava ve icra dosyaları oluşturun. Takvim otomatik güncellenir.', icon: '📁' },
+              { n: '4', t: 'Yönetin', d: "Dashboard'dan tüm iş akışlarınızı izleyin. Raporlarla karar alın.", icon: '📊' },
+            ].map((step, idx) => (
+              <FadeInUp key={step.n} delay={idx * 0.15}>
+                <div className="relative group">
+                  {/* Connector line */}
+                  {idx < 3 && (
+                    <div className="hidden md:block absolute top-10 left-[60%] w-[calc(100%-10px)] h-px bg-gradient-to-r from-[#D4AF37]/20 to-transparent" />
+                  )}
+                  <div className="relative bg-white/[0.02] border border-white/[0.06] rounded-2xl p-8 hover:border-[#D4AF37]/20 hover:bg-[#D4AF37]/[0.02] transition-all duration-500 h-full">
+                    <div className="w-14 h-14 bg-gradient-to-br from-[#D4AF37]/15 to-[#D4AF37]/5 border border-[#D4AF37]/20 rounded-2xl flex items-center justify-center text-2xl mb-5">
+                      {step.icon}
                     </div>
-                  ))}
+                    <div className="text-xs text-[#D4AF37] font-bold mb-2 uppercase tracking-wider">Adım {step.n}</div>
+                    <h4 className="text-lg font-bold text-white mb-2">{step.t}</h4>
+                    <p className="text-sm text-white/40 leading-relaxed">{step.d}</p>
+                  </div>
                 </div>
-                <Link
-                  href="/kayit"
-                  className={`w-full py-3 rounded-lg text-sm font-semibold text-center transition-colors block ${
-                    plan.vurgu
-                      ? 'bg-gold text-bg hover:bg-gold-light'
-                      : 'bg-surface2 text-text hover:bg-gold-dim hover:text-gold border border-border/50'
-                  }`}
-                >
-                  {plan.btnText}
-                </Link>
-              </div>
+              </FadeInUp>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ─── CTA ─── */}
-      <section className="py-20">
-        <div className="max-w-3xl mx-auto px-6 text-center relative">
-          <div className="absolute inset-0 bg-gold/5 rounded-3xl blur-3xl -z-10" />
-          <div className="text-xs font-bold uppercase tracking-widest text-gold mb-4">Hemen Baslayin</div>
-          <h2 className="font-[var(--font-playfair)] text-3xl md:text-4xl text-text font-bold mb-4 leading-tight">
-            Buronuzu bugun<br /><span className="text-gold">dijitale tasiyin</span>
-          </h2>
-          <p className="text-text-dim mb-10">30 gun ucretsiz — kart bilgisi gerekmez — istediginizde iptal edin</p>
-          <Link href="/kayit" className="inline-block px-12 py-4 bg-[#0097A7] text-white font-bold rounded-lg text-base hover:bg-[#00ACC1] transition-all shadow-lg">
-            Hemen Basla — Ucretsiz →
-          </Link>
+      {/* ════════════════════════════════════════════════════
+          FİYATLANDIRMA — 4 Plan
+          ════════════════════════════════════════════════════ */}
+      <section id="fiyatlar" className="py-28 bg-[#0B0F19]">
+        <div className="max-w-[1200px] mx-auto px-8 md:px-12">
+          <FadeInUp className="text-center mb-20">
+            <div className="text-sm font-bold uppercase tracking-[0.2em] text-[#D4AF37] mb-4">Fiyatlandırma</div>
+            <h2 className="font-[var(--font-playfair)] text-3xl md:text-[2.8rem] text-white font-bold mb-4">
+              Her büro için doğru plan
+            </h2>
+            <p className="text-white/40 text-lg">30 gün ücretsiz deneyin, beğenirseniz devam edin</p>
+          </FadeInUp>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {PLANLAR.map((plan, idx) => (
+              <FadeInUp key={plan.ad} delay={idx * 0.1}>
+                <div className={`relative rounded-2xl p-7 flex flex-col h-full transition-all duration-500 ${
+                  plan.vurgu
+                    ? 'bg-gradient-to-b from-[#D4AF37]/10 to-[#D4AF37]/[0.02] border-2 border-[#D4AF37]/30 shadow-[0_0_60px_rgba(212,175,55,0.08)]'
+                    : 'bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.12]'
+                }`}>
+                  {plan.vurgu && (
+                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-5 py-1 bg-gradient-to-r from-[#D4AF37] to-[#E8C64A] text-[#0B0F19] text-[10px] font-bold rounded-full uppercase tracking-wider whitespace-nowrap">
+                      EN POPÜLER
+                    </div>
+                  )}
+                  <div className="text-3xl mb-3">{plan.icon}</div>
+                  <h3 className="text-lg font-bold text-white">{plan.ad}</h3>
+                  <p className="text-xs text-white/30 mb-4">{plan.aciklama}</p>
+                  <div className="mb-6">
+                    <span className="font-[var(--font-playfair)] text-3xl text-[#D4AF37] font-bold">{plan.fiyat}</span>
+                    <span className="text-sm text-white/25 ml-1">{plan.periyot}</span>
+                  </div>
+                  <div className="border-t border-white/[0.06] pt-5 space-y-3 flex-1 mb-6">
+                    {plan.ozellikler.map((oz) => (
+                      <div key={oz.text} className="flex items-center gap-2.5 text-sm">
+                        <span className={oz.var ? 'text-[#D4AF37]' : 'text-white/15'}>
+                          {oz.var ? '✓' : '✗'}
+                        </span>
+                        <span className={oz.var ? 'text-white/60' : 'text-white/20'}>{oz.text}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => openAuth('kayit')}
+                    className={`w-full py-3.5 rounded-xl text-sm font-bold text-center transition-all duration-300 ${
+                      plan.vurgu
+                        ? 'bg-gradient-to-r from-[#D4AF37] to-[#E8C64A] text-[#0B0F19] hover:shadow-[0_0_30px_rgba(212,175,55,0.3)]'
+                        : 'bg-white/[0.04] text-white/60 border border-white/[0.08] hover:bg-[#D4AF37]/10 hover:text-[#D4AF37] hover:border-[#D4AF37]/20'
+                    }`}
+                  >
+                    {plan.btnText}
+                  </button>
+                </div>
+              </FadeInUp>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* ─── Footer (4 Sutun) ─── */}
-      <footer className="border-t border-border py-16">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-10">
+      {/* ════════════════════════════════════════════════════
+          CTA — Full width gold accent
+          ════════════════════════════════════════════════════ */}
+      <section className="py-32 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0B0F19] via-[#0D1117] to-[#0B0F19]" />
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-[#D4AF37]/[0.04] rounded-full blur-[120px]" />
+        </div>
+        <div className="relative z-10 max-w-[800px] mx-auto px-8 text-center">
+          <FadeInUp>
+            <div className="text-sm font-bold uppercase tracking-[0.2em] text-[#D4AF37] mb-6">Hemen Başlayın</div>
+            <h2 className="font-[var(--font-playfair)] text-3xl md:text-5xl text-white font-bold mb-6 leading-tight">
+              Büronuzu bugün<br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D4AF37] to-[#E8C64A]">dijitale taşıyın</span>
+            </h2>
+            <p className="text-white/35 text-lg mb-12">30 gün ücretsiz — kart bilgisi gerekmez — istediğinizde iptal edin</p>
+            <button
+              onClick={() => openAuth('kayit')}
+              className="group px-14 py-5 bg-gradient-to-r from-[#D4AF37] to-[#E8C64A] text-[#0B0F19] text-lg font-bold rounded-2xl shadow-[0_0_50px_rgba(212,175,55,0.2)] hover:shadow-[0_0_80px_rgba(212,175,55,0.35)] transition-all duration-500 hover:scale-[1.03]"
+            >
+              Hemen Başla — Ücretsiz
+              <span className="inline-block ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
+            </button>
+          </FadeInUp>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════════════
+          FOOTER — 4 Sütun, full width
+          ════════════════════════════════════════════════════ */}
+      <footer className="border-t border-white/[0.06] py-20 bg-[#080B12]">
+        <div className="max-w-[1400px] mx-auto px-8 md:px-12">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-14">
             {/* Marka */}
             <div>
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 bg-gold-dim border border-gold/20 rounded-lg flex items-center justify-center">
-                  <span className="font-[var(--font-playfair)] text-sm text-gold font-bold">L</span>
+              <div className="flex items-center gap-2.5 mb-4">
+                <div className="w-10 h-10 bg-[#D4AF37]/10 border border-[#D4AF37]/20 rounded-xl flex items-center justify-center">
+                  <span className="font-[var(--font-playfair)] text-lg text-[#D4AF37] font-bold">L</span>
                 </div>
-                <span className="font-[var(--font-playfair)] text-lg text-text font-bold">LexBase</span>
+                <span className="font-[var(--font-playfair)] text-xl text-white font-bold">LexBase</span>
               </div>
-              <p className="text-sm text-text-dim leading-relaxed mb-4">
-                Hukuk Buronuzu<br />Dijitale Tasiyin.
+              <p className="text-sm text-white/30 leading-relaxed mb-5">
+                Hukuk büronuzu dijitale taşıyan profesyonel platform.
               </p>
               <div className="flex items-center gap-3">
-                <a href="#" className="w-8 h-8 rounded-lg border border-border flex items-center justify-center text-text-dim hover:text-gold hover:border-gold/50 transition-colors text-sm" title="LinkedIn">in</a>
-                <a href="#" className="w-8 h-8 rounded-lg border border-border flex items-center justify-center text-text-dim hover:text-gold hover:border-gold/50 transition-colors text-sm" title="X">X</a>
-                <a href="#" className="w-8 h-8 rounded-lg border border-border flex items-center justify-center text-text-dim hover:text-gold hover:border-gold/50 transition-colors text-sm" title="Instagram">ig</a>
+                {['in', 'X', 'ig'].map((s) => (
+                  <a key={s} href="#" className="w-9 h-9 rounded-xl border border-white/[0.08] flex items-center justify-center text-white/25 hover:text-[#D4AF37] hover:border-[#D4AF37]/30 transition-all duration-300 text-sm">
+                    {s}
+                  </a>
+                ))}
               </div>
             </div>
 
             {/* Platform */}
             <div>
-              <h4 className="text-xs font-bold text-text uppercase tracking-wider mb-4">Platform</h4>
-              <ul className="space-y-2.5">
-                <li><a href="#ozellikler" className="text-sm text-text-muted hover:text-gold transition-colors">Ozellikler</a></li>
-                <li><a href="#fiyatlar" className="text-sm text-text-muted hover:text-gold transition-colors">Fiyatlandirma</a></li>
-                <li><span className="text-sm text-text-muted hover:text-gold cursor-pointer transition-colors">Avukat Arac Kutusu</span></li>
-                <li><span className="text-sm text-text-muted hover:text-gold cursor-pointer transition-colors">Surum Notlari</span></li>
+              <h4 className="text-xs font-bold text-white uppercase tracking-[0.15em] mb-5">Platform</h4>
+              <ul className="space-y-3">
+                <li><a href="#ozellikler" className="text-sm text-white/35 hover:text-[#D4AF37] transition-colors duration-300">Özellikler</a></li>
+                <li><a href="#fiyatlar" className="text-sm text-white/35 hover:text-[#D4AF37] transition-colors duration-300">Fiyatlandırma</a></li>
+                <li><button onClick={() => openInfo('surum')} className="text-sm text-white/35 hover:text-[#D4AF37] transition-colors duration-300 text-left">Sürüm Notları</button></li>
+                <li><button onClick={() => openInfo('yardim')} className="text-sm text-white/35 hover:text-[#D4AF37] transition-colors duration-300 text-left">Yardım Merkezi</button></li>
               </ul>
             </div>
 
             {/* Kurumsal */}
             <div>
-              <h4 className="text-xs font-bold text-text uppercase tracking-wider mb-4">LexBase</h4>
-              <ul className="space-y-2.5">
-                <li><span className="text-sm text-text-muted hover:text-gold cursor-pointer transition-colors">Hakkimizda</span></li>
-                <li><span className="text-sm text-text-muted hover:text-gold cursor-pointer transition-colors">Blog</span></li>
-                <li><span className="text-sm text-text-muted hover:text-gold cursor-pointer transition-colors">Iletisim</span></li>
-                <li><span className="text-sm text-text-muted hover:text-gold cursor-pointer transition-colors">Yardim Merkezi</span></li>
+              <h4 className="text-xs font-bold text-white uppercase tracking-[0.15em] mb-5">LexBase</h4>
+              <ul className="space-y-3">
+                <li><button onClick={() => openInfo('hakkimizda')} className="text-sm text-white/35 hover:text-[#D4AF37] transition-colors duration-300 text-left">Hakkımızda</button></li>
+                <li><button onClick={() => openInfo('iletisim')} className="text-sm text-white/35 hover:text-[#D4AF37] transition-colors duration-300 text-left">İletişim</button></li>
+                <li><button onClick={() => openInfo('yardim')} className="text-sm text-white/35 hover:text-[#D4AF37] transition-colors duration-300 text-left">Yardım Merkezi</button></li>
               </ul>
             </div>
 
             {/* Yasal */}
             <div>
-              <h4 className="text-xs font-bold text-text uppercase tracking-wider mb-4">Yasal</h4>
-              <ul className="space-y-2.5">
-                <li><span className="text-sm text-text-muted hover:text-gold cursor-pointer transition-colors">Kullanim Kosullari</span></li>
-                <li><span className="text-sm text-text-muted hover:text-gold cursor-pointer transition-colors">Gizlilik Politikasi</span></li>
-                <li><span className="text-sm text-text-muted hover:text-gold cursor-pointer transition-colors">KVKK Aydinlatma Metni</span></li>
-                <li><span className="text-sm text-text-muted hover:text-gold cursor-pointer transition-colors">Veri Guvenligi</span></li>
-                <li><span className="text-sm text-text-muted hover:text-gold cursor-pointer transition-colors">Cerez Ayarlari</span></li>
+              <h4 className="text-xs font-bold text-white uppercase tracking-[0.15em] mb-5">Yasal</h4>
+              <ul className="space-y-3">
+                <li><button onClick={() => openInfo('kullanim')} className="text-sm text-white/35 hover:text-[#D4AF37] transition-colors duration-300 text-left">Kullanım Koşulları</button></li>
+                <li><button onClick={() => openInfo('gizlilik')} className="text-sm text-white/35 hover:text-[#D4AF37] transition-colors duration-300 text-left">Gizlilik Politikası</button></li>
+                <li><button onClick={() => openInfo('kvkk')} className="text-sm text-white/35 hover:text-[#D4AF37] transition-colors duration-300 text-left">KVKK Aydınlatma Metni</button></li>
+                <li><button onClick={() => openInfo('veri')} className="text-sm text-white/35 hover:text-[#D4AF37] transition-colors duration-300 text-left">Veri Güvenliği</button></li>
+                <li><button onClick={() => openInfo('cerez')} className="text-sm text-white/35 hover:text-[#D4AF37] transition-colors duration-300 text-left">Çerez Ayarları</button></li>
               </ul>
             </div>
           </div>
 
           {/* Alt Telif */}
-          <div className="border-t border-border pt-6 flex items-center justify-between text-[11px] text-text-dim">
-            <span>© 2026 LexBase. Tum haklari saklidir.</span>
-            <span>Turkiye&apos;de Gelistirilmistir 🇹🇷</span>
+          <div className="border-t border-white/[0.06] pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-white/20">
+            <span>© 2026 LexBase. Tüm hakları saklıdır.</span>
+            <span>Türkiye&apos;de Geliştirilmiştir 🇹🇷</span>
           </div>
         </div>
       </footer>
+    </div>
+  );
+}
+
+/* ── Alt Bileşenler ── */
+
+function FeatureVisual({ icon, tag }: { icon: string; tag: string }) {
+  return (
+    <div className="relative">
+      <div className="relative bg-white/[0.02] border border-white/[0.06] rounded-2xl overflow-hidden aspect-[4/3] flex items-center justify-center hover:border-[#D4AF37]/15 transition-all duration-500 group">
+        {/* İçerik yerine ekran görüntüsü konacak */}
+        <div className="text-center">
+          <div className="text-6xl mb-4 opacity-30 group-hover:opacity-50 transition-opacity duration-500">{icon}</div>
+          <div className="text-sm text-white/15 font-medium">{tag}</div>
+          <div className="text-[10px] text-white/10 mt-1">Ekran görüntüsü eklenecek</div>
+        </div>
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F19]/50 to-transparent pointer-events-none" />
+      </div>
+      {/* Glow */}
+      <div className="absolute -inset-4 bg-[#D4AF37]/[0.02] rounded-3xl blur-2xl -z-10" />
+    </div>
+  );
+}
+
+function FeatureText({ feat }: { feat: typeof FEATURES[0] }) {
+  return (
+    <div>
+      <div className="text-sm font-bold uppercase tracking-[0.2em] text-[#D4AF37] mb-4">{feat.tag}</div>
+      <h3 className="font-[var(--font-playfair)] text-2xl md:text-[2.2rem] text-white font-bold mb-5 leading-tight">{feat.title}</h3>
+      <p className="text-base text-white/40 mb-7 leading-relaxed">{feat.desc}</p>
+      <ul className="space-y-3">
+        {feat.list.map((item) => (
+          <li key={item} className="flex items-center gap-3 text-[15px] text-white/50">
+            <span className="w-5 h-5 bg-[#D4AF37]/15 rounded-md flex items-center justify-center flex-shrink-0">
+              <span className="text-[#D4AF37] text-xs">✓</span>
+            </span>
+            {item}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

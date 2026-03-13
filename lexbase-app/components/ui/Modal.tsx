@@ -2,6 +2,12 @@
 
 import { useEffect, useRef } from 'react';
 
+/* ══════════════════════════════════════════════════════════════
+   Premium Modal — Orijinal Vanilla JS tasarımının birebir
+   karşılığı. Blur overlay, gold-tinted border, heavy shadow,
+   20px radius.
+   ══════════════════════════════════════════════════════════════ */
+
 interface ModalProps {
   open: boolean;
   onClose: () => void;
@@ -38,16 +44,17 @@ export function Modal({ open, onClose, title, maxWidth = 'max-w-lg', children, f
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-150"
+      className="modal-overlay fixed inset-0 z-[100] flex items-center justify-center animate-fade-in-up"
       onClick={(e) => { if (e.target === overlayRef.current) onClose(); }}
     >
-      <div className={`bg-surface border border-border rounded-xl shadow-2xl w-[95%] ${maxWidth} animate-in zoom-in-95 duration-200`}>
+      <div className={`modal-box w-[95%] ${maxWidth} animate-scale-in`}>
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border/50">
           <h2 className="text-base font-semibold text-text">{title}</h2>
           <button
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface2 text-text-muted hover:text-text transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded-lg
+                       hover:bg-surface2 text-text-muted hover:text-text transition-all duration-200"
           >
             ✕
           </button>
@@ -60,7 +67,7 @@ export function Modal({ open, onClose, title, maxWidth = 'max-w-lg', children, f
 
         {/* Footer */}
         {footer && (
-          <div className="px-6 py-4 border-t border-border flex items-center justify-end gap-3">
+          <div className="px-6 py-4 border-t border-border/50 flex items-center justify-end gap-3">
             {footer}
           </div>
         )}
@@ -69,7 +76,10 @@ export function Modal({ open, onClose, title, maxWidth = 'max-w-lg', children, f
   );
 }
 
-// ── Form Input Components ─────────────────────────────────────
+/* ══════════════════════════════════════════════════════════════
+   Form Components — Premium Styled
+   ══════════════════════════════════════════════════════════════ */
+
 export function FormGroup({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (
     <div>
@@ -86,7 +96,7 @@ export function FormInput({ type = 'text', ...props }: React.InputHTMLAttributes
     <input
       type={type}
       {...props}
-      className={`w-full px-3 py-2.5 bg-surface2 border border-border rounded-lg text-sm text-text placeholder:text-text-dim focus:outline-none focus:border-gold transition-colors ${props.className || ''}`}
+      className={`form-input ${props.className || ''}`}
     />
   );
 }
@@ -95,7 +105,7 @@ export function FormSelect({ children, ...props }: React.SelectHTMLAttributes<HT
   return (
     <select
       {...props}
-      className={`w-full px-3 py-2.5 bg-surface2 border border-border rounded-lg text-sm text-text focus:outline-none focus:border-gold transition-colors ${props.className || ''}`}
+      className={`form-input ${props.className || ''}`}
     >
       {children}
     </select>
@@ -106,17 +116,22 @@ export function FormTextarea({ ...props }: React.TextareaHTMLAttributes<HTMLText
   return (
     <textarea
       {...props}
-      className={`w-full px-3 py-2.5 bg-surface2 border border-border rounded-lg text-sm text-text placeholder:text-text-dim focus:outline-none focus:border-gold transition-colors resize-none ${props.className || ''}`}
+      className={`form-input resize-none ${props.className || ''}`}
     />
   );
 }
 
-// ── Button Components ────────────────────────────────────────
+
+/* ══════════════════════════════════════════════════════════════
+   Button Components — Gradient + Shadow + Hover Lift
+   Orijinal: .btn-gold, .btn-outline
+   ══════════════════════════════════════════════════════════════ */
+
 export function BtnGold({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
       {...props}
-      className={`px-5 py-2.5 bg-gold text-bg font-semibold rounded-lg text-sm hover:bg-gold-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${props.className || ''}`}
+      className={`btn-gold ${props.className || ''}`}
     >
       {children}
     </button>
@@ -127,7 +142,7 @@ export function BtnOutline({ children, ...props }: React.ButtonHTMLAttributes<HT
   return (
     <button
       {...props}
-      className={`px-5 py-2.5 border border-border text-text-muted font-medium rounded-lg text-sm hover:bg-surface2 hover:text-text transition-colors ${props.className || ''}`}
+      className={`btn-outline ${props.className || ''}`}
     >
       {children}
     </button>

@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useDanismanliklar } from '@/lib/hooks/useDanismanlik';
+import { useDanismanliklar, type Danismanlik } from '@/lib/hooks/useDanismanlik';
 import { useMuvekkillar } from '@/lib/hooks/useMuvekkillar';
 import { fmt, fmtTarih } from '@/lib/utils';
+import { DanismanlikModal } from '@/components/modules/DanismanlikModal';
 
 const DURUM_RENK: Record<string, string> = {
   'Taslak': 'bg-surface2 text-text-dim border-border',
@@ -19,6 +20,8 @@ export default function DanismanlikPage() {
   const { data: muvekkillar } = useMuvekkillar();
   const [arama, setArama] = useState('');
   const [durumFiltre, setDurumFiltre] = useState('hepsi');
+  const [modalAcik, setModalAcik] = useState(false);
+  const [secili, setSecili] = useState<Danismanlik | null>(null);
 
   const muvAdMap = useMemo(() => {
     const map: Record<string, string> = {};
@@ -59,7 +62,10 @@ export default function DanismanlikPage() {
           Danışmanlık
           {danismanliklar && <span className="text-sm font-normal text-text-muted ml-2">({danismanliklar.length})</span>}
         </h1>
-        <button className="px-4 py-2 bg-gold text-bg font-semibold rounded-lg text-xs hover:bg-gold-light transition-colors">
+        <button
+          onClick={() => { setSecili(null); setModalAcik(true); }}
+          className="px-4 py-2 bg-gold text-bg font-semibold rounded-lg text-xs hover:bg-gold-light transition-colors"
+        >
           + Yeni Danışmanlık
         </button>
       </div>
@@ -108,7 +114,7 @@ export default function DanismanlikPage() {
           {filtrelenmis.map((d) => {
             const kalan = (d.ucret || 0) - (d.tahsilEdildi || 0);
             return (
-              <div key={d.id} className="grid grid-cols-[80px_1fr_1fr_1fr_100px_100px_100px] gap-2 px-4 py-3 border-b border-border/50 hover:bg-gold-dim transition-colors items-center cursor-pointer">
+              <div key={d.id} onClick={() => { setSecili(d); setModalAcik(true); }} className="grid grid-cols-[80px_1fr_1fr_1fr_100px_100px_100px] gap-2 px-4 py-3 border-b border-border/50 hover:bg-gold-dim transition-colors items-center cursor-pointer">
                 <span className="text-[11px] text-text-dim">{fmtTarih(d.tarih)}</span>
                 <span className="text-xs text-text truncate">{d.tur || '—'}</span>
                 <span className="text-xs text-text truncate">{muvAdMap[d.muvId || ''] || '—'}</span>
@@ -127,6 +133,7 @@ export default function DanismanlikPage() {
           })}
         </div>
       )}
+      <DanismanlikModal open={modalAcik} onClose={() => setModalAcik(false)} danismanlik={secili} />
     </div>
   );
 }

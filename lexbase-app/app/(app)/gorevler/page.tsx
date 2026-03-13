@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useTodolar, type Todo } from '@/lib/hooks/useTodolar';
+import { useTodolar, useTodoKaydet, type Todo } from '@/lib/hooks/useTodolar';
 import { useMuvekkillar } from '@/lib/hooks/useMuvekkillar';
 import { fmtTarih } from '@/lib/utils';
+import { GorevModal } from '@/components/modules/GorevModal';
 
 const ONCELIK_RENK: Record<string, { bg: string; text: string; icon: string }> = {
   'Yüksek': { bg: 'bg-red-dim', text: 'text-red', icon: '🔴' },
@@ -23,8 +24,20 @@ type Grup = 'Gecikmiş' | 'Bugün' | 'Bu Hafta' | 'Diğer' | 'Tamamlandı / İpt
 export default function GorevlerPage() {
   const { data: todolar, isLoading } = useTodolar();
   const { data: muvekkillar } = useMuvekkillar();
+  const todoKaydet = useTodoKaydet();
   const [arama, setArama] = useState('');
   const [filtre, setFiltre] = useState<'hepsi' | 'aktif' | 'tamamlandi'>('aktif');
+  const [modalAcik, setModalAcik] = useState(false);
+  const [seciliGorev, setSeciliGorev] = useState<Todo | null>(null);
+
+  function toggleTamamla(todo: Todo) {
+    const yeniDurum = todo.durum === 'Tamamlandı' ? 'Bekliyor' : 'Tamamlandı';
+    todoKaydet.mutate({
+      ...todo,
+      durum: yeniDurum,
+      ...(yeniDurum === 'Tamamlandı' ? { tamamlanmaTarih: new Date().toISOString() } : { tamamlanmaTarih: undefined }),
+    });
+  }
 
   const muvAdMap = useMemo(() => {
     const map: Record<string, string> = {};
@@ -116,7 +129,10 @@ export default function GorevlerPage() {
           Görevler
           {todolar && <span className="text-sm font-normal text-text-muted ml-2">({todolar.length})</span>}
         </h1>
-        <button className="px-4 py-2 bg-gold text-bg font-semibold rounded-lg text-xs hover:bg-gold-light transition-colors">
+        <button
+          onClick={() => { setSeciliGorev(null); setModalAcik(true); }}
+          className="px-4 py-2 bg-gold text-bg font-semibold rounded-lg text-xs hover:bg-gold-light transition-colors"
+        >
           + Yeni Görev
         </button>
       </div>
@@ -173,14 +189,18 @@ export default function GorevlerPage() {
                   {gorevler.map((t) => (
                     <div
                       key={t.id}
-                      className={`flex items-start gap-3 bg-surface border border-border rounded-lg p-3.5 hover:border-gold transition-colors ${
+                      onClick={() => { setSeciliGorev(t); setModalAcik(true); }}
+                      className={`flex items-start gap-3 bg-surface border border-border rounded-lg p-3.5 hover:border-gold transition-colors cursor-pointer ${
                         t.durum === 'Tamamlandı' ? 'opacity-60' : ''
                       }`}
                     >
                       {/* Checkbox */}
-                      <div className={`w-4 h-4 rounded border-2 flex-shrink-0 mt-0.5 flex items-center justify-center cursor-pointer ${
-                        t.durum === 'Tamamlandı' ? 'bg-green border-green' : 'border-border hover:border-gold'
-                      }`}>
+                      <div
+                        onClick={(e) => { e.stopPropagation(); toggleTamamla(t); }}
+                        className={`w-4 h-4 rounded border-2 flex-shrink-0 mt-0.5 flex items-center justify-center cursor-pointer transition-colors ${
+                          t.durum === 'Tamamlandı' ? 'bg-green border-green' : 'border-border hover:border-gold'
+                        }`}
+                      >
                         {t.durum === 'Tamamlandı' && <span className="text-[10px] text-bg">✓</span>}
                       </div>
 
@@ -238,6 +258,8 @@ export default function GorevlerPage() {
           })}
         </div>
       )}
+
+      <GorevModal open={modalAcik} onClose={() => setModalAcik(false)} gorev={seciliGorev} />
     </div>
   );
 }

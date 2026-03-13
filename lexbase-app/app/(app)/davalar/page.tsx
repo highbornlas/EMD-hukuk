@@ -2,9 +2,10 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { useDavalar } from '@/lib/hooks/useDavalar';
+import { useDavalar, type Dava } from '@/lib/hooks/useDavalar';
 import { useMuvekkillar } from '@/lib/hooks/useMuvekkillar';
 import { fmtTarih } from '@/lib/utils';
+import { DavaModal } from '@/components/modules/DavaModal';
 
 const ASAMA_RENK: Record<string, string> = {
   'İlk Derece': 'text-blue-400 bg-blue-400/10',
@@ -28,6 +29,8 @@ export default function DavalarPage() {
   const [arama, setArama] = useState('');
   const [durumFiltre, setDurumFiltre] = useState<string>('hepsi');
   const [asamaFiltre, setAsamaFiltre] = useState<string>('hepsi');
+  const [modalAcik, setModalAcik] = useState(false);
+  const [seciliDava, setSeciliDava] = useState<Dava | null>(null);
 
   // Müvekkil adı map
   const muvAdMap = useMemo(() => {
@@ -76,7 +79,10 @@ export default function DavalarPage() {
           Davalar
           {davalar && <span className="text-sm font-normal text-text-muted ml-2">({davalar.length})</span>}
         </h1>
-        <button className="px-4 py-2 bg-gold text-bg font-semibold rounded-lg text-xs hover:bg-gold-light transition-colors">
+        <button
+          onClick={() => { setSeciliDava(null); setModalAcik(true); }}
+          className="px-4 py-2 bg-gold text-bg font-semibold rounded-lg text-xs hover:bg-gold-light transition-colors"
+        >
           + Yeni Dava
         </button>
       </div>
@@ -181,6 +187,7 @@ export default function DavalarPage() {
           ))}
         </div>
       )}
+      <DavaModal open={modalAcik} onClose={() => setModalAcik(false)} dava={seciliDava} />
     </div>
   );
 }

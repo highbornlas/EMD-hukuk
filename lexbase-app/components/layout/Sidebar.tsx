@@ -2,8 +2,23 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useMuvekkillar } from '@/lib/hooks/useMuvekkillar';
+import { useDavalar } from '@/lib/hooks/useDavalar';
+import { useIcralar } from '@/lib/hooks/useIcra';
+import { useDanismanliklar } from '@/lib/hooks/useDanismanlik';
+import { useTodolar } from '@/lib/hooks/useTodolar';
+import { useFinansUyarilar } from '@/lib/hooks/useFinans';
 
-// Badge type: 'count' shows number, 'red' shows red badge (financial alerts)
+/* ══════════════════════════════════════════════════════════════
+   Premium Sidebar — Kompakt & Zarif
+   - Genişlik: 200px (w-[200px])
+   - Kompakt item: py-[7px] px-[12px], gap-[8px], font-size 13px
+   - Badge: gold bg + dark text
+   - Finans badge: red bg
+   - Active: gold text + gold-dim bg + font-bold
+   - Hover: gold accent belirgin
+   ══════════════════════════════════════════════════════════════ */
+
 type BadgeType = 'count' | 'red';
 
 interface MenuItem {
@@ -11,6 +26,7 @@ interface MenuItem {
   icon: string;
   label: string;
   badge?: BadgeType;
+  countKey?: string;
 }
 
 interface SidebarGroup {
@@ -21,23 +37,23 @@ const sidebarGroups: SidebarGroup[] = [
   {
     items: [
       { href: '/dashboard', icon: '🏛', label: 'Ana Sayfa' },
-      { href: '/muvekkillar', icon: '📒', label: 'Rehber', badge: 'count' },
+      { href: '/muvekkillar', icon: '📒', label: 'Rehber', badge: 'count', countKey: 'muvekkil' },
     ],
   },
   {
     items: [
-      { href: '/davalar', icon: '📁', label: 'Davalar', badge: 'count' },
-      { href: '/icra', icon: '⚡', label: 'İcra', badge: 'count' },
-      { href: '/arabuluculuk', icon: '🤝', label: 'Arabuluculuk', badge: 'count' },
-      { href: '/danismanlik', icon: '⚖️', label: 'Danışmanlık', badge: 'count' },
-      { href: '/ihtarname', icon: '📨', label: 'İhtarname', badge: 'count' },
-      { href: '/gorevler', icon: '✅', label: 'Görevler', badge: 'count' },
+      { href: '/davalar', icon: '📁', label: 'Davalar', badge: 'count', countKey: 'dava' },
+      { href: '/icra', icon: '⚡', label: 'İcra', badge: 'count', countKey: 'icra' },
+      { href: '/arabuluculuk', icon: '🤝', label: 'Arabuluculuk', badge: 'count', countKey: 'arabuluculuk' },
+      { href: '/danismanlik', icon: '⚖️', label: 'Danışmanlık', badge: 'count', countKey: 'danismanlik' },
+      { href: '/ihtarname', icon: '📨', label: 'İhtarname', badge: 'count', countKey: 'ihtarname' },
+      { href: '/gorevler', icon: '✅', label: 'Görevler', badge: 'count', countKey: 'gorev' },
     ],
   },
   {
     items: [
-      { href: '/finans', icon: '💰', label: 'Finans', badge: 'red' },
-      { href: '/takvim', icon: '📅', label: 'Takvim', badge: 'count' },
+      { href: '/finans', icon: '💰', label: 'Finans', badge: 'red', countKey: 'finans' },
+      { href: '/takvim', icon: '📅', label: 'Takvim', badge: 'count', countKey: 'takvim' },
     ],
   },
   {
@@ -53,10 +69,26 @@ const bottomItems: MenuItem[] = [
   { href: '/destek', icon: '🎧', label: 'Destek' },
 ];
 
-// TODO: Replace with real counts from state/store when available
+/* Hook: gerçek badge sayılarını hesapla */
 function useBadgeCounts(): Record<string, number> {
-  // Placeholder — in production these come from Supabase queries / app state
-  return {};
+  const { data: muvekkillar } = useMuvekkillar();
+  const { data: davalar } = useDavalar();
+  const { data: icralar } = useIcralar();
+  const { data: danismanliklar } = useDanismanliklar();
+  const { data: gorevler } = useTodolar();
+  const { data: uyarilar } = useFinansUyarilar();
+
+  return {
+    muvekkil: muvekkillar?.length ?? 0,
+    dava: davalar?.filter((d) => d.durum === 'Aktif' || d.durum === 'Devam Ediyor').length ?? 0,
+    icra: icralar?.filter((i) => i.durum !== 'Kapandı').length ?? 0,
+    danismanlik: danismanliklar?.filter((d) => d.durum === 'Aktif' || d.durum === 'Devam Ediyor').length ?? 0,
+    gorev: gorevler?.filter((g) => g.durum !== 'Tamamlandı' && g.durum !== 'İptal').length ?? 0,
+    finans: Array.isArray(uyarilar) ? uyarilar.length : 0,
+    arabuluculuk: 0,
+    ihtarname: 0,
+    takvim: 0,
+  };
 }
 
 export function Sidebar() {
@@ -69,31 +101,30 @@ export function Sidebar() {
         ? pathname === '/dashboard'
         : pathname.startsWith(item.href);
 
-    const count = badgeCounts[item.href] ?? 0;
+    const count = item.countKey ? (badgeCounts[item.countKey] ?? 0) : 0;
 
     return (
       <Link
         key={item.href}
         href={item.href}
         className={`
-          flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium
-          transition-all duration-150
+          flex items-center gap-2 px-3 py-[7px] mx-2 my-[1px]
+          text-[13px] rounded-lg transition-all duration-200 group
           ${isActive
-            ? 'bg-gold-dim text-gold'
-            : 'text-text-muted hover:bg-surface2 hover:text-text'
+            ? 'bg-[rgba(212,175,55,0.12)] text-[#D4AF37] font-bold shadow-[inset_0_0_0_1px_rgba(212,175,55,0.08)]'
+            : 'text-[#8B95A5] font-medium hover:text-white hover:bg-[rgba(212,175,55,0.06)]'
           }
         `}
       >
-        <span className="text-base w-5 text-center">{item.icon}</span>
-        <span className="flex-1">{item.label}</span>
+        <span className="text-[14px] w-[18px] text-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">{item.icon}</span>
+        <span className="flex-1 truncate">{item.label}</span>
         {item.badge && count > 0 && (
           <span
             className={`
-              min-w-[20px] h-5 flex items-center justify-center rounded-full
-              text-[10px] font-semibold px-1.5
+              ml-auto rounded-full text-[9px] font-bold min-w-[18px] h-[18px] flex items-center justify-center px-1 leading-none
               ${item.badge === 'red'
-                ? 'bg-red-500/20 text-red-400'
-                : 'bg-white/10 text-text-muted'
+                ? 'bg-[#e74c3c] text-white shadow-[0_0_8px_rgba(231,76,60,0.3)]'
+                : 'bg-[#D4AF37] text-[#0D1117]'
               }
             `}
           >
@@ -104,44 +135,40 @@ export function Sidebar() {
     );
   };
 
-  const separator = (key: string) => (
-    <div key={key} className="h-px bg-border mx-2 my-2" />
-  );
-
   return (
-    <aside className="fixed left-0 top-0 bottom-0 w-[220px] bg-surface border-r border-border flex flex-col z-50">
+    <aside className="fixed left-0 top-0 bottom-0 w-[200px] bg-[#0D1117] border-r border-white/[0.06] flex flex-col z-50">
       {/* Logo */}
-      <div className="h-14 flex items-center px-5 border-b border-border">
-        <span className="font-[var(--font-playfair)] text-lg text-gold font-bold tracking-tight">
-          LexBase
-        </span>
+      <div className="h-14 flex items-center px-4 border-b border-white/[0.06]">
+        <Link href="/dashboard" className="font-[var(--font-playfair)] text-lg font-bold tracking-tight hover:opacity-90 transition-opacity">
+          <span className="text-[#D4AF37]">Lex</span><span className="text-white">Base</span>
+        </Link>
       </div>
 
       {/* Main Navigation */}
-      <nav className="flex-1 py-3 px-2 overflow-y-auto">
+      <nav className="flex-1 pt-4 overflow-y-auto flex flex-col">
         {sidebarGroups.map((group, gi) => (
           <div key={gi}>
-            {gi > 0 && separator(`sep-${gi}`)}
-            <div className="space-y-0.5">
+            {gi > 0 && <div className="h-px bg-white/[0.04] mx-3 my-1.5" />}
+            <div className="space-y-[1px]">
               {group.items.map(renderItem)}
             </div>
           </div>
         ))}
 
-        {/* Spacer pushes bottom items down */}
+        {/* Spacer */}
         <div className="flex-1" />
       </nav>
 
       {/* Bottom Section */}
-      <div className="px-2 pb-2">
-        {separator('sep-bottom')}
-        <div className="space-y-0.5">
+      <div className="pb-3">
+        <div className="h-px bg-white/[0.04] mx-3 mb-1.5" />
+        <div className="space-y-[1px]">
           {bottomItems.map(renderItem)}
         </div>
 
         {/* Version */}
-        <div className="mt-3 px-3 pb-1">
-          <span className="text-[10px] text-text-dim">v2.1.0</span>
+        <div className="text-center mt-2">
+          <span className="text-[9px] text-white/15 tracking-wider">v2.1.0</span>
         </div>
       </div>
     </aside>

@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useEtkinlikler } from '@/lib/hooks/useEtkinlikler';
+import { useEtkinlikler, type Etkinlik } from '@/lib/hooks/useEtkinlikler';
 import { useDavalar } from '@/lib/hooks/useDavalar';
 import { useMuvekkillar } from '@/lib/hooks/useMuvekkillar';
+import { EtkinlikModal } from '@/components/modules/EtkinlikModal';
 import { fmtTarih } from '@/lib/utils';
 
 const GUNLER = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
@@ -26,6 +27,8 @@ export default function TakvimPage() {
   const bugun = new Date();
   const [yil, setYil] = useState(bugun.getFullYear());
   const [ay, setAy] = useState(bugun.getMonth());
+  const [modalAcik, setModalAcik] = useState(false);
+  const [seciliEtkinlik, setSeciliEtkinlik] = useState<Etkinlik | null>(null);
 
   // Müvekkil adı map
   const muvAdMap = useMemo(() => {
@@ -106,7 +109,10 @@ export default function TakvimPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="font-[var(--font-playfair)] text-2xl text-text font-bold">Takvim</h1>
-        <button className="px-4 py-2 bg-gold text-bg font-semibold rounded-lg text-xs hover:bg-gold-light transition-colors">
+        <button
+          onClick={() => { setSeciliEtkinlik(null); setModalAcik(true); }}
+          className="px-4 py-2 bg-gold text-bg font-semibold rounded-lg text-xs hover:bg-gold-light transition-colors"
+        >
           + Yeni Etkinlik
         </button>
       </div>
@@ -207,6 +213,8 @@ export default function TakvimPage() {
           )}
         </div>
       </div>
+
+      <EtkinlikModal open={modalAcik} onClose={() => setModalAcik(false)} etkinlik={seciliEtkinlik} />
     </div>
   );
 }

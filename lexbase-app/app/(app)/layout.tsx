@@ -11,9 +11,9 @@ export default function AppLayout({
     <AuthGuard>
       <div className="min-h-screen bg-bg">
         <Sidebar />
-        <div className="ml-[220px]">
+        <div className="ml-[200px]">
           <Topbar />
-          <main className="p-6">
+          <main className="px-5 py-4">
             {children}
           </main>
         </div>

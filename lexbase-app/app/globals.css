@@ -1,23 +1,54 @@
 @import "tailwindcss";
 
-/* ── LexBase Renk Paleti (mevcut Vanilla JS ile birebir) ────── */
+/* ══════════════════════════════════════════════════════════════
+   LexBase — Premium Design System
+   Orijinal Vanilla JS tasarımındaki tüm renk, gradient, shadow,
+   hover ve geçiş efektlerinin birebir karşılığı.
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Renk Paleti (CSS Variables) ──────────────────────────── */
 :root {
-  /* Dark theme (varsayılan) */
+  /* Core */
   --bg: #0D1117;
   --surface: #161B22;
   --surface2: #1C2333;
   --border: #2A3142;
+  /* Gold */
   --gold: #C9A84C;
   --gold-light: #E0C068;
   --gold-dim: rgba(201,168,76,0.15);
+  /* Text */
   --text: #f0ebe3;
   --text-muted: #8a8278;
   --text-dim: #5a5650;
+  /* Semantic */
   --red: #c0392b;
   --red-dim: rgba(192,57,43,0.15);
   --green: #27ae60;
   --green-dim: rgba(39,174,96,0.15);
-  --radius: 8px;
+  --blue: #2980b9;
+  --blue-dim: rgba(41,128,185,0.15);
+  --purple: #8e44ad;
+  --purple-dim: rgba(142,68,173,0.15);
+  --orange: #e67e22;
+  --orange-dim: rgba(230,126,34,0.15);
+  /* Sizing */
+  --radius: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.2);
+  --shadow-md: 0 4px 20px rgba(0,0,0,0.25);
+  --shadow-lg: 0 12px 36px rgba(0,0,0,0.4);
+  --shadow-xl: 0 32px 80px rgba(0,0,0,0.75);
+  --shadow-gold: 0 4px 16px rgba(201,168,76,0.3);
+  --shadow-gold-lg: 0 8px 24px rgba(201,168,76,0.45);
+  --shadow-gold-xl: 0 18px 52px rgba(201,168,76,0.44);
+  /* Gradients */
+  --gradient-gold: linear-gradient(135deg, #C9A84C, #E0C068);
+  --gradient-gold-hover: linear-gradient(135deg, #E0C068, #C9A84C);
+  --gradient-card: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%);
+  --gradient-progress: linear-gradient(90deg, #C9A84C, #E0C068);
 }
 
 /* Light theme */
@@ -36,8 +67,22 @@
   --red-dim: rgba(192,57,43,0.1);
   --green: #1e8449;
   --green-dim: rgba(30,132,73,0.1);
+  --blue: #2471a3;
+  --blue-dim: rgba(36,113,163,0.1);
+  --purple: #7d3c98;
+  --purple-dim: rgba(125,60,152,0.1);
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 20px rgba(0,0,0,0.08);
+  --shadow-lg: 0 12px 36px rgba(0,0,0,0.12);
+  --shadow-xl: 0 32px 80px rgba(0,0,0,0.18);
+  --shadow-gold: 0 4px 16px rgba(160,120,48,0.15);
+  --shadow-gold-lg: 0 8px 24px rgba(160,120,48,0.2);
+  --gradient-gold: linear-gradient(135deg, #a07830, #8a6520);
+  --gradient-gold-hover: linear-gradient(135deg, #8a6520, #a07830);
+  --gradient-card: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%);
 }
 
+/* ── Tailwind v4 Theme Mapping ───────────────────────────── */
 @theme inline {
   --color-bg: var(--bg);
   --color-surface: var(--surface);
@@ -53,9 +98,20 @@
   --color-red-dim: var(--red-dim);
   --color-green: var(--green);
   --color-green-dim: var(--green-dim);
+  --color-blue: var(--blue);
+  --color-blue-dim: var(--blue-dim);
+  --color-purple: var(--purple);
+  --color-purple-dim: var(--purple-dim);
+  --color-orange: var(--orange);
+  --color-orange-dim: var(--orange-dim);
   --font-sans: var(--font-dm-sans);
   --font-display: var(--font-playfair);
 }
+
+
+/* ══════════════════════════════════════════════════════════════
+   BASE LAYER — Premium Defaults
+   ══════════════════════════════════════════════════════════════ */
 
 body {
   background: var(--bg);
@@ -63,15 +119,563 @@ body {
   font-family: var(--font-dm-sans), 'DM Sans', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
-/* ── Scrollbar (dark tema uyumlu) ──────────────────────────── */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+/* iOS rubber banding engelle */
+html {
+  overflow: hidden;
+  height: 100%;
+}
+body {
+  overflow: auto;
+  height: 100%;
+  -webkit-overflow-scrolling: touch;
+}
 
-/* ── Capacitor / Mobil uyumluluk ──────────────────────────── */
+/* ── Selection ────────────────────────────────────────────── */
+::selection {
+  background: rgba(201,168,76,0.25);
+  color: var(--text);
+}
+
+/* ── Premium Scrollbar ───────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+  transition: background 0.2s;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-dim);
+}
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   FORM ELEMENTS — Premium Focus States
+   ══════════════════════════════════════════════════════════════ */
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--gold) !important;
+  box-shadow: 0 0 0 3px var(--gold-dim);
+  outline: none;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   CARD — Gradient Background + Hover Lift
+   Orijinal: .card, .section, .kpi-item
+   ══════════════════════════════════════════════════════════════ */
+
+.card {
+  background: var(--gradient-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.card:hover {
+  border-color: rgba(201,168,76,0.25);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+/* Section: card variant without hover lift */
+.section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   KPI CARD — Gradient + Subtle Hover
+   Orijinal: .kpi-item
+   ══════════════════════════════════════════════════════════════ */
+
+.kpi-card {
+  background: var(--gradient-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.kpi-card:hover {
+  border-color: rgba(201,168,76,0.25);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+}
+.kpi-card.kpi-accent {
+  border-color: var(--gold);
+  background: var(--gold-dim);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   DASHBOARD PANEL — Left Colored Border
+   Orijinal: .dash-panel.dp-blue, .dp-green, .dp-gold, .dp-red
+   ══════════════════════════════════════════════════════════════ */
+
+.dash-panel {
+  background: var(--gradient-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+.dash-panel:hover {
+  border-color: rgba(201,168,76,0.15);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+}
+.dash-panel.dp-green  { border-left: 3px solid var(--green); }
+.dash-panel.dp-blue   { border-left: 3px solid var(--blue); }
+.dash-panel.dp-gold   { border-left: 3px solid var(--gold); }
+.dash-panel.dp-red    { border-left: 3px solid var(--red); }
+.dash-panel.dp-purple { border-left: 3px solid var(--purple); }
+
+
+/* ══════════════════════════════════════════════════════════════
+   BUTTONS — Premium Gradient + Shadow + Hover Lift
+   ══════════════════════════════════════════════════════════════ */
+
+/* Gold Primary Button */
+.btn-gold {
+  background: var(--gradient-gold);
+  color: var(--bg);
+  border: 1px solid var(--gold);
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  padding: 0.625rem 1.25rem;
+  cursor: pointer;
+  box-shadow: var(--shadow-gold);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-gold:hover {
+  background: var(--gradient-gold-hover);
+  box-shadow: var(--shadow-gold-lg);
+  transform: translateY(-2px);
+}
+.btn-gold:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-gold);
+}
+.btn-gold:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Outline Button */
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 10px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  padding: 0.625rem 1.25rem;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-outline:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: var(--gold-dim);
+}
+
+/* Header "Yeni Oluştur" button — gradient */
+.btn-header-gold {
+  background: var(--gradient-gold);
+  color: var(--bg);
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.75rem;
+  padding: 0.375rem 0.75rem;
+  cursor: pointer;
+  box-shadow: var(--shadow-gold);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-header-gold:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-gold-lg);
+}
+
+/* Landing CTA — Extra large shadow */
+.btn-cta-gold {
+  background: var(--gradient-gold);
+  color: var(--bg);
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 8px 32px rgba(201,168,76,0.28);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-cta-gold:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-gold-xl);
+}
+.btn-cta-gold:active {
+  transform: translateY(-1px);
+}
+
+/* Landing primary CTA (teal) */
+.btn-cta-primary {
+  background: linear-gradient(135deg, #0097A7, #00ACC1);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 8px 32px rgba(0,151,167,0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-cta-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 18px 52px rgba(0,151,167,0.4);
+}
+
+/* Ghost button (just text with hover) */
+.btn-ghost {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.btn-ghost:hover {
+  color: var(--gold);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   MODAL — Heavy Shadow + Gold-Tinted Border + Blur Overlay
+   Orijinal: .modal-overlay, .modal
+   ══════════════════════════════════════════════════════════════ */
+
+.modal-overlay {
+  background: rgba(0,0,0,0.72);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.modal-box {
+  background: var(--surface);
+  border: 1px solid rgba(201,168,76,0.12);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl), 0 0 0 1px rgba(255,255,255,0.03);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   DROPDOWN — Deep Shadow
+   Orijinal: .header-yeni-menu, dropdown menus
+   ══════════════════════════════════════════════════════════════ */
+
+.dropdown-menu {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+.dropdown-item {
+  transition: all 0.15s ease;
+}
+.dropdown-item:hover {
+  background: var(--surface2);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   FORM INPUT — Premium Styled
+   ══════════════════════════════════════════════════════════════ */
+
+.form-input {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.875rem;
+  color: var(--text);
+  transition: all 0.2s ease;
+}
+.form-input::placeholder {
+  color: var(--text-dim);
+}
+.form-input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-dim);
+  outline: none;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   SIDEBAR — Premium Navigation
+   ══════════════════════════════════════════════════════════════ */
+
+.sidebar-item {
+  border-radius: 8px;
+  transition: all 0.15s ease;
+}
+.sidebar-item:hover {
+  background: var(--surface2);
+}
+.sidebar-item.active {
+  background: var(--gold-dim);
+  color: var(--gold);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   BADGE — Status Indicators
+   ══════════════════════════════════════════════════════════════ */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+}
+.badge-green  { background: var(--green-dim); color: var(--green); }
+.badge-red    { background: var(--red-dim); color: var(--red); }
+.badge-gold   { background: var(--gold-dim); color: var(--gold); }
+.badge-blue   { background: var(--blue-dim); color: var(--blue); }
+.badge-purple { background: var(--purple-dim); color: var(--purple); }
+
+
+/* ══════════════════════════════════════════════════════════════
+   PROGRESS BAR — Gold Gradient
+   ══════════════════════════════════════════════════════════════ */
+
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--surface2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--gradient-progress);
+  border-radius: 3px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   NAVBAR (Landing) — Blur + Shadow on Scroll
+   ══════════════════════════════════════════════════════════════ */
+
+.landing-nav {
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: all 0.3s ease;
+}
+.landing-nav.scrolled {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   AUTH / LOGIN — Premium Box
+   ══════════════════════════════════════════════════════════════ */
+
+.auth-box {
+  background: #0D1117;
+  border: 1px solid rgba(201,168,76,0.18);
+  border-radius: 16px;
+  box-shadow: 0 40px 100px rgba(0,0,0,0.85), 0 0 60px rgba(201,168,76,0.04);
+}
+.auth-submit {
+  background: var(--gradient-gold);
+  color: var(--bg);
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow-gold);
+  transition: all 0.25s ease;
+}
+.auth-submit:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(201,168,76,0.38);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   TABLE — Premium Styling
+   ══════════════════════════════════════════════════════════════ */
+
+.premium-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.premium-table th {
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+.premium-table td {
+  font-size: 0.8125rem;
+  color: var(--text);
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+.premium-table tr:hover td {
+  background: var(--surface2);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   PRICING CARD — Landing Page
+   ══════════════════════════════════════════════════════════════ */
+
+.pricing-card {
+  background: var(--gradient-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.pricing-card:hover {
+  border-color: rgba(201,168,76,0.2);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-4px);
+}
+.pricing-card.featured {
+  background: var(--gold-dim);
+  border: 2px solid var(--gold);
+  box-shadow: 0 8px 40px rgba(201,168,76,0.15);
+}
+.pricing-card.featured:hover {
+  box-shadow: 0 12px 48px rgba(201,168,76,0.25);
+  transform: translateY(-4px);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   FEATURE CARD — Landing Özellik Kartı
+   ══════════════════════════════════════════════════════════════ */
+
+.feature-placeholder {
+  background: var(--gradient-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.feature-placeholder:hover {
+  border-color: rgba(201,168,76,0.15);
+  box-shadow: var(--shadow-md);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   HOW-IT-WORKS STEP — Landing
+   ══════════════════════════════════════════════════════════════ */
+
+.step-card {
+  background: var(--gradient-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.step-card:hover {
+  border-color: rgba(201,168,76,0.2);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   BROWSER MOCKUP — Heavy Shadow
+   ══════════════════════════════════════════════════════════════ */
+
+.browser-mockup {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 40px 110px rgba(0,0,0,0.85), 0 0 80px rgba(201,168,76,0.04);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   TOPBAR SEARCH — Focus Glow
+   ══════════════════════════════════════════════════════════════ */
+
+.topbar-search {
+  transition: all 0.2s ease;
+}
+.topbar-search:hover {
+  border-color: var(--text-dim);
+}
+.topbar-search:focus-within {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-dim);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   GLOW / ACCENT EFFECTS
+   ══════════════════════════════════════════════════════════════ */
+
+/* Dot pulse animation (landing hero) */
+.glow-dot {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+@keyframes glow-pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 4px rgba(201,168,76,0.6); }
+  50% { opacity: 0.5; box-shadow: 0 0 8px rgba(201,168,76,0.3); }
+}
+
+/* Gold shimmer for premium elements */
+.shimmer-gold {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer-gold::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 50%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(201,168,76,0.1), transparent);
+  animation: shimmer 3s infinite;
+}
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 200%; }
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   CAPACITOR / MOBİL UYUMLULUK
+   ══════════════════════════════════════════════════════════════ */
 
 /* iOS safe area padding */
 .safe-area-top { padding-top: env(safe-area-inset-top, 0px); }
@@ -87,30 +691,101 @@ body.keyboard-open {
 
 /* Mobil touch optimizasyon */
 @media (pointer: coarse) {
-  /* Dokunmatik ekranlar için daha büyük hit alanları */
   button, a, input, select, textarea {
     min-height: 44px;
   }
-
-  /* Overscroll bounce devre dışı */
   html, body {
     overscroll-behavior: none;
     -webkit-overflow-scrolling: touch;
   }
-
-  /* Sidebar mobilde gizle (responsive) */
   .mobile-hide-sidebar {
     display: none;
   }
 }
 
-/* iOS rubber banding engelle */
-html {
-  overflow: hidden;
-  height: 100%;
+
+/* ══════════════════════════════════════════════════════════════
+   INFO MODAL — Scrollable Content + Legal Typography
+   ══════════════════════════════════════════════════════════════ */
+
+.info-modal-scroll::-webkit-scrollbar {
+  width: 5px;
 }
-body {
-  overflow: auto;
-  height: 100%;
-  -webkit-overflow-scrolling: touch;
+.info-modal-scroll::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.03);
+  border-radius: 3px;
+}
+.info-modal-scroll::-webkit-scrollbar-thumb {
+  background: rgba(201,168,76,0.25);
+  border-radius: 3px;
+}
+.info-modal-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(201,168,76,0.4);
+}
+.info-modal-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(201,168,76,0.25) transparent;
+}
+
+/* Legal content typography */
+.yasal-icerik h3 {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+.yasal-icerik p {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 0.75rem;
+}
+.yasal-icerik ul {
+  margin-bottom: 0.75rem;
+  padding-left: 0.25rem;
+}
+.yasal-icerik li {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+.yasal-icerik table {
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.yasal-icerik strong {
+  color: var(--text);
+  font-weight: 600;
+}
+.yasal-icerik code {
+  font-size: 0.625rem;
+  color: var(--gold);
+}
+.yasal-icerik details summary {
+  list-style: none;
+}
+.yasal-icerik details summary::-webkit-details-marker {
+  display: none;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   UTILITY ANIMATIONS
+   ══════════════════════════════════════════════════════════════ */
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up {
+  animation: fade-in-up 0.3s ease-out;
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.animate-scale-in {
+  animation: scale-in 0.2s ease-out;
 }

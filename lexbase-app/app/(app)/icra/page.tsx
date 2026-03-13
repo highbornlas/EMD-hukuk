@@ -2,9 +2,10 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { useIcralar } from '@/lib/hooks/useIcra';
+import { useIcralar, type Icra } from '@/lib/hooks/useIcra';
 import { useMuvekkillar } from '@/lib/hooks/useMuvekkillar';
 import { fmt, fmtTarih } from '@/lib/utils';
+import { IcraModal } from '@/components/modules/IcraModal';
 
 const DURUM_RENK: Record<string, string> = {
   'Aktif': 'text-green bg-green-dim border-green/20',
@@ -20,6 +21,8 @@ export default function IcraPage() {
   const [arama, setArama] = useState('');
   const [durumFiltre, setDurumFiltre] = useState<string>('hepsi');
   const [turFiltre, setTurFiltre] = useState<string>('hepsi');
+  const [modalAcik, setModalAcik] = useState(false);
+  const [seciliIcra, setSeciliIcra] = useState<Icra | null>(null);
 
   // Müvekkil adı map
   const muvAdMap = useMemo(() => {
@@ -78,7 +81,10 @@ export default function IcraPage() {
           İcra Dosyaları
           {icralar && <span className="text-sm font-normal text-text-muted ml-2">({icralar.length})</span>}
         </h1>
-        <button className="px-4 py-2 bg-gold text-bg font-semibold rounded-lg text-xs hover:bg-gold-light transition-colors">
+        <button
+          onClick={() => { setSeciliIcra(null); setModalAcik(true); }}
+          className="px-4 py-2 bg-gold text-bg font-semibold rounded-lg text-xs hover:bg-gold-light transition-colors"
+        >
           + Yeni İcra Dosyası
         </button>
       </div>
@@ -192,6 +198,7 @@ export default function IcraPage() {
           })}
         </div>
       )}
+      <IcraModal open={modalAcik} onClose={() => setModalAcik(false)} icra={seciliIcra} />
     </div>
   );
 }

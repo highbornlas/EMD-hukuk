@@ -1,7 +1,8 @@
 'use client';
 
-import { useMemo } from 'react';
-import { usePersoneller } from '@/lib/hooks/usePersonel';
+import { useState, useMemo } from 'react';
+import { usePersoneller, type Personel } from '@/lib/hooks/usePersonel';
+import { PersonelModal } from '@/components/modules/PersonelModal';
 
 const ROL_RENK: Record<string, { bg: string; text: string; label: string }> = {
   sahip: { bg: 'bg-gold-dim', text: 'text-gold', label: 'Büro Sahibi' },
@@ -12,6 +13,8 @@ const ROL_RENK: Record<string, { bg: string; text: string; label: string }> = {
 
 export default function PersonelPage() {
   const { data: personeller, isLoading } = usePersoneller();
+  const [modalAcik, setModalAcik] = useState(false);
+  const [secili, setSecili] = useState<Personel | null>(null);
 
   const kpis = useMemo(() => {
     if (!personeller) return { toplam: 0, aktif: 0, avukat: 0, stajyer: 0 };
@@ -30,8 +33,11 @@ export default function PersonelPage() {
           Personel
           {personeller && <span className="text-sm font-normal text-text-muted ml-2">({personeller.length})</span>}
         </h1>
-        <button className="px-4 py-2 bg-gold text-bg font-semibold rounded-lg text-xs hover:bg-gold-light transition-colors">
-          + Personel Davet Et
+        <button
+          onClick={() => { setSecili(null); setModalAcik(true); }}
+          className="px-4 py-2 bg-gold text-bg font-semibold rounded-lg text-xs hover:bg-gold-light transition-colors"
+        >
+          + Personel Ekle
         </button>
       </div>
 
@@ -56,7 +62,7 @@ export default function PersonelPage() {
           {personeller.map((p) => {
             const rol = ROL_RENK[p.rol || ''] || { bg: 'bg-surface2', text: 'text-text-muted', label: p.rol || '—' };
             return (
-              <div key={p.id} className="bg-surface border border-border rounded-lg p-4 hover:border-gold transition-colors cursor-pointer group">
+              <div key={p.id} onClick={() => { setSecili(p); setModalAcik(true); }} className="bg-surface border border-border rounded-lg p-4 hover:border-gold transition-colors cursor-pointer group">
                 <div className="flex items-start gap-3">
                   {/* Avatar */}
                   <div className={`w-10 h-10 rounded-full ${rol.bg} border border-current flex items-center justify-center ${rol.text} text-sm font-bold flex-shrink-0`}>
@@ -91,6 +97,7 @@ export default function PersonelPage() {
           })}
         </div>
       )}
+      <PersonelModal open={modalAcik} onClose={() => setModalAcik(false)} personel={secili} />
     </div>
   );
 }
