@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useDavalar, type Dava } from '@/lib/hooks/useDavalar';
 import { useMuvekkillar } from '@/lib/hooks/useMuvekkillar';
@@ -36,6 +36,44 @@ const DURUM_RENK: Record<string, string> = {
 type SortKey = 'kayitNo' | 'esasNo' | 'mahkeme' | 'davaci' | 'davali' | 'acilisTarihi' | 'asama' | 'durum' | 'durusmaTarihi';
 type SortDir = 'asc' | 'desc';
 
+// ── Sütun tanımları ──────────────────────────────────────────
+
+type DavaColKey = 'sira' | 'esasNo' | 'mahkeme' | 'davaci' | 'davali' | 'acilis' | 'asama' | 'durum' | 'durusma';
+
+const DAVA_SUTUNLAR: { key: DavaColKey; label: string; sortKey?: SortKey; varsayilan: boolean }[] = [
+  { key: 'sira', label: '#', sortKey: 'kayitNo', varsayilan: true },
+  { key: 'esasNo', label: 'Esas No', sortKey: 'esasNo', varsayilan: true },
+  { key: 'mahkeme', label: 'Mahkeme', sortKey: 'mahkeme', varsayilan: true },
+  { key: 'davaci', label: 'Davacı', sortKey: 'davaci', varsayilan: true },
+  { key: 'davali', label: 'Davalı', sortKey: 'davali', varsayilan: true },
+  { key: 'acilis', label: 'Açılış', sortKey: 'acilisTarihi', varsayilan: true },
+  { key: 'asama', label: 'Aşama', sortKey: 'asama', varsayilan: true },
+  { key: 'durum', label: 'Durum', sortKey: 'durum', varsayilan: true },
+  { key: 'durusma', label: 'Duruşma', sortKey: 'durusmaTarihi', varsayilan: true },
+];
+
+const LS_KEY_COLS = 'lb_dava_cols';
+const LS_KEY_FILTERS = 'lb_dava_saved_filters';
+const PAGE_SIZE = 25;
+
+// ── Tarih renk yardımcısı ────────────────────────────────────
+
+function tarihRenkSinifi(tarih?: string): string {
+  if (!tarih) return 'text-text-dim';
+  const gun = Math.floor((Date.now() - new Date(tarih).getTime()) / 86400000);
+  if (gun > 365) return 'text-red';
+  if (gun > 180) return 'text-orange-400';
+  return 'text-text-muted';
+}
+
+function tarihTooltip(tarih?: string): string {
+  if (!tarih) return '';
+  const gun = Math.floor((Date.now() - new Date(tarih).getTime()) / 86400000);
+  if (gun > 365) return `${Math.floor(gun / 365)} yıl ${gun % 365} gündür açık`;
+  if (gun > 30) return `${Math.floor(gun / 30)} ay ${gun % 30} gündür açık`;
+  return `${gun} gündür açık`;
+}
+
 // ══════════════════════════════════════════════════════════════
 //  Davalar Sayfası
 // ══════════════════════════════════════════════════════════════
@@ -56,6 +94,55 @@ export default function DavalarPage() {
   const [modalAcik, setModalAcik] = useState(false);
   const [seciliDava, setSeciliDava] = useState<Dava | null>(null);
 
+  // Sayfalama
+  const [sayfa, setSayfa] = useState(1);
+
+  // Sütun görünürlük
+  const [gorunenSutunlar, setGorunenSutunlar] = useState<DavaColKey[]>(() => {
+    if (typeof window === 'undefined') return DAVA_SUTUNLAR.map((s) => s.key);
+    try {
+      const saved = localStorage.getItem(LS_KEY_COLS);
+      return saved ? JSON.parse(saved) : DAVA_SUTUNLAR.map((s) => s.key);
+    } catch { return DAVA_SUTUNLAR.map((s) => s.key); }
+  });
+  const [sutunMenuAcik, setSutunMenuAcik] = useState(false);
+  const sutunMenuRef = useRef<HTMLDivElement>(null);
+
+  // Satır seçimi
+  const [seciliIdler, setSeciliIdler] = useState<Set<string>>(new Set());
+
+  // Kayıtlı filtreler
+  const [kayitliFiltreMenuAcik, setKayitliFiltreMenuAcik] = useState(false);
+  const [filtreAdi, setFiltreAdi] = useState('');
+  const kayitliFiltreRef = useRef<HTMLDivElement>(null);
+  const [kayitliFiltreler, setKayitliFiltreler] = useState<Array<{ ad: string; filtre: Record<string, string> }>>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const s = localStorage.getItem(LS_KEY_FILTERS);
+      return s ? JSON.parse(s) : [];
+    } catch { return []; }
+  });
+
+  // Persist sütun tercihleri
+  useEffect(() => {
+    localStorage.setItem(LS_KEY_COLS, JSON.stringify(gorunenSutunlar));
+  }, [gorunenSutunlar]);
+
+  // Persist kayıtlı filtreler
+  useEffect(() => {
+    localStorage.setItem(LS_KEY_FILTERS, JSON.stringify(kayitliFiltreler));
+  }, [kayitliFiltreler]);
+
+  // Dış tıklama — menüleri kapat
+  useEffect(() => {
+    function handle(e: MouseEvent) {
+      if (sutunMenuRef.current && !sutunMenuRef.current.contains(e.target as Node)) setSutunMenuAcik(false);
+      if (kayitliFiltreRef.current && !kayitliFiltreRef.current.contains(e.target as Node)) setKayitliFiltreMenuAcik(false);
+    }
+    document.addEventListener('mousedown', handle);
+    return () => document.removeEventListener('mousedown', handle);
+  }, []);
+
   // ── Müvekkil adı map ───────────────────────────────────────
   const muvAdMap = useMemo(() => {
     const map: Record<string, string> = {};
@@ -66,13 +153,11 @@ export default function DavalarPage() {
   // ── KPI hesaplama ──────────────────────────────────────────
   const kpis = useMemo(() => {
     if (!davalar) return { toplam: 0, aktif: 0, yaklasanDurusma: 0, istinaf: 0, temyiz: 0, kapali: 0 };
-
     let yaklasanDurusma = 0;
     davalar.forEach((d) => {
       const kalan = durusmayaKalanGun(d.durusma);
       if (kalan !== null && kalan >= 0 && kalan <= 7) yaklasanDurusma++;
     });
-
     return {
       toplam: davalar.length,
       aktif: davalar.filter((d) => d.durum === 'Aktif' || d.durum === 'Devam Ediyor').length,
@@ -86,23 +171,15 @@ export default function DavalarPage() {
   // ── Filtreleme + Arama ─────────────────────────────────────
   const filtrelenmis = useMemo(() => {
     if (!davalar) return [];
-
     return davalar.filter((d) => {
-      // Durum filtre
       if (durumFiltre !== 'hepsi' && d.durum !== durumFiltre) return false;
-      // Aşama filtre
       if (asamaFiltre !== 'hepsi' && d.asama !== asamaFiltre) return false;
-      // Dava türü filtre
       if (davaTuruFiltre !== 'hepsi' && d.davaTuru !== davaTuruFiltre) return false;
-
-      // Tarih aralığı filtre
       if (tarihBaslangic || tarihBitis) {
         const davaTarih = d.tarih || '';
         if (tarihBaslangic && davaTarih < tarihBaslangic) return false;
         if (tarihBitis && davaTarih > tarihBitis) return false;
       }
-
-      // Arama
       if (arama) {
         const q = arama.toLowerCase();
         const muvAd = muvAdMap[d.muvId || ''] || '';
@@ -118,7 +195,6 @@ export default function DavalarPage() {
           (d.no || '').toLowerCase().includes(q)
         );
       }
-
       return true;
     });
   }, [davalar, arama, durumFiltre, asamaFiltre, davaTuruFiltre, tarihBaslangic, tarihBitis, muvAdMap]);
@@ -126,83 +202,90 @@ export default function DavalarPage() {
   // ── Sıralama ───────────────────────────────────────────────
   const sirali = useMemo(() => {
     const list = [...filtrelenmis];
-
     list.sort((a, b) => {
       let cmp = 0;
       switch (sortKey) {
-        case 'kayitNo':
-          cmp = (a.kayitNo ?? a.sira ?? 0) - (b.kayitNo ?? b.sira ?? 0);
-          break;
-        case 'esasNo': {
-          const aEsas = esasNoGoster(a.esasYil, a.esasNo);
-          const bEsas = esasNoGoster(b.esasYil, b.esasNo);
-          cmp = aEsas.localeCompare(bEsas, 'tr');
-          break;
-        }
-        case 'mahkeme': {
-          const aM = tamMahkemeAdi(a.il, a.mno, a.mtur);
-          const bM = tamMahkemeAdi(b.il, b.mno, b.mtur);
-          cmp = aM.localeCompare(bM, 'tr');
-          break;
-        }
-        case 'davaci': {
-          const aD = davaciBelirle(a.taraf, muvAdMap[a.muvId || ''] || '', a.karsi || '').davaci;
-          const bD = davaciBelirle(b.taraf, muvAdMap[b.muvId || ''] || '', b.karsi || '').davaci;
-          cmp = aD.localeCompare(bD, 'tr');
-          break;
-        }
-        case 'davali': {
-          const aD = davaciBelirle(a.taraf, muvAdMap[a.muvId || ''] || '', a.karsi || '').davali;
-          const bD = davaciBelirle(b.taraf, muvAdMap[b.muvId || ''] || '', b.karsi || '').davali;
-          cmp = aD.localeCompare(bD, 'tr');
-          break;
-        }
-        case 'acilisTarihi': {
-          const aT = a.tarih || '9999';
-          const bT = b.tarih || '9999';
-          cmp = aT.localeCompare(bT);
-          break;
-        }
-        case 'asama': {
-          cmp = (a.asama || '').localeCompare(b.asama || '', 'tr');
-          break;
-        }
-        case 'durum': {
-          cmp = (a.durum || '').localeCompare(b.durum || '', 'tr');
-          break;
-        }
-        case 'durusmaTarihi': {
-          const aD = a.durusma || '9999';
-          const bD = b.durusma || '9999';
-          cmp = aD.localeCompare(bD);
-          break;
-        }
-        default:
-          cmp = 0;
+        case 'kayitNo': cmp = (a.kayitNo ?? a.sira ?? 0) - (b.kayitNo ?? b.sira ?? 0); break;
+        case 'esasNo': cmp = esasNoGoster(a.esasYil, a.esasNo).localeCompare(esasNoGoster(b.esasYil, b.esasNo), 'tr'); break;
+        case 'mahkeme': cmp = tamMahkemeAdi(a.il, a.mno, a.mtur).localeCompare(tamMahkemeAdi(b.il, b.mno, b.mtur), 'tr'); break;
+        case 'davaci': cmp = davaciBelirle(a.taraf, muvAdMap[a.muvId || ''] || '', a.karsi || '').davaci.localeCompare(davaciBelirle(b.taraf, muvAdMap[b.muvId || ''] || '', b.karsi || '').davaci, 'tr'); break;
+        case 'davali': cmp = davaciBelirle(a.taraf, muvAdMap[a.muvId || ''] || '', a.karsi || '').davali.localeCompare(davaciBelirle(b.taraf, muvAdMap[b.muvId || ''] || '', b.karsi || '').davali, 'tr'); break;
+        case 'acilisTarihi': cmp = (a.tarih || '9999').localeCompare(b.tarih || '9999'); break;
+        case 'asama': cmp = (a.asama || '').localeCompare(b.asama || '', 'tr'); break;
+        case 'durum': cmp = (a.durum || '').localeCompare(b.durum || '', 'tr'); break;
+        case 'durusmaTarihi': cmp = (a.durusma || '9999').localeCompare(b.durusma || '9999'); break;
       }
       return sortDir === 'desc' ? -cmp : cmp;
     });
-
     return list;
   }, [filtrelenmis, sortKey, sortDir, muvAdMap]);
 
+  // ── Sayfalama ──────────────────────────────────────────────
+  const toplamSayfa = Math.max(1, Math.ceil(sirali.length / PAGE_SIZE));
+  const sayfadakiler = useMemo(() => {
+    const bas = (sayfa - 1) * PAGE_SIZE;
+    return sirali.slice(bas, bas + PAGE_SIZE);
+  }, [sirali, sayfa]);
+
+  // Filtre değişince sayfa 1'e dön
+  useEffect(() => { setSayfa(1); }, [arama, durumFiltre, asamaFiltre, davaTuruFiltre, tarihBaslangic, tarihBitis]);
+
   // ── Sıralama toggle ──────────────────────────────────────
   function toggleSort(key: SortKey) {
-    if (sortKey === key) {
-      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
-    } else {
-      setSortKey(key);
-      setSortDir('asc');
-    }
+    if (sortKey === key) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    else { setSortKey(key); setSortDir('asc'); }
+  }
+  function sortIcon(key: SortKey) {
+    if (sortKey !== key) return ' \u21C5';
+    return sortDir === 'asc' ? ' \u2191' : ' \u2193';
   }
 
-  function sortIcon(key: SortKey) {
-    if (sortKey !== key) return ' ↕';
-    return sortDir === 'asc' ? ' ↑' : ' ↓';
+  // ── Sütun toggle ──────────────────────────────────────────
+  function toggleSutun(key: DavaColKey) {
+    setGorunenSutunlar((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+    );
+  }
+
+  // ── Satır seçimi ──────────────────────────────────────────
+  function toggleSecim(id: string) {
+    setSeciliIdler((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+  function tumunuSec() {
+    if (seciliIdler.size === sayfadakiler.length) setSeciliIdler(new Set());
+    else setSeciliIdler(new Set(sayfadakiler.map((d) => d.id)));
+  }
+
+  // ── Kayıtlı filtre ───────────────────────────────────────
+  function filtreKaydet() {
+    if (!filtreAdi.trim()) return;
+    const yeni = {
+      ad: filtreAdi.trim(),
+      filtre: { arama, durumFiltre, asamaFiltre, davaTuruFiltre, tarihBaslangic, tarihBitis },
+    };
+    setKayitliFiltreler((prev) => [...prev.filter((f) => f.ad !== yeni.ad), yeni]);
+    setFiltreAdi('');
+    setKayitliFiltreMenuAcik(false);
+  }
+  function filtreUygula(f: Record<string, string>) {
+    setArama(f.arama || '');
+    setDurumFiltre(f.durumFiltre || 'hepsi');
+    setAsamaFiltre(f.asamaFiltre || 'hepsi');
+    setDavaTuruFiltre(f.davaTuruFiltre || 'hepsi');
+    setTarihBaslangic(f.tarihBaslangic || '');
+    setTarihBitis(f.tarihBitis || '');
+    setKayitliFiltreMenuAcik(false);
+  }
+  function filtreSil(ad: string) {
+    setKayitliFiltreler((prev) => prev.filter((f) => f.ad !== ad));
   }
 
   // ── Row highlight class ────────────────────────────────────
-  const satırVurgu = useCallback((d: Dava): string => {
+  const satirVurgu = useCallback((d: Dava): string => {
     const kalan = durusmayaKalanGun(d.durusma);
     if (kalan === null || kalan < 0) return '';
     if (kalan <= 3) return 'bg-red/5';
@@ -213,22 +296,40 @@ export default function DavalarPage() {
   // ── Export handlers ────────────────────────────────────────
   const handleExportExcel = useCallback(() => {
     if (!sirali.length) return;
-    exportDavaListeUYAPXLS(
-      sirali as unknown as Array<Record<string, unknown>>,
-      muvAdMap,
-    );
-  }, [sirali, muvAdMap]);
+    const hedef = seciliIdler.size > 0 ? sirali.filter((d) => seciliIdler.has(d.id)) : sirali;
+    exportDavaListeUYAPXLS(hedef as unknown as Array<Record<string, unknown>>, muvAdMap);
+  }, [sirali, muvAdMap, seciliIdler]);
 
   const handleExportPDF = useCallback(() => {
     if (!sirali.length) return;
-    exportDavaListePDF(
-      sirali as unknown as Array<Record<string, unknown>>,
-      muvAdMap,
-    );
-  }, [sirali, muvAdMap]);
+    const hedef = seciliIdler.size > 0 ? sirali.filter((d) => seciliIdler.has(d.id)) : sirali;
+    exportDavaListePDF(hedef as unknown as Array<Record<string, unknown>>, muvAdMap);
+  }, [sirali, muvAdMap, seciliIdler]);
 
   // ── Filtrelerin aktif olup olmadigi ────────────────────────
   const filtreAktif = durumFiltre !== 'hepsi' || asamaFiltre !== 'hepsi' || davaTuruFiltre !== 'hepsi' || !!tarihBaslangic || !!tarihBitis || !!arama;
+
+  // ── Grid template — dinamik sütunlara göre ─────────────────
+  const COL_WIDTHS: Record<DavaColKey, string> = {
+    sira: '36px',
+    esasNo: 'minmax(80px,1fr)',
+    mahkeme: 'minmax(140px,2fr)',
+    davaci: 'minmax(100px,1fr)',
+    davali: 'minmax(100px,1fr)',
+    acilis: '90px',
+    asama: '80px',
+    durum: '75px',
+    durusma: '100px',
+  };
+
+  const gridTemplate = useMemo(() => {
+    const cols = ['28px']; // checkbox
+    gorunenSutunlar.forEach((k) => { if (COL_WIDTHS[k]) cols.push(COL_WIDTHS[k]); });
+    return cols.join('_');
+  }, [gorunenSutunlar]);
+
+  const gridClass = `grid gap-2 px-4 min-w-[950px]`;
+  const gridStyle = { gridTemplateColumns: ['28px', ...gorunenSutunlar.map((k) => COL_WIDTHS[k])].join(' ') };
 
   return (
     <div>
@@ -239,6 +340,69 @@ export default function DavalarPage() {
           {davalar && <span className="text-sm font-normal text-text-muted ml-2">({davalar.length})</span>}
         </h1>
         <div className="flex items-center gap-2">
+          {/* Sütun ayarları */}
+          <div className="relative" ref={sutunMenuRef}>
+            <button
+              onClick={() => setSutunMenuAcik((p) => !p)}
+              className="p-2 bg-surface border border-border rounded-lg text-text-muted hover:text-text hover:border-gold transition-colors"
+              title="Sütunları ayarla"
+            >
+              <span className="text-sm">&#x2699;&#xFE0F;</span>
+            </button>
+            {sutunMenuAcik && (
+              <div className="absolute right-0 top-full mt-1 w-48 bg-surface border border-border rounded-lg shadow-xl z-50 py-1">
+                <div className="px-3 py-1.5 text-[10px] text-text-dim uppercase tracking-wider border-b border-border">Sütunlar</div>
+                {DAVA_SUTUNLAR.map((s) => (
+                  <label key={s.key} className="flex items-center gap-2 px-3 py-1.5 text-xs text-text hover:bg-surface2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={gorunenSutunlar.includes(s.key)}
+                      onChange={() => toggleSutun(s.key)}
+                      className="accent-[var(--gold)]"
+                    />
+                    {s.label}
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Kayıtlı filtreler */}
+          <div className="relative" ref={kayitliFiltreRef}>
+            <button
+              onClick={() => setKayitliFiltreMenuAcik((p) => !p)}
+              className="p-2 bg-surface border border-border rounded-lg text-text-muted hover:text-text hover:border-gold transition-colors"
+              title="Kayıtlı filtreler"
+            >
+              <span className="text-sm">&#x1F516;</span>
+            </button>
+            {kayitliFiltreMenuAcik && (
+              <div className="absolute right-0 top-full mt-1 w-60 bg-surface border border-border rounded-lg shadow-xl z-50 py-1">
+                <div className="px-3 py-1.5 text-[10px] text-text-dim uppercase tracking-wider border-b border-border">Kayıtlı Filtreler</div>
+                {kayitliFiltreler.length === 0 && (
+                  <div className="px-3 py-2 text-xs text-text-dim">Henüz kayıtlı filtre yok</div>
+                )}
+                {kayitliFiltreler.map((f) => (
+                  <div key={f.ad} className="flex items-center gap-1 px-3 py-1.5 hover:bg-surface2">
+                    <button onClick={() => filtreUygula(f.filtre)} className="flex-1 text-left text-xs text-text hover:text-gold truncate">{f.ad}</button>
+                    <button onClick={() => filtreSil(f.ad)} className="text-[10px] text-red hover:text-red/80 flex-shrink-0">&times;</button>
+                  </div>
+                ))}
+                <div className="border-t border-border px-3 py-2 flex gap-1.5">
+                  <input
+                    type="text"
+                    value={filtreAdi}
+                    onChange={(e) => setFiltreAdi(e.target.value)}
+                    placeholder="Filtre adı..."
+                    className="flex-1 px-2 py-1 bg-bg border border-border rounded text-xs text-text placeholder:text-text-dim focus:outline-none focus:border-gold"
+                    onKeyDown={(e) => e.key === 'Enter' && filtreKaydet()}
+                  />
+                  <button onClick={filtreKaydet} className="px-2 py-1 bg-gold text-bg text-[10px] rounded font-semibold">Kaydet</button>
+                </div>
+              </div>
+            )}
+          </div>
+
           <ExportMenu
             onExportExcel={handleExportExcel}
             onExportPDF={handleExportPDF}
@@ -265,202 +429,146 @@ export default function DavalarPage() {
 
       {/* ── Arama + Filtreler ────────────────────────────────── */}
       <div className="flex flex-wrap items-center gap-3 mb-5">
-        {/* Arama */}
         <div className="flex-1 min-w-[200px] relative">
-          <input
-            type="text"
-            value={arama}
-            onChange={(e) => setArama(e.target.value)}
-            placeholder="Esas no, mahkeme, taraf, konu, dava türü ile ara..."
-            className="w-full px-4 py-2.5 pl-9 bg-surface border border-border rounded-lg text-sm text-text placeholder:text-text-dim focus:outline-none focus:border-gold transition-colors"
-          />
+          <input type="text" value={arama} onChange={(e) => setArama(e.target.value)} placeholder="Esas no, mahkeme, taraf, konu, dava türü ile ara..." className="w-full px-4 py-2.5 pl-9 bg-surface border border-border rounded-lg text-sm text-text placeholder:text-text-dim focus:outline-none focus:border-gold transition-colors" />
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim text-sm">&#x1F50D;</span>
         </div>
-
-        {/* Durum */}
-        <select
-          value={durumFiltre}
-          onChange={(e) => setDurumFiltre(e.target.value)}
-          className="px-3 py-2.5 bg-surface border border-border rounded-lg text-xs text-text focus:outline-none focus:border-gold"
-        >
-          <option value="hepsi">Tum Durumlar</option>
-          {DAVA_DURUMLARI.map((d) => (
-            <option key={d} value={d}>{d}</option>
-          ))}
+        <select value={durumFiltre} onChange={(e) => setDurumFiltre(e.target.value)} className="px-3 py-2.5 bg-surface border border-border rounded-lg text-xs text-text focus:outline-none focus:border-gold">
+          <option value="hepsi">Tüm Durumlar</option>
+          {DAVA_DURUMLARI.map((d) => <option key={d} value={d}>{d}</option>)}
         </select>
-
-        {/* Asama */}
-        <select
-          value={asamaFiltre}
-          onChange={(e) => setAsamaFiltre(e.target.value)}
-          className="px-3 py-2.5 bg-surface border border-border rounded-lg text-xs text-text focus:outline-none focus:border-gold"
-        >
-          <option value="hepsi">Tum Asamalar</option>
-          {DAVA_ASAMALARI.map((a) => (
-            <option key={a} value={a}>{a}</option>
-          ))}
+        <select value={asamaFiltre} onChange={(e) => setAsamaFiltre(e.target.value)} className="px-3 py-2.5 bg-surface border border-border rounded-lg text-xs text-text focus:outline-none focus:border-gold">
+          <option value="hepsi">Tüm Aşamalar</option>
+          {DAVA_ASAMALARI.map((a) => <option key={a} value={a}>{a}</option>)}
         </select>
-
-        {/* Dava Turu */}
-        <select
-          value={davaTuruFiltre}
-          onChange={(e) => setDavaTuruFiltre(e.target.value)}
-          className="px-3 py-2.5 bg-surface border border-border rounded-lg text-xs text-text focus:outline-none focus:border-gold"
-        >
-          <option value="hepsi">Tum Turler</option>
-          {DAVA_TURLERI.map((t) => (
-            <option key={t} value={t}>{t}</option>
-          ))}
+        <select value={davaTuruFiltre} onChange={(e) => setDavaTuruFiltre(e.target.value)} className="px-3 py-2.5 bg-surface border border-border rounded-lg text-xs text-text focus:outline-none focus:border-gold">
+          <option value="hepsi">Tüm Türler</option>
+          {DAVA_TURLERI.map((t) => <option key={t} value={t}>{t}</option>)}
         </select>
-
-        {/* Sıralama artık sütün başlıklarından yapılıyor */}
       </div>
 
-      {/* Tarih araligi filtre */}
+      {/* Tarih aralığı filtre */}
       <div className="flex items-center gap-3 mb-5">
         <div className="flex items-center gap-2 text-xs text-text-muted">
           <span>Tarih:</span>
-          <input
-            type="date"
-            value={tarihBaslangic}
-            onChange={(e) => setTarihBaslangic(e.target.value)}
-            className="px-2 py-1.5 bg-surface border border-border rounded-lg text-xs text-text focus:outline-none focus:border-gold"
-          />
+          <input type="date" value={tarihBaslangic} onChange={(e) => setTarihBaslangic(e.target.value)} className="px-2 py-1.5 bg-surface border border-border rounded-lg text-xs text-text focus:outline-none focus:border-gold" />
           <span>-</span>
-          <input
-            type="date"
-            value={tarihBitis}
-            onChange={(e) => setTarihBitis(e.target.value)}
-            className="px-2 py-1.5 bg-surface border border-border rounded-lg text-xs text-text focus:outline-none focus:border-gold"
-          />
+          <input type="date" value={tarihBitis} onChange={(e) => setTarihBitis(e.target.value)} className="px-2 py-1.5 bg-surface border border-border rounded-lg text-xs text-text focus:outline-none focus:border-gold" />
         </div>
-
         {filtreAktif && (
-          <button
-            onClick={() => {
-              setArama('');
-              setDurumFiltre('hepsi');
-              setAsamaFiltre('hepsi');
-              setDavaTuruFiltre('hepsi');
-              setTarihBaslangic('');
-              setTarihBitis('');
-            }}
-            className="text-[11px] text-gold hover:text-gold-light transition-colors underline"
-          >
+          <button onClick={() => { setArama(''); setDurumFiltre('hepsi'); setAsamaFiltre('hepsi'); setDavaTuruFiltre('hepsi'); setTarihBaslangic(''); setTarihBitis(''); }} className="text-[11px] text-gold hover:text-gold-light transition-colors underline">
             Filtreleri temizle
           </button>
         )}
       </div>
 
+      {/* ── Toplu işlem bar ─────────────────────────────────── */}
+      {seciliIdler.size > 0 && (
+        <div className="flex items-center gap-3 mb-4 px-4 py-2.5 bg-gold-dim border border-gold/20 rounded-lg">
+          <span className="text-xs text-gold font-semibold">{seciliIdler.size} dosya seçili</span>
+          <button onClick={handleExportExcel} className="text-[11px] px-2.5 py-1 bg-surface border border-border rounded text-text hover:border-gold transition-colors">Excel&apos;e Aktar</button>
+          <button onClick={handleExportPDF} className="text-[11px] px-2.5 py-1 bg-surface border border-border rounded text-text hover:border-gold transition-colors">PDF&apos;e Aktar</button>
+          <button onClick={() => setSeciliIdler(new Set())} className="ml-auto text-[11px] text-text-dim hover:text-text transition-colors">Seçimi Temizle</button>
+        </div>
+      )}
+
       {/* ── Tablo ────────────────────────────────────────────── */}
       {isLoading ? (
-        <div className="text-center py-12 text-text-muted text-sm">Yukleniyor...</div>
+        <div className="text-center py-12 text-text-muted text-sm">Yükleniyor...</div>
       ) : sirali.length === 0 ? (
         <div className="text-center py-16 bg-surface border border-border rounded-lg">
           <div className="text-4xl mb-3">&#x2696;&#xFE0F;</div>
-          <div className="text-sm text-text-muted">
-            {filtreAktif
-              ? 'Arama sonucu bulunamadi'
-              : 'Henuz dava kaydi eklenmemis'}
-          </div>
+          <div className="text-sm text-text-muted">{filtreAktif ? 'Arama sonucu bulunamadı' : 'Henüz dava kaydı eklenmemiş'}</div>
         </div>
       ) : (
         <div className="bg-surface border border-border rounded-lg overflow-x-auto">
-          {/* Tablo Baslik */}
-          <div
-            className="grid grid-cols-[36px_minmax(80px,1fr)_minmax(140px,2fr)_minmax(100px,1fr)_minmax(100px,1fr)_90px_80px_75px_100px] gap-2 px-4 py-2.5 border-b border-border text-[11px] text-text-muted font-medium uppercase tracking-wider min-w-[950px]"
-          >
-            <button type="button" onClick={() => toggleSort('kayitNo')} className="text-left hover:text-text transition-colors">#{ sortIcon('kayitNo')}</button>
-            <button type="button" onClick={() => toggleSort('esasNo')} className="text-left hover:text-text transition-colors">Esas No{sortIcon('esasNo')}</button>
-            <button type="button" onClick={() => toggleSort('mahkeme')} className="text-left hover:text-text transition-colors">Mahkeme{sortIcon('mahkeme')}</button>
-            <button type="button" onClick={() => toggleSort('davaci')} className="text-left hover:text-text transition-colors">Davacı{sortIcon('davaci')}</button>
-            <button type="button" onClick={() => toggleSort('davali')} className="text-left hover:text-text transition-colors">Davalı{sortIcon('davali')}</button>
-            <button type="button" onClick={() => toggleSort('acilisTarihi')} className="text-left hover:text-text transition-colors">Açılış{sortIcon('acilisTarihi')}</button>
-            <button type="button" onClick={() => toggleSort('asama')} className="text-left hover:text-text transition-colors">Aşama{sortIcon('asama')}</button>
-            <button type="button" onClick={() => toggleSort('durum')} className="text-left hover:text-text transition-colors">Durum{sortIcon('durum')}</button>
-            <button type="button" onClick={() => toggleSort('durusmaTarihi')} className="text-left hover:text-text transition-colors">Duruşma{sortIcon('durusmaTarihi')}</button>
+          {/* Sticky Tablo Başlık */}
+          <div className={`${gridClass} py-2.5 border-b border-border text-[11px] text-text-muted font-medium uppercase tracking-wider sticky top-0 z-10 bg-surface`} style={gridStyle}>
+            <label className="flex items-center justify-center cursor-pointer">
+              <input type="checkbox" checked={seciliIdler.size === sayfadakiler.length && sayfadakiler.length > 0} onChange={tumunuSec} className="accent-[var(--gold)]" />
+            </label>
+            {gorunenSutunlar.map((colKey) => {
+              const col = DAVA_SUTUNLAR.find((s) => s.key === colKey);
+              if (!col) return null;
+              return col.sortKey ? (
+                <button key={col.key} type="button" onClick={() => toggleSort(col.sortKey!)} className="text-left hover:text-text transition-colors truncate">{col.label}{sortIcon(col.sortKey)}</button>
+              ) : (
+                <span key={col.key}>{col.label}</span>
+              );
+            })}
           </div>
 
-          {/* Satirlar */}
-          {sirali.map((d, idx) => {
+          {/* Satırlar */}
+          {sayfadakiler.map((d, idx) => {
             const muvAd = muvAdMap[d.muvId || ''] || '';
             const karsiAd = d.karsi || '';
             const { davaci, davali } = davaciBelirle(d.taraf, muvAd, karsiAd);
             const mahkeme = tamMahkemeAdi(d.il, d.mno, d.mtur);
             const esasStr = esasNoGoster(d.esasYil, d.esasNo);
-            const vurgu = satırVurgu(d);
+            const vurgu = satirVurgu(d);
+            const secili = seciliIdler.has(d.id);
+            const globalIdx = (sayfa - 1) * PAGE_SIZE + idx;
 
             return (
-              <Link
-                key={d.id}
-                href={`/davalar/${d.id}`}
-                className={`grid grid-cols-[36px_minmax(80px,1fr)_minmax(140px,2fr)_minmax(100px,1fr)_minmax(100px,1fr)_90px_80px_75px_100px] gap-2 px-4 py-3 border-b border-border/50 hover:bg-gold-dim transition-colors group items-center min-w-[950px] ${vurgu}`}
-              >
-                {/* Sıra */}
-                <span className="text-[11px] text-text-dim">{idx + 1}</span>
+              <div key={d.id} className={`${gridClass} py-3 border-b border-border/50 hover:bg-gold-dim transition-colors items-center ${vurgu} ${secili ? 'bg-gold-dim/50' : ''}`} style={gridStyle}>
+                <label className="flex items-center justify-center cursor-pointer" onClick={(e) => e.stopPropagation()}>
+                  <input type="checkbox" checked={secili} onChange={() => toggleSecim(d.id)} className="accent-[var(--gold)]" />
+                </label>
 
-                {/* Esas No */}
-                <div className="min-w-0 flex items-center gap-1.5">
-                  <span className="font-[var(--font-playfair)] text-sm font-bold text-gold truncate">
-                    {esasStr || '—'}
-                  </span>
-                  {d.davaTuru && (
-                    <span className="text-[9px] px-1 py-0.5 rounded bg-surface2 text-text-dim border border-border/50 whitespace-nowrap flex-shrink-0">
-                      {d.davaTuru}
-                    </span>
-                  )}
-                </div>
-
-                {/* Mahkeme */}
-                <span className="text-xs text-text truncate" title={mahkeme || d.konu || ''}>
-                  {mahkeme || d.konu || '—'}
-                </span>
-
-                {/* Davaci */}
-                <span className="text-xs text-text truncate" title={davaci}>
-                  {davaci || '—'}
-                </span>
-
-                {/* Davali */}
-                <span className="text-xs text-text truncate" title={davali}>
-                  {davali || '—'}
-                </span>
-
-                {/* Açılış Tarihi */}
-                <span className="text-[11px] text-text-muted">
-                  {d.tarih ? fmtTarih(d.tarih) : '—'}
-                </span>
-
-                {/* Asama */}
-                <span>
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${ASAMA_RENK[d.asama || ''] || 'text-text-dim bg-surface2'}`}>
-                    {d.asama || '—'}
-                  </span>
-                </span>
-
-                {/* Durum */}
-                <span>
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${DURUM_RENK[d.durum || ''] || 'text-text-dim bg-surface2 border-border'}`}>
-                    {d.durum || '—'}
-                  </span>
-                </span>
-
-                {/* Durusma */}
-                <span>
-                  <DurusmaBadge tarih={d.durusma} saat={d.durusmaSaati} />
-                </span>
-              </Link>
+                {gorunenSutunlar.map((colKey) => {
+                  switch (colKey) {
+                    case 'sira': return <span key={colKey} className="text-[11px] text-text-dim">{globalIdx + 1}</span>;
+                    case 'esasNo': return (
+                      <Link key={colKey} href={`/davalar/${d.id}`} className="min-w-0 flex items-center gap-1.5 hover:underline">
+                        <span className="font-[var(--font-playfair)] text-sm font-bold text-gold truncate">{esasStr || '—'}</span>
+                        {d.davaTuru && <span className="text-[9px] px-1 py-0.5 rounded bg-surface2 text-text-dim border border-border/50 whitespace-nowrap flex-shrink-0">{d.davaTuru}</span>}
+                      </Link>
+                    );
+                    case 'mahkeme': return <Link key={colKey} href={`/davalar/${d.id}`} className="text-xs text-text truncate hover:underline" title={mahkeme || d.konu || ''}>{mahkeme || d.konu || '—'}</Link>;
+                    case 'davaci': return <span key={colKey} className="text-xs text-text truncate" title={davaci}>{davaci || '—'}</span>;
+                    case 'davali': return <span key={colKey} className="text-xs text-text truncate" title={davali}>{davali || '—'}</span>;
+                    case 'acilis': return (
+                      <span key={colKey} className={`text-[11px] ${tarihRenkSinifi(d.tarih)}`} title={tarihTooltip(d.tarih)}>
+                        {d.tarih ? fmtTarih(d.tarih) : '—'}
+                      </span>
+                    );
+                    case 'asama': return <span key={colKey}><span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${ASAMA_RENK[d.asama || ''] || 'text-text-dim bg-surface2'}`}>{d.asama || '—'}</span></span>;
+                    case 'durum': return <span key={colKey}><span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${DURUM_RENK[d.durum || ''] || 'text-text-dim bg-surface2 border-border'}`}>{d.durum || '—'}</span></span>;
+                    case 'durusma': return <span key={colKey}><DurusmaBadge tarih={d.durusma} saat={d.durusmaSaati} /></span>;
+                    default: return null;
+                  }
+                })}
+              </div>
             );
           })}
         </div>
       )}
 
-      {/* Sonuc sayisi */}
+      {/* ── Sayfalama ───────────────────────────────────────── */}
       {!isLoading && sirali.length > 0 && (
-        <div className="mt-3 text-[11px] text-text-dim text-right">
-          {filtreAktif
-            ? `${sirali.length} / ${davalar?.length ?? 0} dava gosteriliyor`
-            : `${sirali.length} dava`}
+        <div className="flex items-center justify-between mt-3">
+          <div className="text-[11px] text-text-dim">
+            {filtreAktif ? `${sirali.length} / ${davalar?.length ?? 0} dava` : `${sirali.length} dava`}
+            {sirali.length > PAGE_SIZE && ` — Sayfa ${sayfa}/${toplamSayfa}`}
+          </div>
+          {toplamSayfa > 1 && (
+            <div className="flex items-center gap-1">
+              <button onClick={() => setSayfa(1)} disabled={sayfa === 1} className="px-2 py-1 text-[11px] rounded border border-border bg-surface text-text-muted hover:border-gold disabled:opacity-30 transition-colors">&laquo;</button>
+              <button onClick={() => setSayfa((p) => Math.max(1, p - 1))} disabled={sayfa === 1} className="px-2 py-1 text-[11px] rounded border border-border bg-surface text-text-muted hover:border-gold disabled:opacity-30 transition-colors">&lsaquo;</button>
+              {Array.from({ length: Math.min(5, toplamSayfa) }, (_, i) => {
+                let pg: number;
+                if (toplamSayfa <= 5) pg = i + 1;
+                else if (sayfa <= 3) pg = i + 1;
+                else if (sayfa >= toplamSayfa - 2) pg = toplamSayfa - 4 + i;
+                else pg = sayfa - 2 + i;
+                return (
+                  <button key={pg} onClick={() => setSayfa(pg)} className={`px-2.5 py-1 text-[11px] rounded border transition-colors ${pg === sayfa ? 'border-gold bg-gold text-bg font-bold' : 'border-border bg-surface text-text-muted hover:border-gold'}`}>{pg}</button>
+                );
+              })}
+              <button onClick={() => setSayfa((p) => Math.min(toplamSayfa, p + 1))} disabled={sayfa === toplamSayfa} className="px-2 py-1 text-[11px] rounded border border-border bg-surface text-text-muted hover:border-gold disabled:opacity-30 transition-colors">&rsaquo;</button>
+              <button onClick={() => setSayfa(toplamSayfa)} disabled={sayfa === toplamSayfa} className="px-2 py-1 text-[11px] rounded border border-border bg-surface text-text-muted hover:border-gold disabled:opacity-30 transition-colors">&raquo;</button>
+            </div>
+          )}
         </div>
       )}
 
