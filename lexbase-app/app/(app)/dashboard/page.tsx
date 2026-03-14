@@ -6,6 +6,9 @@ import { useDavalar } from '@/lib/hooks/useDavalar';
 import { useIcralar } from '@/lib/hooks/useIcra';
 import { useFinansUyarilar, useBuroKarZarar } from '@/lib/hooks/useFinans';
 import { useDanismanliklar } from '@/lib/hooks/useDanismanlik';
+import { useArabuluculuklar } from '@/lib/hooks/useArabuluculuk';
+import { useIhtarnameler } from '@/lib/hooks/useIhtarname';
+import { useBuroGiderleri } from '@/lib/hooks/useBuroGiderleri';
 import { useTodolar } from '@/lib/hooks/useTodolar';
 import { useEtkinlikler } from '@/lib/hooks/useEtkinlikler';
 import { useBelgeler } from '@/lib/hooks/useBelgeler';
@@ -35,6 +38,9 @@ export default function DashboardPage() {
   const { data: uyarilar } = useFinansUyarilar();
   const { data: karZarar } = useBuroKarZarar(new Date().getFullYear(), new Date().getMonth() + 1);
   const { data: danismanliklar } = useDanismanliklar();
+  const { data: arabuluculuklar } = useArabuluculuklar();
+  const { data: ihtarnameler } = useIhtarnameler();
+  const { data: buroGiderleri } = useBuroGiderleri();
   const { data: gorevler } = useTodolar();
   const { data: etkinlikler } = useEtkinlikler();
   const { data: belgeler } = useBelgeler();
@@ -112,6 +118,9 @@ export default function DashboardPage() {
         etkinlikler={etkinlikler || []}
         uyarilar={Array.isArray(uyarilar) ? uyarilar : []}
         belgeler={belgeler || []}
+        arabuluculuklar={arabuluculuklar || []}
+        ihtarnameler={ihtarnameler || []}
+        buroGiderleri={buroGiderleri || []}
         yilNet={yilNet}
         muvAdMap={muvAdMap}
       />

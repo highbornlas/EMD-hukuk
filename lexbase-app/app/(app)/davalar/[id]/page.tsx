@@ -17,6 +17,7 @@ import {
 import { SureBadge, DurusmaBadge } from '@/components/ui/SureBadge';
 import { DavaModal } from '@/components/modules/DavaModal';
 import { DosyaEvrakTab } from '@/components/modules/DosyaEvrakTab';
+import { TahsilatModal, type TahsilatKaydi } from '@/components/modules/TahsilatModal';
 
 const TABS = [
   { key: 'ozet', label: 'Özet', icon: '📋' },
@@ -49,6 +50,8 @@ export default function DavaDetayPage({ params }: { params: Promise<{ id: string
   const davaKaydet = useDavaKaydet();
   const [aktifTab, setAktifTab] = useState('ozet');
   const [duzenleModu, setDuzenleModu] = useState(false);
+  const [tahsilatModal, setTahsilatModal] = useState(false);
+  const [duzenlenecekTahsilat, setDuzenlenecekTahsilat] = useState<TahsilatKaydi | null>(null);
 
   // Müvekkil adı
   const muvAd = useMemo(() => {
@@ -287,7 +290,17 @@ export default function DavaDetayPage({ params }: { params: Promise<{ id: string
         {aktifTab === 'ozet' && <OzetTab dava={dava} muvAd={muvAd} mahkeme={mahkemeAdi} taraflar={taraflar} esasNo={esasNo} hesap={hesap} />}
         {aktifTab === 'evrak' && <DosyaEvrakTab dosyaId={id} dosyaTipi="dava" muvId={dava.muvId} />}
         {aktifTab === 'harcama' && <HarcamaTab harcamalar={dava.harcamalar || []} />}
-        {aktifTab === 'tahsilat' && <TahsilatTab tahsilatlar={dava.tahsilatlar || []} />}
+        {aktifTab === 'tahsilat' && (
+          <TahsilatTab
+            tahsilatlar={dava.tahsilatlar || []}
+            onEkle={() => { setDuzenlenecekTahsilat(null); setTahsilatModal(true); }}
+            onDuzenle={(t) => { setDuzenlenecekTahsilat(t); setTahsilatModal(true); }}
+            onSil={(tahsilatId) => {
+              const yeni = { ...dava, tahsilatlar: (dava.tahsilatlar || []).filter((t) => t.id !== tahsilatId) };
+              davaKaydet.mutate(yeni);
+            }}
+          />
+        )}
         {aktifTab === 'sureler' && <SurelerTab sureler={dava.sureler || []} />}
         {aktifTab === 'notlar' && <NotlarTab notlar={dava.notlar || []} notText={dava.not} />}
         {aktifTab === 'anlasma' && <AnlasmaTab anlasma={dava.anlasma} />}
@@ -305,6 +318,21 @@ export default function DavaDetayPage({ params }: { params: Promise<{ id: string
           }}
         />
       )}
+
+      {/* Tahsilat Modal */}
+      <TahsilatModal
+        open={tahsilatModal}
+        onClose={() => setTahsilatModal(false)}
+        tahsilat={duzenlenecekTahsilat}
+        onKaydet={(tahsilat) => {
+          const mevcut = dava.tahsilatlar || [];
+          const varMi = mevcut.find((t) => t.id === tahsilat.id);
+          const yeniListe = varMi
+            ? mevcut.map((t) => (t.id === tahsilat.id ? tahsilat : t))
+            : [...mevcut, tahsilat];
+          davaKaydet.mutate({ ...dava, tahsilatlar: yeniListe });
+        }}
+      />
     </div>
   );
 }
@@ -472,28 +500,52 @@ function HarcamaTab({ harcamalar }: { harcamalar: Array<{ id: string; kat?: stri
 }
 
 // ── Tahsilat Sekmesi ─────────────────────────────────────────
-function TahsilatTab({ tahsilatlar }: { tahsilatlar: Array<{ id: string; tur: string; tutar: number; tarih?: string; acik?: string }> }) {
-  if (tahsilatlar.length === 0) return <EmptyTab icon="💰" message="Henüz tahsilat kaydı yok" />;
+function TahsilatTab({ tahsilatlar, onEkle, onDuzenle, onSil }: {
+  tahsilatlar: Array<TahsilatKaydi>;
+  onEkle: () => void;
+  onDuzenle: (t: TahsilatKaydi) => void;
+  onSil: (id: string) => void;
+}) {
   const turLabel: Record<string, string> = {
     tahsilat: 'Tahsilat', akdi_vekalet: 'Akdi Vekalet', 'hakediş': 'Hakediş', aktarim: 'Aktarım', iade: 'İade',
   };
+  const toplam = tahsilatlar.reduce((t, h) => t + (h.tutar || 0), 0);
   return (
-    <div className="space-y-1.5">
-      {tahsilatlar.map((t) => (
-        <div key={t.id} className="flex items-center gap-3 p-3 bg-surface2 rounded-lg text-xs">
-          <span className="text-text-dim">{fmtTarih(t.tarih)}</span>
-          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-            t.tur === 'tahsilat' ? 'bg-green-dim text-green' :
-            t.tur === 'akdi_vekalet' ? 'bg-blue-400/10 text-blue-400' :
-            t.tur === 'hakediş' ? 'bg-gold-dim text-gold' :
-            'bg-surface text-text-muted'
-          }`}>
-            {turLabel[t.tur] || t.tur}
-          </span>
-          <span className="flex-1 text-text">{t.acik || '—'}</span>
-          <span className={`font-bold ${t.tur === 'aktarim' || t.tur === 'iade' ? 'text-red' : 'text-green'}`}>{fmt(t.tutar)}</span>
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <div className="text-xs text-text-muted">
+          {tahsilatlar.length > 0 && <>Toplam: <span className="font-bold text-green">{fmt(toplam)}</span> · {tahsilatlar.length} kayıt</>}
         </div>
-      ))}
+        <button onClick={onEkle} className="px-3 py-1.5 bg-gold text-bg font-semibold rounded-lg text-xs hover:bg-gold-light transition-colors">
+          + Tahsilat Ekle
+        </button>
+      </div>
+      {tahsilatlar.length === 0 ? (
+        <EmptyTab icon="💰" message="Henüz tahsilat kaydı yok" />
+      ) : (
+        <div className="space-y-1.5">
+          {tahsilatlar.map((t) => (
+            <div key={t.id} className="flex items-center gap-3 p-3 bg-surface2 rounded-lg text-xs group">
+              <span className="text-text-dim">{fmtTarih(t.tarih)}</span>
+              <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                t.tur === 'tahsilat' ? 'bg-green-dim text-green' :
+                t.tur === 'akdi_vekalet' ? 'bg-blue-400/10 text-blue-400' :
+                t.tur === 'hakediş' ? 'bg-gold-dim text-gold' :
+                'bg-surface text-text-muted'
+              }`}>
+                {turLabel[t.tur] || t.tur}
+              </span>
+              <span className="flex-1 text-text">{t.acik || '—'}</span>
+              {t.makbuzKesildi && <span className="text-[10px] text-green" title="Makbuz kesildi">📄</span>}
+              <span className={`font-bold ${t.tur === 'aktarim' || t.tur === 'iade' ? 'text-red' : 'text-green'}`}>{fmt(t.tutar)}</span>
+              <div className="opacity-0 group-hover:opacity-100 flex gap-1 transition-opacity">
+                <button onClick={() => onDuzenle(t)} className="text-text-dim hover:text-gold text-[10px]" title="Düzenle">✏️</button>
+                <button onClick={() => onSil(t.id)} className="text-text-dim hover:text-red text-[10px]" title="Sil">🗑️</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

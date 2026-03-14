@@ -174,7 +174,7 @@ export function MuvDosyalar({ davalar, icralar, arabuluculuklar, ihtarnameler, o
                 konu: a.konu as string,
                 alt: a.arabulucu as string,
                 durum: a.durum as string,
-                tarih: (a.tarihler as Record<string, string>)?.baslangic || '',
+                tarih: (a.tarihler as Record<string, string>)?.baslangic || (a.basvuruTarih as string) || '',
               })}
               onYeniEkle={() => onYeniEkle('arabuluculuk')}
             />

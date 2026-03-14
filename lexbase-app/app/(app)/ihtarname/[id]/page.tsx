@@ -4,6 +4,8 @@ import { use, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useIhtarnameler, useIhtarnameKaydet, useIhtarnameSil, useIhtarnameArsivle, type Ihtarname } from '@/lib/hooks/useIhtarname';
 import { useMuvekkillar } from '@/lib/hooks/useMuvekkillar';
+import { useDavalar } from '@/lib/hooks/useDavalar';
+import { useIcralar } from '@/lib/hooks/useIcra';
 import { IhtarnameModal } from '@/components/modules/IhtarnameModal';
 import { fmt, fmtTarih } from '@/lib/utils';
 
@@ -37,6 +39,8 @@ export default function IhtarnameDetayPage({ params }: { params: Promise<{ id: s
   const { id } = use(params);
   const { data: ihtarnameler, isLoading } = useIhtarnameler();
   const { data: muvekkillar } = useMuvekkillar();
+  const { data: davalar } = useDavalar();
+  const { data: icralar } = useIcralar();
   const kaydet = useIhtarnameKaydet();
   const silMut = useIhtarnameSil();
   const arsivleMut = useIhtarnameArsivle();
@@ -250,7 +254,7 @@ export default function IhtarnameDetayPage({ params }: { params: Promise<{ id: s
 
       {/* Tab İçerikleri */}
       <div className="bg-surface border border-border rounded-lg p-5">
-        {aktifTab === 'ozet' && <OzetTab ihtarname={ihtarname} muvAd={muvAd} sureBilgi={sureBilgi} />}
+        {aktifTab === 'ozet' && <OzetTab ihtarname={ihtarname} muvAd={muvAd} sureBilgi={sureBilgi} davalar={davalar} icralar={icralar} />}
         {aktifTab === 'icerik' && <IcerikTab ihtarname={ihtarname} />}
         {aktifTab === 'teblig' && <TebligTab ihtarname={ihtarname} sureBilgi={sureBilgi} />}
         {aktifTab === 'ptt' && <PttTab ihtarname={ihtarname} pttLoading={pttLoading} pttSonuc={pttSonuc} onSorgula={handlePttSorgula} />}
@@ -309,11 +313,27 @@ function EmptyTab({ icon, message }: { icon: string; message: string }) {
 }
 
 // ── Özet Sekmesi ─────────────────────────────────────────────
-function OzetTab({ ihtarname, muvAd, sureBilgi }: {
+function OzetTab({ ihtarname, muvAd, sureBilgi, davalar, icralar }: {
   ihtarname: Ihtarname;
   muvAd: string;
   sureBilgi: { kalanGun: number; gecmis: boolean; acil: boolean } | null;
+  davalar?: Array<Record<string, unknown>>;
+  icralar?: Array<Record<string, unknown>>;
 }) {
+  // İlişkili dosya
+  const iliskiliDosya = useMemo(() => {
+    if (!ihtarname.iliskiliDosyaId) return null;
+    if (ihtarname.iliskiliDosyaTip === 'dava') {
+      const d = davalar?.find((x) => x.id === ihtarname.iliskiliDosyaId);
+      if (d) return { tip: 'Dava', ad: `${(d.esasYil as string) || ''}/${(d.esasNo as string) || ''} — ${(d.konu as string) || ''}`, href: `/davalar/${d.id}` };
+    }
+    if (ihtarname.iliskiliDosyaTip === 'icra') {
+      const i = icralar?.find((x) => x.id === ihtarname.iliskiliDosyaId);
+      if (i) return { tip: 'İcra', ad: `${(i.esas as string) || (i.no as string) || ''} — ${(i.borclu as string) || ''}`, href: `/icra/${i.id}` };
+    }
+    return null;
+  }, [ihtarname, davalar, icralar]);
+
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-3 gap-4">
@@ -323,6 +343,14 @@ function OzetTab({ ihtarname, muvAd, sureBilgi }: {
           <InfoRow label="Yön" value={(ihtarname.yon || 'giden') === 'giden' ? '📤 Giden' : '📥 Gelen'} />
           <InfoRow label="Durum" value={ihtarname.durum || '—'} />
           <InfoRow label="Konu" value={ihtarname.konu || '—'} />
+          {iliskiliDosya && (
+            <div className="mt-2 pt-2 border-t border-border">
+              <div className="text-[10px] text-text-dim uppercase tracking-wider mb-1">📎 İlişkili Dosya</div>
+              <Link href={iliskiliDosya.href} className="text-xs text-gold hover:underline font-medium">
+                {iliskiliDosya.tip}: {iliskiliDosya.ad}
+              </Link>
+            </div>
+          )}
         </InfoCard>
 
         <InfoCard title="Taraflar">

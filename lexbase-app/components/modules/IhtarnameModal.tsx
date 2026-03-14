@@ -5,7 +5,11 @@ import { Modal, FormGroup, FormInput, FormSelect, FormTextarea, BtnGold, BtnOutl
 import { useIhtarnameKaydet, useIhtarnameler, type Ihtarname } from '@/lib/hooks/useIhtarname';
 import { useMuvekkillar } from '@/lib/hooks/useMuvekkillar';
 import { useEtkinlikKaydet } from '@/lib/hooks/useEtkinlikler';
-import { useKarsiTaraflar } from '@/lib/hooks/useKarsiTaraflar';
+import { useKarsiTaraflar, useKarsiTarafKaydet } from '@/lib/hooks/useKarsiTaraflar';
+import { useDavalar } from '@/lib/hooks/useDavalar';
+import { useIcralar } from '@/lib/hooks/useIcra';
+import { fmt } from '@/lib/utils';
+import { bruttenNete } from '@/lib/hooks/useGelirHesapla';
 
 interface IhtarnameModalProps {
   open: boolean;
@@ -35,6 +39,8 @@ const bos: Partial<Ihtarname> = {
   icerik: '',
   cevapTarih: '',
   cevapOzet: '',
+  iliskiliDosyaTip: '',
+  iliskiliDosyaId: '',
 };
 
 export function IhtarnameModal({ open, onClose, ihtarname }: IhtarnameModalProps) {
@@ -42,11 +48,16 @@ export function IhtarnameModal({ open, onClose, ihtarname }: IhtarnameModalProps
   const [hata, setHata] = useState('');
   const [pttLoading, setPttLoading] = useState(false);
   const [pttSonuc, setPttSonuc] = useState('');
+  const [yeniKarsiTarafAd, setYeniKarsiTarafAd] = useState('');
+  const [yeniKarsiTarafGoster, setYeniKarsiTarafGoster] = useState(false);
   const kaydet = useIhtarnameKaydet();
   const etkinlikKaydet = useEtkinlikKaydet();
   const { data: muvekkillar } = useMuvekkillar();
   const { data: karsiTaraflar } = useKarsiTaraflar();
+  const { data: davalar } = useDavalar();
+  const { data: icralar } = useIcralar();
   const { data: tumIhtarnameler } = useIhtarnameler();
+  const karsiTarafKaydet = useKarsiTarafKaydet();
 
   /* ── Otomatik numaralama ── */
   const sonrakiNo = useMemo(() => {
@@ -80,6 +91,95 @@ export function IhtarnameModal({ open, onClose, ihtarname }: IhtarnameModalProps
     return map;
   }, [karsiTaraflar, muvekkillar]);
 
+  /* ── Seçili müvekkil adı ── */
+  const seciliMuvAd = useMemo(() => {
+    if (!form.muvId || !muvekkillar) return '';
+    return muvekkillar.find((m) => m.id === form.muvId)?.ad || '';
+  }, [form.muvId, muvekkillar]);
+
+  /* ── Yön değişince gönderen/alıcı otomatik doldur ── */
+  function handleYonDegistir(yeniYon: string) {
+    setForm((prev) => {
+      const next = { ...prev, yon: yeniYon };
+      const muvAd = seciliMuvAd || prev.gonderen || prev.alici || '';
+
+      if (yeniYon === 'giden') {
+        // Giden: müvekkil → gönderen
+        if (muvAd && !prev.gonderen) next.gonderen = muvAd;
+      } else {
+        // Gelen: müvekkil → alıcı
+        if (muvAd && !prev.alici) next.alici = muvAd;
+      }
+      return next;
+    });
+  }
+
+  /* ── Müvekkil değişince gönderen/alıcı otomatik doldur ── */
+  function handleMuvDegistir(muvId: string) {
+    const muvAd = muvekkillar?.find((m) => m.id === muvId)?.ad || '';
+    setForm((prev) => {
+      const next = { ...prev, muvId };
+      if (muvAd) {
+        if ((prev.yon || 'giden') === 'giden') {
+          next.gonderen = muvAd;
+        } else {
+          next.alici = muvAd;
+          if (karsiAdresMap[muvAd]) {
+            next.aliciAdres = karsiAdresMap[muvAd];
+          }
+        }
+      }
+      return next;
+    });
+  }
+
+  /* ── Karşı taraf seçilince ── */
+  function handleKarsiTarafSec(karsiTarafId: string) {
+    if (karsiTarafId === '__yeni__') {
+      setYeniKarsiTarafGoster(true);
+      return;
+    }
+    const kt = karsiTaraflar?.find((k) => k.id === karsiTarafId);
+    if (!kt) return;
+    const ktAd = kt.ad || '';
+    const adresRaw = kt.adres;
+    const adres = typeof adresRaw === 'string' ? adresRaw : (adresRaw as Record<string, string> | undefined)?.tam || '';
+
+    setForm((prev) => {
+      const yon = prev.yon || 'giden';
+      if (yon === 'giden') {
+        // Giden: karşı taraf = alıcı
+        return { ...prev, alici: ktAd, aliciAdres: adres || prev.aliciAdres || '' };
+      } else {
+        // Gelen: karşı taraf = gönderen
+        return { ...prev, gonderen: ktAd };
+      }
+    });
+  }
+
+  /* ── Yeni karşı taraf kaydet ── */
+  async function handleYeniKarsiTarafKaydet() {
+    if (!yeniKarsiTarafAd.trim()) return;
+    const yeniKt = {
+      id: crypto.randomUUID(),
+      ad: yeniKarsiTarafAd.trim(),
+      tip: 'gercek' as const,
+    };
+    await karsiTarafKaydet.mutateAsync(yeniKt);
+
+    // Otomatik seç
+    setForm((prev) => {
+      const yon = prev.yon || 'giden';
+      if (yon === 'giden') {
+        return { ...prev, alici: yeniKt.ad };
+      } else {
+        return { ...prev, gonderen: yeniKt.ad };
+      }
+    });
+    setYeniKarsiTarafAd('');
+    setYeniKarsiTarafGoster(false);
+  }
+
   useEffect(() => {
     if (ihtarname) {
       setForm({ ...ihtarname });
@@ -88,6 +188,8 @@ export function IhtarnameModal({ open, onClose, ihtarname }: IhtarnameModalProps
     }
     setHata('');
     setPttSonuc('');
+    setYeniKarsiTarafGoster(false);
+    setYeniKarsiTarafAd('');
   }, [ihtarname, open, sonrakiNo]);
 
   function handleChange(field: string, value: string | number) {
@@ -108,6 +210,24 @@ export function IhtarnameModal({ open, onClose, ihtarname }: IhtarnameModalProps
     tarih.setDate(tarih.getDate() + form.cevapSuresi);
     return tarih.toISOString().split('T')[0];
   }, [form.tebligTarih, form.cevapSuresi]);
+
+  /* ── İlişkili dosya listesi (müvekkile göre filtreli) ── */
+  const iliskiliDavalar = useMemo(() => {
+    if (!davalar) return [];
+    if (form.muvId) return davalar.filter((d) => d.muvId === form.muvId && !d._silindi && !d._arsivlendi);
+    return davalar.filter((d) => !d._silindi && !d._arsivlendi);
+  }, [davalar, form.muvId]);
+
+  const iliskiliIcralar = useMemo(() => {
+    if (!icralar) return [];
+    if (form.muvId) return icralar.filter((i) => i.muvId === form.muvId && !i._silindi && !i._arsivlendi);
+    return icralar.filter((i) => !i._silindi && !i._arsivlendi);
+  }, [icralar, form.muvId]);
+
+  /* ── Karşı taraf label'ı (yöne göre) ── */
+  const karsiTarafLabel = (form.yon || 'giden') === 'giden' ? 'Alıcı (Karşı Taraf)' : 'Gönderen (Karşı Taraf)';
+  const muvTarafLabel = (form.yon || 'giden') === 'giden' ? 'Gönderen (Müvekkil)' : 'Alıcı (Müvekkil)';
+  const muvTarafValue = (form.yon || 'giden') === 'giden' ? form.gonderen : form.alici;
 
   /* ── PTT Barkod Sorgulama ── */
   async function handlePttSorgula() {
@@ -221,7 +341,7 @@ export function IhtarnameModal({ open, onClose, ihtarname }: IhtarnameModalProps
             </FormSelect>
           </FormGroup>
           <FormGroup label="Yön">
-            <FormSelect value={form.yon || 'giden'} onChange={(e) => handleChange('yon', e.target.value)}>
+            <FormSelect value={form.yon || 'giden'} onChange={(e) => handleYonDegistir(e.target.value)}>
               <option value="giden">📤 Giden</option>
               <option value="gelen">📥 Gelen</option>
             </FormSelect>
@@ -230,7 +350,7 @@ export function IhtarnameModal({ open, onClose, ihtarname }: IhtarnameModalProps
 
         <div className="grid grid-cols-2 gap-4">
           <FormGroup label="Müvekkil">
-            <FormSelect value={form.muvId || ''} onChange={(e) => handleChange('muvId', e.target.value)}>
+            <FormSelect value={form.muvId || ''} onChange={(e) => handleMuvDegistir(e.target.value)}>
               <option value="">Seçiniz</option>
               {muvekkillar?.map((m) => (
                 <option key={m.id} value={m.id}>{m.ad}</option>
@@ -253,31 +373,132 @@ export function IhtarnameModal({ open, onClose, ihtarname }: IhtarnameModalProps
           <FormInput value={form.konu || ''} onChange={(e) => handleChange('konu', e.target.value)} placeholder="İhtarname konusu" />
         </FormGroup>
 
-        <div className="grid grid-cols-2 gap-4">
-          <FormGroup label="Gönderen">
-            <FormInput value={form.gonderen || ''} onChange={(e) => handleChange('gonderen', e.target.value)} placeholder="Gönderen ad/unvan" />
-          </FormGroup>
-          <FormGroup label="Alıcı">
-            <FormInput
-              value={form.alici || ''}
-              onChange={(e) => handleChange('alici', e.target.value)}
-              placeholder="Alıcı ad/unvan"
-              list="alici-list"
-            />
-            <datalist id="alici-list">
-              {karsiTaraflar?.map((k) => (
-                <option key={k.id} value={(k.ad as string) || ''} />
-              ))}
-              {muvekkillar?.map((m) => (
-                <option key={m.id} value={m.ad || ''} />
-              ))}
-            </datalist>
-          </FormGroup>
+        {/* ── Taraflar (Yöne göre akıllı form) ── */}
+        <div className="border border-border rounded-lg p-4 bg-surface2/30 space-y-3">
+          <div className="text-xs font-bold text-text-muted uppercase tracking-wider flex items-center gap-1.5">
+            <span>👥</span> Taraflar
+            <span className="text-[10px] font-normal text-text-dim ml-auto">
+              {(form.yon || 'giden') === 'giden' ? '📤 Müvekkil gönderen, karşı taraf alıcı' : '📥 Karşı taraf gönderen, müvekkil alıcı'}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            {/* Müvekkil tarafı (otomatik dolan, readonly görünümlü) */}
+            <FormGroup label={muvTarafLabel}>
+              <FormInput
+                value={(muvTarafValue as string) || ''}
+                onChange={(e) => handleChange((form.yon || 'giden') === 'giden' ? 'gonderen' : 'alici', e.target.value)}
+                placeholder={seciliMuvAd || 'Müvekkil seçince otomatik dolar'}
+                className="bg-gold-dim/30"
+              />
+              {seciliMuvAd && (
+                <div className="text-[10px] text-gold mt-0.5">↑ Müvekkilden otomatik</div>
+              )}
+            </FormGroup>
+
+            {/* Karşı taraf seçici */}
+            <FormGroup label={karsiTarafLabel}>
+              <FormSelect
+                value=""
+                onChange={(e) => handleKarsiTarafSec(e.target.value)}
+              >
+                <option value="">Rehberden seç...</option>
+                {karsiTaraflar?.map((k) => (
+                  <option key={k.id} value={k.id}>{k.ad}{k.tc ? ` (${k.tc})` : ''}</option>
+                ))}
+                <option value="__yeni__">➕ Yeni Karşı Taraf Ekle</option>
+              </FormSelect>
+              {/* Seçilen değeri gösteren input */}
+              <FormInput
+                value={((form.yon || 'giden') === 'giden' ? form.alici : form.gonderen) as string || ''}
+                onChange={(e) => handleChange((form.yon || 'giden') === 'giden' ? 'alici' : 'gonderen', e.target.value)}
+                placeholder="veya elle yazın..."
+                className="mt-1.5"
+              />
+            </FormGroup>
+          </div>
+
+          {/* Yeni Karşı Taraf Ekleme */}
+          {yeniKarsiTarafGoster && (
+            <div className="flex items-end gap-2 p-3 bg-gold-dim border border-gold/20 rounded-lg">
+              <div className="flex-1">
+                <label className="text-[10px] text-gold font-bold block mb-1">Yeni Karşı Taraf Adı</label>
+                <input
+                  value={yeniKarsiTarafAd}
+                  onChange={(e) => setYeniKarsiTarafAd(e.target.value)}
+                  placeholder="Ad Soyad veya Unvan"
+                  className="w-full px-3 py-2 text-xs bg-surface border border-border rounded-lg text-text placeholder:text-text-dim focus:outline-none focus:border-gold"
+                  autoFocus
+                />
+              </div>
+              <button
+                onClick={handleYeniKarsiTarafKaydet}
+                disabled={!yeniKarsiTarafAd.trim() || karsiTarafKaydet.isPending}
+                className="px-3 py-2 bg-gold text-bg text-xs font-semibold rounded-lg hover:bg-gold-light transition-colors disabled:opacity-40 whitespace-nowrap"
+              >
+                {karsiTarafKaydet.isPending ? '...' : '✓ Kaydet & Seç'}
+              </button>
+              <button
+                onClick={() => { setYeniKarsiTarafGoster(false); setYeniKarsiTarafAd(''); }}
+                className="px-3 py-2 text-xs text-text-muted hover:text-text border border-border rounded-lg"
+              >
+                İptal
+              </button>
+            </div>
+          )}
         </div>
 
         <FormGroup label="Alıcı Adresi">
           <FormTextarea value={form.aliciAdres || ''} onChange={(e) => handleChange('aliciAdres', e.target.value)} rows={2} placeholder="Alıcı açık adresi" />
         </FormGroup>
+
+        {/* ── İlişkili Dosya ── */}
+        <div className="border border-border rounded-lg p-4 bg-surface2/30 space-y-3">
+          <div className="text-xs font-bold text-text-muted uppercase tracking-wider flex items-center gap-1.5">
+            <span>📎</span> İlişkili Dosya
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <FormGroup label="Dosya Türü">
+              <FormSelect value={form.iliskiliDosyaTip || ''} onChange={(e) => { handleChange('iliskiliDosyaTip', e.target.value); handleChange('iliskiliDosyaId', ''); }}>
+                <option value="">Seçiniz (opsiyonel)</option>
+                <option value="dava">📁 Dava Dosyası</option>
+                <option value="icra">⚡ İcra Dosyası</option>
+              </FormSelect>
+            </FormGroup>
+            <FormGroup label="Dosya Seç">
+              {form.iliskiliDosyaTip === 'dava' ? (
+                <FormSelect value={form.iliskiliDosyaId || ''} onChange={(e) => handleChange('iliskiliDosyaId', e.target.value)}>
+                  <option value="">Seçiniz</option>
+                  {iliskiliDavalar.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.esasNo ? `${d.esasYil || ''}/${d.esasNo}` : d.no || '—'} — {d.konu || 'Konusuz'}
+                    </option>
+                  ))}
+                  {iliskiliDavalar.length === 0 && <option disabled>Dava dosyası bulunamadı</option>}
+                </FormSelect>
+              ) : form.iliskiliDosyaTip === 'icra' ? (
+                <FormSelect value={form.iliskiliDosyaId || ''} onChange={(e) => handleChange('iliskiliDosyaId', e.target.value)}>
+                  <option value="">Seçiniz</option>
+                  {iliskiliIcralar.map((i) => (
+                    <option key={i.id} value={i.id}>
+                      {i.esas || i.no || '—'} — {i.borclu || 'Borçlu Yok'}
+                    </option>
+                  ))}
+                  {iliskiliIcralar.length === 0 && <option disabled>İcra dosyası bulunamadı</option>}
+                </FormSelect>
+              ) : (
+                <FormSelect disabled value="">
+                  <option>Önce dosya türü seçin</option>
+                </FormSelect>
+              )}
+            </FormGroup>
+          </div>
+          {form.iliskiliDosyaId && (
+            <div className="text-[10px] text-green flex items-center gap-1">
+              ✓ Dosya bağlandı
+            </div>
+          )}
+        </div>
 
         {/* ── Tarih & Noter ── */}
         <div className="grid grid-cols-4 gap-4">
@@ -432,6 +653,72 @@ export function IhtarnameModal({ open, onClose, ihtarname }: IhtarnameModalProps
           <FormGroup label="Tahsil Edilen (TL)">
             <FormInput type="number" value={form.tahsilEdildi || ''} onChange={(e) => handleChange('tahsilEdildi', Number(e.target.value))} placeholder="0" />
           </FormGroup>
+        </div>
+
+        {/* ── Vergi / SMM ── */}
+        <div className="border-t border-border/50 pt-4">
+          <div className="text-[11px] font-semibold text-text-muted uppercase tracking-wider mb-3">Vergi / SMM Bilgileri</div>
+          <div className="grid grid-cols-2 gap-4 mb-3">
+            <FormGroup label="KDV Oranı (%)">
+              <FormSelect value={String(form.kdvOrani ?? 0)} onChange={(e) => handleChange('kdvOrani', Number(e.target.value))}>
+                <option value="0">%0 (Yok)</option>
+                <option value="1">%1</option>
+                <option value="10">%10</option>
+                <option value="20">%20</option>
+              </FormSelect>
+            </FormGroup>
+            <FormGroup label="Stopaj Oranı (%)">
+              <FormSelect value={String(form.stopajOrani ?? 0)} onChange={(e) => handleChange('stopajOrani', Number(e.target.value))}>
+                <option value="0">%0 (Yok)</option>
+                <option value="15">%15</option>
+                <option value="20">%20</option>
+                <option value="25">%25</option>
+              </FormSelect>
+            </FormGroup>
+          </div>
+          <label className="flex items-center gap-2 text-xs text-text-muted mb-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={!!form.makbuzKesildi}
+              onChange={(e) => setForm((p) => ({ ...p, makbuzKesildi: e.target.checked }))}
+              className="rounded border-border accent-gold"
+            />
+            Resmi Makbuz (SMM) Kesildi
+          </label>
+          {form.makbuzKesildi && (
+            <div className="grid grid-cols-2 gap-4">
+              <FormGroup label="Makbuz No">
+                <FormInput value={form.makbuzNo || ''} onChange={(e) => handleChange('makbuzNo', e.target.value)} placeholder="SMM-2026-001" />
+              </FormGroup>
+              <FormGroup label="Makbuz Tarihi">
+                <FormInput type="date" value={form.makbuzTarih || ''} onChange={(e) => handleChange('makbuzTarih', e.target.value)} />
+              </FormGroup>
+            </div>
+          )}
+          {form.makbuzKesildi && (form.kdvOrani || 0) > 0 && (form.ucret || 0) > 0 && (() => {
+            const { kdvTutar, stopajTutar, netTutar } = bruttenNete(form.ucret || 0, form.kdvOrani || 0, form.stopajOrani || 0);
+            return (
+              <div className="grid grid-cols-3 gap-3 bg-surface2 rounded-lg p-3 mt-3">
+                <div>
+                  <div className="text-[9px] text-text-dim uppercase tracking-wider">KDV Tutarı</div>
+                  <div className="text-sm font-semibold text-text">{fmt(kdvTutar)}</div>
+                </div>
+                <div>
+                  <div className="text-[9px] text-text-dim uppercase tracking-wider">Stopaj Tutarı</div>
+                  <div className="text-sm font-semibold text-text">{fmt(stopajTutar)}</div>
+                </div>
+                <div>
+                  <div className="text-[9px] text-text-dim uppercase tracking-wider">Net Tutar</div>
+                  <div className="text-sm font-bold text-gold">{fmt(netTutar)}</div>
+                </div>
+              </div>
+            );
+          })()}
+          {!form.makbuzKesildi && (form.kdvOrani || 0) > 0 && (
+            <div className="text-[10px] text-text-dim mt-1">
+              ℹ️ Makbuz kesilmediğinde KDV/Stopaj vergi hesabına dahil edilmez.
+            </div>
+          )}
         </div>
       </div>
     </Modal>

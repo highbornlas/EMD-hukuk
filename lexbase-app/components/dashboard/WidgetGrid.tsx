@@ -55,6 +55,9 @@ interface WidgetGridProps {
   etkinlikler: Array<Record<string, unknown>>;
   uyarilar: Array<Record<string, unknown>>;
   belgeler: Array<Record<string, unknown>>;
+  arabuluculuklar: Array<Record<string, unknown>>;
+  ihtarnameler: Array<Record<string, unknown>>;
+  buroGiderleri: Array<Record<string, unknown>>;
   yilNet: number;
   muvAdMap: Record<string, string>;
 }
@@ -73,6 +76,9 @@ export function WidgetGrid({
   etkinlikler,
   uyarilar,
   belgeler,
+  arabuluculuklar,
+  ihtarnameler,
+  buroGiderleri,
   yilNet,
   muvAdMap,
 }: WidgetGridProps) {
@@ -84,7 +90,7 @@ export function WidgetGrid({
       case 'kpi':
         return <KpiWidget muvekkillar={muvekkillar} davalar={davalar} icralar={icralar} yilNet={yilNet} />;
       case 'performans':
-        return <PerformansWidget davalar={davalar} icralar={icralar} />;
+        return <PerformansWidget davalar={davalar} icralar={icralar} danismanliklar={danismanliklar} arabuluculuklar={arabuluculuklar} ihtarnameler={ihtarnameler} buroGiderleri={buroGiderleri} />;
       case 'gundem':
         return <GundemWidget davalar={davalar} etkinlikler={etkinlikler} muvAdMap={muvAdMap} />;
       case 'gorevler':

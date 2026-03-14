@@ -33,8 +33,17 @@ export interface Ihtarname {
   ucret?: number;
   tahsilEdildi?: number;
   noterMasrafi?: number;
+  // Vergi / SMM
+  kdvOrani?: number;
+  stopajOrani?: number;
+  makbuzKesildi?: boolean;
+  makbuzNo?: string;
+  makbuzTarih?: string;
   icerik?: string;
   cevapOzet?: string;
+  // İlişkili dosya
+  iliskiliDosyaTip?: 'dava' | 'icra' | '';
+  iliskiliDosyaId?: string;
   evraklar?: Record<string, unknown>[];
   notlar?: Record<string, unknown>[];
   // Soft delete / Arşiv

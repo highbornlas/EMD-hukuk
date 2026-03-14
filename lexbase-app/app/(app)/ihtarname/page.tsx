@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useIhtarnameler, useIhtarnameSil, useIhtarnameArsivle, type Ihtarname } from '@/lib/hooks/useIhtarname';
 import { useMuvekkillar } from '@/lib/hooks/useMuvekkillar';
 import { IhtarnameModal } from '@/components/modules/IhtarnameModal';
@@ -29,6 +29,10 @@ const TUR_BADGE: Record<string, string> = {
 
 type YonFiltre = 'hepsi' | 'giden' | 'gelen';
 
+// ── Sıralama ─────────────────────────────────────────────────
+type SortKey = 'no' | 'yon' | 'tur' | 'muvekkil' | 'gonderen' | 'alici' | 'konu' | 'noterAd' | 'noterNo' | 'durum' | 'ucret' | 'tarih';
+type SortDir = 'asc' | 'desc';
+
 export default function IhtarnamePage() {
   const { data: tumIhtarnameler, isLoading } = useIhtarnameler();
   const { data: muvekkillar } = useMuvekkillar();
@@ -44,6 +48,8 @@ export default function IhtarnamePage() {
   const [kebabAcik, setKebabAcik] = useState<string | null>(null);
   const [topluPttLoading, setTopluPttLoading] = useState(false);
   const [topluPttSonuc, setTopluPttSonuc] = useState('');
+  const [sortKey, setSortKey] = useState<SortKey>('tarih');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
   const kebabRef = useRef<HTMLDivElement>(null);
 
   // Aktif (silinmemiş + arşivlenmemiş) ihtarnameler
@@ -56,6 +62,16 @@ export default function IhtarnamePage() {
     muvekkillar?.forEach((m) => { map[m.id] = m.ad || '?'; });
     return map;
   }, [muvekkillar]);
+
+  // Sıralama toggle
+  const handleSort = useCallback((key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  }, [sortKey]);
 
   // Kebab dışına tıklanınca kapat
   useEffect(() => {
@@ -84,10 +100,10 @@ export default function IhtarnamePage() {
     return { toplam: ihtarnameler.length, tebligBekleyen, tebligEdilen, suresiDolan, toplamUcret, giden, gelen };
   }, [ihtarnameler]);
 
-  // Filtreleme
+  // Filtreleme + Sıralama
   const filtrelenmis = useMemo(() => {
     if (!ihtarnameler) return [];
-    return ihtarnameler.filter((i) => {
+    const filtered = ihtarnameler.filter((i) => {
       if (durumFiltre !== 'hepsi' && i.durum !== durumFiltre) return false;
       if (yonFiltre !== 'hepsi' && (i.yon || 'giden') !== yonFiltre) return false;
       if (arama) {
@@ -97,12 +113,37 @@ export default function IhtarnamePage() {
           (i.konu || '').toLowerCase().includes(q) ||
           (i.alici || '').toLowerCase().includes(q) ||
           (i.gonderen || '').toLowerCase().includes(q) ||
+          (i.noterAd || '').toLowerCase().includes(q) ||
           (muvAdMap[i.muvId || ''] || '').toLowerCase().includes(q)
         );
       }
       return true;
-    }).sort((a, b) => (b.tarih || '').localeCompare(a.tarih || ''));
-  }, [ihtarnameler, arama, durumFiltre, yonFiltre, muvAdMap]);
+    });
+
+    // Sıralama
+    const dir = sortDir === 'asc' ? 1 : -1;
+    filtered.sort((a, b) => {
+      let va = '';
+      let vb = '';
+      switch (sortKey) {
+        case 'no': va = a.no || ''; vb = b.no || ''; break;
+        case 'yon': va = a.yon || 'giden'; vb = b.yon || 'giden'; break;
+        case 'tur': va = a.tur || ''; vb = b.tur || ''; break;
+        case 'muvekkil': va = muvAdMap[a.muvId || ''] || ''; vb = muvAdMap[b.muvId || ''] || ''; break;
+        case 'gonderen': va = a.gonderen || ''; vb = b.gonderen || ''; break;
+        case 'alici': va = a.alici || ''; vb = b.alici || ''; break;
+        case 'konu': va = a.konu || ''; vb = b.konu || ''; break;
+        case 'noterAd': va = a.noterAd || ''; vb = b.noterAd || ''; break;
+        case 'noterNo': va = a.noterNo || ''; vb = b.noterNo || ''; break;
+        case 'durum': va = a.durum || ''; vb = b.durum || ''; break;
+        case 'ucret': return dir * ((a.ucret || 0) - (b.ucret || 0));
+        case 'tarih': va = a.tarih || ''; vb = b.tarih || ''; break;
+      }
+      return dir * va.localeCompare(vb, 'tr');
+    });
+
+    return filtered;
+  }, [ihtarnameler, arama, durumFiltre, yonFiltre, muvAdMap, sortKey, sortDir]);
 
   // Filtre değişince sayfa 1'e dön
   useEffect(() => { setSayfa(1); }, [arama, durumFiltre, yonFiltre]);
@@ -147,6 +188,14 @@ export default function IhtarnamePage() {
     setTopluPttSonuc(`Tamamlandı: ${basarili} başarılı, ${basarisiz} başarısız`);
     setTopluPttLoading(false);
   }
+
+  // Sıralama ikonu
+  const sortIcon = (key: SortKey) => {
+    if (sortKey !== key) return <span className="text-text-dim/30 ml-0.5">↕</span>;
+    return <span className="text-gold ml-0.5">{sortDir === 'asc' ? '↑' : '↓'}</span>;
+  };
+
+  const GRID = 'grid-cols-[60px_30px_80px_1fr_1fr_1fr_1fr_120px_80px_90px_80px_36px]';
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-8rem)]">
@@ -204,7 +253,7 @@ export default function IhtarnamePage() {
             type="text"
             value={arama}
             onChange={(e) => setArama(e.target.value)}
-            placeholder="Dosya no, konu, alıcı, gönderen ile ara..."
+            placeholder="Dosya no, konu, alıcı, gönderen, noter ile ara..."
             className="w-full px-4 py-2.5 pl-9 bg-surface border border-border rounded-lg text-sm text-text placeholder:text-text-dim focus:outline-none focus:border-gold transition-colors"
           />
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim text-sm">🔍</span>
@@ -251,18 +300,20 @@ export default function IhtarnamePage() {
           </div>
         </div>
       ) : (
-        <div className="bg-surface border border-border rounded-lg overflow-hidden flex-1">
-          {/* Tablo Başlık */}
-          <div className="grid grid-cols-[60px_30px_80px_1fr_1fr_1fr_100px_80px_80px_36px] gap-2 px-4 py-2.5 border-b border-border text-[11px] text-text-muted font-medium uppercase tracking-wider">
-            <span>No</span>
-            <span>Yön</span>
-            <span>Tür</span>
-            <span>Müvekkil</span>
-            <span>Alıcı</span>
-            <span>Konu</span>
-            <span>Durum</span>
-            <span>Ücret</span>
-            <span>Tarih</span>
+        <div className="bg-surface border border-border rounded-lg overflow-hidden flex-1 overflow-x-auto">
+          {/* Tablo Başlık — Sıralanabilir */}
+          <div className={`grid ${GRID} gap-2 px-4 py-2.5 border-b border-border text-[11px] text-text-muted font-medium uppercase tracking-wider min-w-[1100px]`}>
+            <button type="button" onClick={() => handleSort('no')} className="text-left hover:text-gold transition-colors flex items-center">No{sortIcon('no')}</button>
+            <button type="button" onClick={() => handleSort('yon')} className="text-left hover:text-gold transition-colors flex items-center">Yön{sortIcon('yon')}</button>
+            <button type="button" onClick={() => handleSort('tur')} className="text-left hover:text-gold transition-colors flex items-center">Tür{sortIcon('tur')}</button>
+            <button type="button" onClick={() => handleSort('muvekkil')} className="text-left hover:text-gold transition-colors flex items-center">Müvekkil{sortIcon('muvekkil')}</button>
+            <button type="button" onClick={() => handleSort('gonderen')} className="text-left hover:text-gold transition-colors flex items-center">Gönderen{sortIcon('gonderen')}</button>
+            <button type="button" onClick={() => handleSort('alici')} className="text-left hover:text-gold transition-colors flex items-center">Alıcı{sortIcon('alici')}</button>
+            <button type="button" onClick={() => handleSort('konu')} className="text-left hover:text-gold transition-colors flex items-center">Konu{sortIcon('konu')}</button>
+            <button type="button" onClick={() => handleSort('noterAd')} className="text-left hover:text-gold transition-colors flex items-center">Noter{sortIcon('noterAd')}</button>
+            <button type="button" onClick={() => handleSort('noterNo')} className="text-left hover:text-gold transition-colors flex items-center">Yevmiye{sortIcon('noterNo')}</button>
+            <button type="button" onClick={() => handleSort('durum')} className="text-left hover:text-gold transition-colors flex items-center">Durum{sortIcon('durum')}</button>
+            <button type="button" onClick={() => handleSort('tarih')} className="text-left hover:text-gold transition-colors flex items-center">Tarih{sortIcon('tarih')}</button>
             <span></span>
           </div>
 
@@ -270,22 +321,27 @@ export default function IhtarnamePage() {
           {sayfadakiler.map((i) => (
             <div
               key={i.id}
-              className="grid grid-cols-[60px_30px_80px_1fr_1fr_1fr_100px_80px_80px_36px] gap-2 px-4 py-3 border-b border-border/50 hover:bg-gold-dim transition-colors items-center group"
+              className={`grid ${GRID} gap-2 px-4 py-3 border-b border-border/50 hover:bg-gold-dim transition-colors items-center group min-w-[1100px]`}
             >
               <Link href={`/ihtarname/${i.id}`} className="text-xs font-bold text-gold truncate hover:underline">{i.no || '—'}</Link>
               <span className="text-sm" title={(i.yon || 'giden') === 'giden' ? 'Giden' : 'Gelen'}>{(i.yon || 'giden') === 'giden' ? '📤' : '📥'}</span>
               <span className={`text-[10px] font-bold ${TUR_BADGE[i.tur || ''] || 'text-text-muted'}`}>
                 {i.tur || '—'}
               </span>
-              <span className="text-xs text-text truncate">{muvAdMap[i.muvId || ''] || '—'}</span>
+              <span className="text-xs text-text truncate flex items-center gap-1">
+                {i.muvId && muvAdMap[i.muvId] && <span className="text-[8px] font-black w-4 h-4 rounded flex items-center justify-center flex-shrink-0 border text-green bg-green-dim border-green/30" title="Müvekkil">M</span>}
+                {muvAdMap[i.muvId || ''] || '—'}
+              </span>
+              <span className="text-xs text-text-muted truncate">{i.gonderen || '—'}</span>
               <span className="text-xs text-text-muted truncate">{i.alici || '—'}</span>
               <Link href={`/ihtarname/${i.id}`} className="text-xs text-text-muted truncate hover:text-gold">{i.konu || '—'}</Link>
+              <span className="text-[11px] text-text truncate" title={i.noterAd || ''}>{i.noterAd || '—'}</span>
+              <span className="text-[11px] text-text-dim truncate" title={i.noterNo || ''}>{i.noterNo || '—'}</span>
               <span>
                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${DURUM_RENK[i.durum || ''] || 'bg-surface2 text-text-dim border-border'}`}>
                   {i.durum || '—'}
                 </span>
               </span>
-              <span className="text-xs font-semibold text-text">{i.ucret ? fmt(i.ucret) : '—'}</span>
               <span className="text-[11px] text-text-dim">{fmtTarih(i.tarih)}</span>
 
               {/* Kebab Menu */}
@@ -374,37 +430,6 @@ export default function IhtarnamePage() {
         </div>
       )}
 
-      {/* Tebliğ Durumu Takip */}
-      {filtrelenmis.some((i) => i.durum === 'Gönderildi') && (
-        <div className="mt-5 bg-gold-dim border border-gold/20 rounded-lg p-4">
-          <h3 className="text-sm font-semibold text-gold mb-2">📬 Tebliğ Bekleyen İhtarnameler</h3>
-          <div className="space-y-2">
-            {filtrelenmis
-              .filter((i) => i.durum === 'Gönderildi')
-              .map((i) => {
-                const gunFarki = i.gonderimTarih
-                  ? Math.floor((Date.now() - new Date(i.gonderimTarih).getTime()) / 86400000)
-                  : null;
-                return (
-                  <div key={`teblig-${i.id}`} className="flex items-center justify-between bg-surface rounded-lg px-3 py-2">
-                    <div>
-                      <span className="text-xs font-medium text-text">{i.no || '—'}</span>
-                      <span className="text-[11px] text-text-muted ml-2">{i.alici || ''}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {gunFarki !== null && (
-                        <span className={`text-[10px] font-bold ${gunFarki > 15 ? 'text-red' : gunFarki > 7 ? 'text-orange-400' : 'text-text-dim'}`}>
-                          {gunFarki} gün önce gönderildi
-                        </span>
-                      )}
-                      <span className="text-[11px] text-text-dim">{fmtTarih(i.gonderimTarih)}</span>
-                    </div>
-                  </div>
-                );
-              })}
-          </div>
-        </div>
-      )}
       <IhtarnameModal open={modalAcik} onClose={() => setModalAcik(false)} ihtarname={secili} />
     </div>
   );

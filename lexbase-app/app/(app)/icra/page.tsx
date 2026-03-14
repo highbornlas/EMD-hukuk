@@ -567,16 +567,23 @@ export default function IcraPage() {
                     case 'sira': return <span key={colKey} className="text-[11px] text-text-dim">{globalIdx + 1}</span>;
                     case 'esasNo': return (
                       <Link key={colKey} href={`/icra/${ic.id}`} className="min-w-0 flex items-center gap-1.5 hover:underline">
-                        {ic.muvRol && (
-                          <span className={`text-[8px] font-black w-4 h-4 rounded flex items-center justify-center flex-shrink-0 border ${ic.muvRol === 'alacakli' ? 'text-green bg-green-dim border-green/30' : 'text-red bg-red-dim border-red/30'}`} title={`Müvekkil: ${ic.muvRol === 'alacakli' ? 'Alacaklı' : 'Borçlu'}`}>M</span>
-                        )}
                         <span className="font-[var(--font-playfair)] text-sm font-bold text-gold truncate">{esasStr || '—'}</span>
                         {ic.tur && <span className="text-[9px] px-1 py-0.5 rounded bg-surface2 text-text-dim border border-border/50 whitespace-nowrap flex-shrink-0">{ic.tur}</span>}
                       </Link>
                     );
                     case 'daire': return <Link key={colKey} href={`/icra/${ic.id}`} className="text-xs text-text truncate hover:underline" title={daireFull}>{daireFull || '—'}</Link>;
-                    case 'alacakli': return <span key={colKey} className="text-xs text-text truncate" title={alacakli}>{alacakli || <span className="text-text-dim/40">—</span>}</span>;
-                    case 'borclu': return <span key={colKey} className="text-xs text-text-muted truncate" title={borclu}>{borclu || <span className="text-text-dim/40">—</span>}</span>;
+                    case 'alacakli': return (
+                      <span key={colKey} className="text-xs text-text truncate flex items-center gap-1" title={alacakli}>
+                        {ic.muvRol === 'alacakli' && <span className="text-[8px] font-black w-4 h-4 rounded flex items-center justify-center flex-shrink-0 border text-green bg-green-dim border-green/30" title="Müvekkil">M</span>}
+                        {alacakli || <span className="text-text-dim/40">—</span>}
+                      </span>
+                    );
+                    case 'borclu': return (
+                      <span key={colKey} className="text-xs text-text-muted truncate flex items-center gap-1" title={borclu}>
+                        {ic.muvRol === 'borclu' && <span className="text-[8px] font-black w-4 h-4 rounded flex items-center justify-center flex-shrink-0 border text-red bg-red-dim border-red/30" title="Müvekkil">M</span>}
+                        {borclu || <span className="text-text-dim/40">—</span>}
+                      </span>
+                    );
                     case 'acilis': return <span key={colKey} className={`text-[11px] ${tarihRenkSinifi(ic.tarih)}`} title={tarihTooltip(ic.tarih)}>{ic.tarih ? fmtTarih(ic.tarih) : '—'}</span>;
                     case 'teblig': return <span key={colKey} className={`text-[11px] ${tebligRenkSinifi(ic.tebligTarihi, ic.tur)}`}>{ic.tebligTarihi ? fmtTarih(ic.tebligTarihi) : '—'}</span>;
                     case 'durum': return <span key={colKey}><span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${DURUM_RENK[ic.durum || ''] || 'text-text-dim bg-surface2 border-border'}`}>{ic.durum || '—'}</span></span>;

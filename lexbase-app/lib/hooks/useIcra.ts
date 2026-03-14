@@ -70,7 +70,7 @@ export interface Icra {
   evraklar?: Record<string, unknown>[];
   notlar?: Record<string, unknown>[];
   harcamalar?: Array<{ id: string; kat?: string; acik?: string; tarih?: string; tutar: number }>;
-  tahsilatlar?: Array<{ id: string; tur: string; tutar: number; tarih?: string; acik?: string }>;
+  tahsilatlar?: Array<{ id: string; tur: string; tutar: number; tarih?: string; acik?: string; kdvOrani?: number; stopajOrani?: number; makbuzKesildi?: boolean; makbuzNo?: string; makbuzTarih?: string }>;
   anlasma?: Record<string, unknown>;
   not?: string;
   // Arşiv & Soft delete
