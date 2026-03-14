@@ -15,6 +15,11 @@ import { useBulkSelection } from '@/lib/hooks/useBulkSelection';
 import { exportMuvekkilListePDF, exportKarsiTarafListePDF, exportAvukatListePDF } from '@/lib/export/pdfExport';
 import { exportMuvekkilListeXLS, exportKarsiTarafListeXLS, exportAvukatListeXLS } from '@/lib/export/excelExport';
 import { YetkiKoruma } from '@/components/ui/YetkiKoruma';
+import { EtiketBadge } from '@/components/ui/EtiketSecici';
+import { IceAktarmaModal } from '@/components/modules/IceAktarmaModal';
+import { useMuvekkilKaydet } from '@/lib/hooks/useMuvekkillar';
+import { useKarsiTarafKaydet } from '@/lib/hooks/useKarsiTaraflar';
+import { useVekilKaydet } from '@/lib/hooks/useVekillar';
 import { createClient } from '@/lib/supabase/client';
 
 type TabKey = 'muvekkillar' | 'karsitaraflar' | 'avukatlar';
@@ -143,11 +148,15 @@ export default function RehberPage() {
   const ktSil = useKarsiTarafSil();
   const vSil = useVekilSil();
   const mSil = useMuvekkilSil();
+  const mKaydet = useMuvekkilKaydet();
+  const ktKaydet = useKarsiTarafKaydet();
+  const vKaydet = useVekilKaydet();
 
   /* ── Genel State ── */
   const [aktifTab, setAktifTab] = useState<TabKey>('muvekkillar');
   const [arama, setArama] = useState('');
   const [filtre, setFiltre] = useState<'hepsi' | 'gercek' | 'tuzel'>('hepsi');
+  const [etiketFiltre, setEtiketFiltre] = useState<string | null>(null);
 
   /* ── Sıralama State ── */
   const [muvSort, setMuvSort] = useState<MuvSort>('ad-asc');
@@ -176,6 +185,9 @@ export default function RehberPage() {
   /* ── Silme Onay State ── */
   const [silOnay, setSilOnay] = useState<{ tip: 'kt' | 'vekil'; id: string; ad: string } | null>(null);
 
+  /* ── İçe Aktarma State ── */
+  const [iceAktarmaOpen, setIceAktarmaOpen] = useState(false);
+
   /* ── Toplu Silme State (şifre onaylı) ── */
   const [topluSilOnay, setTopluSilOnay] = useState(false);
   const [topluSilProgress, setTopluSilProgress] = useState(false);
@@ -194,6 +206,7 @@ export default function RehberPage() {
     const filtered = muvekkillar.filter((m) => {
       if (filtre === 'gercek' && m.tip === 'tuzel') return false;
       if (filtre === 'tuzel' && m.tip !== 'tuzel') return false;
+      if (etiketFiltre && !(m.etiketler || []).includes(etiketFiltre)) return false;
       if (arama) {
         const q = arama.toLowerCase();
         return (
@@ -208,7 +221,7 @@ export default function RehberPage() {
       return true;
     });
     return sortMuvekkiller(filtered, muvSort);
-  }, [muvekkillar, arama, filtre, aktifTab, muvSort]);
+  }, [muvekkillar, arama, filtre, etiketFiltre, aktifTab, muvSort]);
 
   /* ── Karşı Taraf Filtreleme + Sıralama ── */
   const ktFiltrelenmis = useMemo(() => {
@@ -216,6 +229,7 @@ export default function RehberPage() {
     const filtered = karsiTaraflar.filter((kt) => {
       if (filtre === 'gercek' && kt.tip === 'tuzel') return false;
       if (filtre === 'tuzel' && kt.tip !== 'tuzel') return false;
+      if (etiketFiltre && !(kt.etiketler || []).includes(etiketFiltre)) return false;
       if (arama) {
         const q = arama.toLowerCase();
         return (
@@ -230,12 +244,13 @@ export default function RehberPage() {
       return true;
     });
     return sortKarsiTaraflar(filtered, ktSort);
-  }, [karsiTaraflar, arama, filtre, aktifTab, ktSort]);
+  }, [karsiTaraflar, arama, filtre, etiketFiltre, aktifTab, ktSort]);
 
   /* ── Avukat Filtreleme + Sıralama ── */
   const vFiltrelenmis = useMemo(() => {
     if (!vekillar || aktifTab !== 'avukatlar') return [];
     const filtered = vekillar.filter((v) => {
+      if (etiketFiltre && !(v.etiketler || []).includes(etiketFiltre)) return false;
       if (arama) {
         const q = arama.toLowerCase();
         return (
@@ -251,7 +266,7 @@ export default function RehberPage() {
       return true;
     });
     return sortVekiller(filtered, vSort);
-  }, [vekillar, arama, aktifTab, vSort]);
+  }, [vekillar, arama, etiketFiltre, aktifTab, vSort]);
 
   /* ── Bulk Selection ── */
   const mBulk = useBulkSelection(mFiltrelenmis);
@@ -259,6 +274,15 @@ export default function RehberPage() {
   const vBulk = useBulkSelection(vFiltrelenmis);
 
   const activeBulk = aktifTab === 'muvekkillar' ? mBulk : aktifTab === 'karsitaraflar' ? ktBulk : vBulk;
+
+  /* ── Bürodaki tüm benzersiz etiketler ── */
+  const tumEtiketler = useMemo(() => {
+    const set = new Set<string>();
+    (muvekkillar || []).forEach((m) => (m.etiketler || []).forEach((e) => set.add(e)));
+    (karsiTaraflar || []).forEach((k) => (k.etiketler || []).forEach((e) => set.add(e)));
+    (vekillar || []).forEach((v) => (v.etiketler || []).forEach((e) => set.add(e)));
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'tr'));
+  }, [muvekkillar, karsiTaraflar, vekillar]);
 
   /* ── Toplu Silme Handler (şifre onaylı) ── */
   const handleTopluSil = useCallback(async () => {
@@ -399,6 +423,31 @@ export default function RehberPage() {
               </div>
             )}
 
+            {/* Etiket Filtre */}
+            {tumEtiketler.length > 0 && (
+              <div className="flex items-center gap-1">
+                {etiketFiltre && (
+                  <button
+                    onClick={() => setEtiketFiltre(null)}
+                    className="px-2 py-1 text-[10px] font-medium text-text-dim hover:text-text bg-surface2 rounded-full border border-border hover:border-red/40 transition-colors"
+                    title="Filtreyi kaldır"
+                  >
+                    ✕
+                  </button>
+                )}
+                <select
+                  value={etiketFiltre || ''}
+                  onChange={(e) => setEtiketFiltre(e.target.value || null)}
+                  className="px-2.5 py-1.5 text-[11px] font-medium bg-surface border border-border rounded-lg text-text-muted hover:border-gold/40 transition-colors"
+                >
+                  <option value="">🏷 Etiket</option>
+                  {tumEtiketler.map((e) => (
+                    <option key={e} value={e}>{e}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             {/* Sıralama */}
             {aktifTab === 'muvekkillar' && (
               <SortDropdown value={muvSort} labels={MUV_SORT_LABELS} onChange={setMuvSort} />
@@ -434,6 +483,14 @@ export default function RehberPage() {
               }`}
             >
               ☑ Çoklu Seç
+            </button>
+
+            {/* İçe Aktar Butonu */}
+            <button
+              onClick={() => setIceAktarmaOpen(true)}
+              className="px-3 py-2 bg-surface border border-border text-text-muted font-medium rounded-lg text-xs hover:border-gold/40 hover:text-text transition-colors"
+            >
+              📥 İçe Aktar
             </button>
 
             {/* Yeni Ekle Butonu */}
@@ -520,6 +577,11 @@ export default function RehberPage() {
                           {m.tel && <span>📞 {m.tel}</span>}
                           {m.mail && <span>✉️ {m.mail}</span>}
                         </div>
+                        {m.etiketler && m.etiketler.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {m.etiketler.map((e) => <EtiketBadge key={e} etiket={e} />)}
+                          </div>
+                        )}
                       </div>
                       <span className="text-text-dim group-hover:text-gold transition-colors text-lg">›</span>
                     </Link>
@@ -600,6 +662,11 @@ export default function RehberPage() {
                         {kt.mail && <span>✉️ {kt.mail}</span>}
                         {kt.uets && <span>📨 UETS</span>}
                       </div>
+                      {kt.etiketler && kt.etiketler.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {kt.etiketler.map((e) => <EtiketBadge key={e} etiket={e} />)}
+                        </div>
+                      )}
                     </button>
 
                     {/* Sil (sadece bulk modda değilken) */}
@@ -685,6 +752,11 @@ export default function RehberPage() {
                         {v.mail && <span>✉️ {v.mail}</span>}
                         {v.uets && <span>📨 UETS</span>}
                       </div>
+                      {v.etiketler && v.etiketler.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {v.etiketler.map((e) => <EtiketBadge key={e} etiket={e} />)}
+                        </div>
+                      )}
                     </button>
 
                     {/* Sil (sadece bulk modda değilken) */}
@@ -850,6 +922,26 @@ export default function RehberPage() {
         open={vModalOpen}
         onClose={() => setVModalOpen(false)}
         vekil={editVekil}
+      />
+
+      {/* İçe Aktarma */}
+      <IceAktarmaModal
+        open={iceAktarmaOpen}
+        onClose={() => setIceAktarmaOpen(false)}
+        hedefTip={aktifTab === 'muvekkillar' ? 'muvekkil' : aktifTab === 'karsitaraflar' ? 'karsiTaraf' : 'vekil'}
+        mevcutKayitlar={(aktifTab === 'muvekkillar' ? muvekkillar : aktifTab === 'karsitaraflar' ? karsiTaraflar : vekillar) as Record<string, unknown>[] || []}
+        onAktar={async (kayitlar) => {
+          for (const kayit of kayitlar) {
+            const id = crypto.randomUUID();
+            if (aktifTab === 'muvekkillar') {
+              await mKaydet.mutateAsync({ id, ...kayit } as unknown as Muvekkil);
+            } else if (aktifTab === 'karsitaraflar') {
+              await ktKaydet.mutateAsync({ id, ...kayit } as unknown as KarsiTaraf);
+            } else {
+              await vKaydet.mutateAsync({ id, ...kayit } as unknown as Vekil);
+            }
+          }
+        }}
       />
     </div>
   );

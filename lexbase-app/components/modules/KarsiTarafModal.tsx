@@ -2,9 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { Modal, FormGroup, FormInput, FormSelect, FormTextarea, BtnGold, BtnOutline } from '@/components/ui/Modal';
-import { useKarsiTarafKaydet, type KarsiTaraf } from '@/lib/hooks/useKarsiTaraflar';
+import { useKarsiTaraflar, useKarsiTarafKaydet, type KarsiTaraf } from '@/lib/hooks/useKarsiTaraflar';
 import { SmartBankaSecici } from '@/components/ui/SmartBankaSecici';
+import { EtiketSecici } from '@/components/ui/EtiketSecici';
 import { SmartAdresInput, type Adres } from '@/components/ui/SmartAdresInput';
+import {
+  tcKimlikDogrula, vknDogrula, ibanDogrula, mersisDogrula,
+  ticaretSicilDogrula, yabanciKimlikDogrula, bankaIbanlarDogrula,
+  telefonDogrula, telefonFormatla, epostaDogrula,
+} from '@/lib/validation';
 
 /* ══════════════════════════════════════════════════════════════
    Karşı Taraf Modal — Oluştur / Düzenle
@@ -56,6 +62,8 @@ const bos: Partial<KarsiTaraf> = {
 export function KarsiTarafModal({ open, onClose, karsiTaraf, onCreated }: KarsiTarafModalProps) {
   const [form, setForm] = useState<Partial<KarsiTaraf>>({ ...bos });
   const [hata, setHata] = useState('');
+  const [alanHata, setAlanHata] = useState<Record<string, string | null>>({});
+  const { data: mevcutlar } = useKarsiTaraflar();
   const kaydet = useKarsiTarafKaydet();
 
   useEffect(() => {
@@ -65,12 +73,24 @@ export function KarsiTarafModal({ open, onClose, karsiTaraf, onCreated }: KarsiT
       setForm({ ...bos, id: crypto.randomUUID() });
     }
     setHata('');
+    setAlanHata({});
   }, [karsiTaraf, open]);
 
   function handleChange(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
+    if (alanHata[field]) setAlanHata((p) => ({ ...p, [field]: null }));
   }
 
+  const ALAN_DOGRULAMA: Record<string, (v: string) => string | null> = {
+    tc: tcKimlikDogrula, vergiNo: vknDogrula, mersis: mersisDogrula,
+    ticaretSicil: ticaretSicilDogrula, yabanciKimlikNo: yabanciKimlikDogrula,
+    yetkiliTc: tcKimlikDogrula, tel: telefonDogrula, mail: epostaDogrula,
+  };
+  function handleBlur(field: string) {
+    const fn = ALAN_DOGRULAMA[field];
+    const val = (form as Record<string, unknown>)[field] as string;
+    if (fn && val) setAlanHata((p) => ({ ...p, [field]: fn(val) }));
+  }
 
   const isTc = !form.uyruk || form.uyruk === 'T.C.';
 
@@ -79,6 +99,34 @@ export function KarsiTarafModal({ open, onClose, karsiTaraf, onCreated }: KarsiT
       setHata(form.tip === 'tuzel' ? 'Şirket adı zorunludur.' : 'Ad zorunludur.');
       return;
     }
+
+    // ── Format doğrulama (zorunlu değil, ama girilmişse format uymalı) ──
+    let formatHata: string | null = null;
+    if (form.tc) formatHata = tcKimlikDogrula(form.tc);
+    if (!formatHata && form.vergiNo) formatHata = vknDogrula(form.vergiNo);
+    if (!formatHata && form.mersis) formatHata = mersisDogrula(form.mersis);
+    if (!formatHata && form.ticaretSicil) formatHata = ticaretSicilDogrula(form.ticaretSicil);
+    if (!formatHata && form.yabanciKimlikNo) formatHata = yabanciKimlikDogrula(form.yabanciKimlikNo);
+    if (!formatHata && form.yetkiliTc) formatHata = tcKimlikDogrula(form.yetkiliTc);
+    if (!formatHata && form.tel) formatHata = telefonDogrula(form.tel);
+    if (!formatHata && form.mail) formatHata = epostaDogrula(form.mail);
+    if (!formatHata && form.bankalar?.length) formatHata = bankaIbanlarDogrula(form.bankalar);
+    if (formatHata) { setHata(formatHata); return; }
+
+    // ── Telefon numarasını formatla ──
+    if (form.tel) form.tel = telefonFormatla(form.tel);
+
+    // ── Çoklu kayıt kontrolü (girilmişse kontrol et) ──
+    const digerler = (mevcutlar || []).filter((k) => k.id !== form.id);
+    if (form.tc?.trim()) {
+      const ayni = digerler.find((k) => k.tc === form.tc?.trim());
+      if (ayni) { setHata(`Bu TC Kimlik No ile kayıtlı bir karşı taraf zaten mevcut: ${[ayni.ad, ayni.soyad].filter(Boolean).join(' ')}`); return; }
+    }
+    if (form.vergiNo?.trim()) {
+      const ayni = digerler.find((k) => k.vergiNo === form.vergiNo?.trim());
+      if (ayni) { setHata(`Bu Vergi No ile kayıtlı bir karşı taraf zaten mevcut: ${ayni.ad}`); return; }
+    }
+
     setHata('');
     try {
       await kaydet.mutateAsync(form as KarsiTaraf);
@@ -171,13 +219,13 @@ export function KarsiTarafModal({ open, onClose, karsiTaraf, onCreated }: KarsiT
 
             {/* TC / Yabancı Kimlik */}
             {isTc ? (
-              <FormGroup label="T.C. Kimlik No">
-                <FormInput value={form.tc || ''} onChange={(e) => handleChange('tc', e.target.value)} placeholder="11 haneli TC Kimlik No" maxLength={11} />
+              <FormGroup label="T.C. Kimlik No" error={alanHata.tc}>
+                <FormInput value={form.tc || ''} onChange={(e) => handleChange('tc', e.target.value)} onBlur={() => handleBlur('tc')} placeholder="11 haneli TC Kimlik No" maxLength={11} />
               </FormGroup>
             ) : (
               <div className="grid grid-cols-2 gap-4">
-                <FormGroup label="Yabancı Kimlik No">
-                  <FormInput value={form.yabanciKimlikNo || ''} onChange={(e) => handleChange('yabanciKimlikNo', e.target.value)} placeholder="Kimlik / Pasaport No" />
+                <FormGroup label="Yabancı Kimlik No" error={alanHata.yabanciKimlikNo}>
+                  <FormInput value={form.yabanciKimlikNo || ''} onChange={(e) => handleChange('yabanciKimlikNo', e.target.value)} onBlur={() => handleBlur('yabanciKimlikNo')} placeholder="Kimlik / Pasaport No" />
                 </FormGroup>
                 <FormGroup label="Uyruk (Ülke)">
                   <FormInput value={form.uyruk === 'Yabancı' ? '' : form.uyruk || ''} onChange={(e) => handleChange('uyruk', e.target.value || 'Yabancı')} placeholder="Ör: Almanya" />
@@ -222,8 +270,8 @@ export function KarsiTarafModal({ open, onClose, karsiTaraf, onCreated }: KarsiT
 
             {/* Vergi No + Vergi Dairesi */}
             <div className="grid grid-cols-2 gap-4">
-              <FormGroup label="Vergi No">
-                <FormInput value={form.vergiNo || ''} onChange={(e) => handleChange('vergiNo', e.target.value)} placeholder="10 haneli VKN" maxLength={10} />
+              <FormGroup label="Vergi No" error={alanHata.vergiNo}>
+                <FormInput value={form.vergiNo || ''} onChange={(e) => handleChange('vergiNo', e.target.value)} onBlur={() => handleBlur('vergiNo')} placeholder="10 haneli VKN" maxLength={10} />
               </FormGroup>
               <FormGroup label="Vergi Dairesi">
                 <FormInput value={form.vergiDairesi || ''} onChange={(e) => handleChange('vergiDairesi', e.target.value)} placeholder="Vergi Dairesi" />
@@ -232,11 +280,11 @@ export function KarsiTarafModal({ open, onClose, karsiTaraf, onCreated }: KarsiT
 
             {/* MERSİS + Ticaret Sicil */}
             <div className="grid grid-cols-2 gap-4">
-              <FormGroup label="MERSİS No">
-                <FormInput value={form.mersis || ''} onChange={(e) => handleChange('mersis', e.target.value)} placeholder="MERSİS No" />
+              <FormGroup label="MERSİS No" error={alanHata.mersis}>
+                <FormInput value={form.mersis || ''} onChange={(e) => handleChange('mersis', e.target.value)} onBlur={() => handleBlur('mersis')} placeholder="MERSİS No" />
               </FormGroup>
-              <FormGroup label="Ticaret Sicil No">
-                <FormInput value={form.ticaretSicil || ''} onChange={(e) => handleChange('ticaretSicil', e.target.value)} placeholder="Ticaret Sicil No" />
+              <FormGroup label="Ticaret Sicil No" error={alanHata.ticaretSicil}>
+                <FormInput value={form.ticaretSicil || ''} onChange={(e) => handleChange('ticaretSicil', e.target.value)} onBlur={() => handleBlur('ticaretSicil')} placeholder="Ticaret Sicil No" />
               </FormGroup>
             </div>
 
@@ -252,8 +300,8 @@ export function KarsiTarafModal({ open, onClose, karsiTaraf, onCreated }: KarsiT
                 </FormGroup>
               </div>
               <div className="grid grid-cols-2 gap-4 mt-3">
-                <FormGroup label="Yetkili TC">
-                  <FormInput value={form.yetkiliTc || ''} onChange={(e) => handleChange('yetkiliTc', e.target.value)} placeholder="11 haneli TC" maxLength={11} />
+                <FormGroup label="Yetkili TC" error={alanHata.yetkiliTc}>
+                  <FormInput value={form.yetkiliTc || ''} onChange={(e) => handleChange('yetkiliTc', e.target.value)} onBlur={() => handleBlur('yetkiliTc')} placeholder="11 haneli TC" maxLength={11} />
                 </FormGroup>
                 <FormGroup label="Yetkili Telefon">
                   <FormInput type="tel" value={form.yetkiliTel || ''} onChange={(e) => handleChange('yetkiliTel', e.target.value)} placeholder="0532 000 0000" />
@@ -267,11 +315,11 @@ export function KarsiTarafModal({ open, onClose, karsiTaraf, onCreated }: KarsiT
         <div className="border-t border-border/50 pt-4">
           <div className="text-[11px] font-semibold text-text-muted uppercase tracking-wider mb-3">İletişim Bilgileri</div>
           <div className="grid grid-cols-2 gap-4">
-            <FormGroup label="Telefon">
-              <FormInput type="tel" value={form.tel || ''} onChange={(e) => handleChange('tel', e.target.value)} placeholder="0532 000 0000" />
+            <FormGroup label="Telefon" error={alanHata.tel}>
+              <FormInput type="tel" value={form.tel || ''} onChange={(e) => handleChange('tel', e.target.value)} onBlur={() => handleBlur('tel')} placeholder="0532 000 0000" />
             </FormGroup>
-            <FormGroup label="E-posta">
-              <FormInput type="email" value={form.mail || ''} onChange={(e) => handleChange('mail', e.target.value)} placeholder="ornek@mail.com" />
+            <FormGroup label="E-posta" error={alanHata.mail}>
+              <FormInput type="email" value={form.mail || ''} onChange={(e) => handleChange('mail', e.target.value)} onBlur={() => handleBlur('mail')} placeholder="ornek@mail.com" />
             </FormGroup>
           </div>
           <div className="grid grid-cols-3 gap-4 mt-3">
@@ -300,6 +348,13 @@ export function KarsiTarafModal({ open, onClose, karsiTaraf, onCreated }: KarsiT
         <SmartBankaSecici
           bankalar={form.bankalar || []}
           onChange={(bankalar) => setForm((prev) => ({ ...prev, bankalar }))}
+        />
+
+        {/* ═══════ ETİKETLER ═══════ */}
+        <EtiketSecici
+          etiketler={form.etiketler || []}
+          onChange={(etiketler) => setForm((prev) => ({ ...prev, etiketler }))}
+          mevcutEtiketler={(mevcutlar || []).flatMap((k) => k.etiketler || [])}
         />
 
         {/* ═══════ NOTLAR ═══════ */}

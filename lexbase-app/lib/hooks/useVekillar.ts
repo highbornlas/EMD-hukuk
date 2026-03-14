@@ -31,6 +31,8 @@ export interface Vekil {
   }>;
   // Notlar
   aciklama?: string;
+  // Etiketler
+  etiketler?: string[];
   [key: string]: unknown;
 }
 

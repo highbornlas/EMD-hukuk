@@ -51,6 +51,8 @@ export interface KarsiTaraf {
   }>;
   // Notlar
   aciklama?: string;
+  // Etiketler
+  etiketler?: string[];
   [key: string]: unknown;
 }
 

@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { Modal, FormGroup, FormInput, FormTextarea, BtnGold, BtnOutline } from '@/components/ui/Modal';
-import { useVekilKaydet, type Vekil } from '@/lib/hooks/useVekillar';
+import { useVekillar, useVekilKaydet, type Vekil } from '@/lib/hooks/useVekillar';
 import { SmartBankaSecici } from '@/components/ui/SmartBankaSecici';
+import { EtiketSecici } from '@/components/ui/EtiketSecici';
+import { baroSicilDogrula, tbbSicilDogrula, bankaIbanlarDogrula, telefonDogrula, telefonFormatla, epostaDogrula } from '@/lib/validation';
 
 /* ══════════════════════════════════════════════════════════════
    Vekil (Avukat) Modal — Oluştur / Düzenle
@@ -48,6 +50,8 @@ const bos: Partial<Vekil> = {
 export function VekilModal({ open, onClose, vekil, onCreated }: VekilModalProps) {
   const [form, setForm] = useState<Partial<Vekil>>({ ...bos });
   const [hata, setHata] = useState('');
+  const [alanHata, setAlanHata] = useState<Record<string, string | null>>({});
+  const { data: mevcutlar } = useVekillar();
   const kaydet = useVekilKaydet();
 
   useEffect(() => {
@@ -57,10 +61,21 @@ export function VekilModal({ open, onClose, vekil, onCreated }: VekilModalProps)
       setForm({ ...bos, id: crypto.randomUUID() });
     }
     setHata('');
+    setAlanHata({});
   }, [vekil, open]);
 
   function handleChange(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
+    if (alanHata[field]) setAlanHata((p) => ({ ...p, [field]: null }));
+  }
+
+  const ALAN_DOGRULAMA: Record<string, (v: string) => string | null> = {
+    baroSicil: baroSicilDogrula, tbbSicil: tbbSicilDogrula, tel: telefonDogrula, mail: epostaDogrula,
+  };
+  function handleBlur(field: string) {
+    const fn = ALAN_DOGRULAMA[field];
+    const val = (form as Record<string, unknown>)[field] as string;
+    if (fn && val) setAlanHata((p) => ({ ...p, [field]: fn(val) }));
   }
 
   async function handleSubmit() {
@@ -68,6 +83,26 @@ export function VekilModal({ open, onClose, vekil, onCreated }: VekilModalProps)
       setHata('Avukat adı zorunludur.');
       return;
     }
+
+    // ── Format doğrulama ──
+    let formatHata: string | null = null;
+    if (form.baroSicil) formatHata = baroSicilDogrula(form.baroSicil);
+    if (!formatHata && form.tbbSicil) formatHata = tbbSicilDogrula(form.tbbSicil);
+    if (!formatHata && form.tel) formatHata = telefonDogrula(form.tel);
+    if (!formatHata && form.mail) formatHata = epostaDogrula(form.mail);
+    if (!formatHata && form.bankalar?.length) formatHata = bankaIbanlarDogrula(form.bankalar);
+    if (formatHata) { setHata(formatHata); return; }
+
+    // ── Telefon numarasını formatla ──
+    if (form.tel) form.tel = telefonFormatla(form.tel);
+
+    // ── Çoklu kayıt kontrolü (Baro + Baro Sicil kombinasyonu) ──
+    if (form.baro && form.baroSicil?.trim()) {
+      const digerler = (mevcutlar || []).filter((v) => v.id !== form.id);
+      const ayni = digerler.find((v) => v.baro === form.baro && v.baroSicil === form.baroSicil?.trim());
+      if (ayni) { setHata(`${form.baro} Barosu ${form.baroSicil} sicil numaralı avukat zaten kayıtlı: ${[ayni.ad, ayni.soyad].filter(Boolean).join(' ')}`); return; }
+    }
+
     setHata('');
     try {
       await kaydet.mutateAsync(form as Vekil);
@@ -132,25 +167,25 @@ export function VekilModal({ open, onClose, vekil, onCreated }: VekilModalProps)
               ))}
             </select>
           </FormGroup>
-          <FormGroup label="Baro Sicil No">
-            <FormInput value={form.baroSicil || ''} onChange={(e) => handleChange('baroSicil', e.target.value)} placeholder="Sicil No" />
+          <FormGroup label="Baro Sicil No" error={alanHata.baroSicil}>
+            <FormInput value={form.baroSicil || ''} onChange={(e) => handleChange('baroSicil', e.target.value)} onBlur={() => handleBlur('baroSicil')} placeholder="Sicil No" />
           </FormGroup>
         </div>
 
         {/* TBB Sicil */}
-        <FormGroup label="TBB Sicil No">
-          <FormInput value={form.tbbSicil || ''} onChange={(e) => handleChange('tbbSicil', e.target.value)} placeholder="Türkiye Barolar Birliği Sicil No" />
+        <FormGroup label="TBB Sicil No" error={alanHata.tbbSicil}>
+          <FormInput value={form.tbbSicil || ''} onChange={(e) => handleChange('tbbSicil', e.target.value)} onBlur={() => handleBlur('tbbSicil')} placeholder="Türkiye Barolar Birliği Sicil No" />
         </FormGroup>
 
         {/* İletişim */}
         <div className="border-t border-border/50 pt-4">
           <div className="text-[11px] font-semibold text-text-muted uppercase tracking-wider mb-3">İletişim Bilgileri</div>
           <div className="grid grid-cols-2 gap-4">
-            <FormGroup label="Telefon">
-              <FormInput type="tel" value={form.tel || ''} onChange={(e) => handleChange('tel', e.target.value)} placeholder="0532 000 0000" />
+            <FormGroup label="Telefon" error={alanHata.tel}>
+              <FormInput type="tel" value={form.tel || ''} onChange={(e) => handleChange('tel', e.target.value)} onBlur={() => handleBlur('tel')} placeholder="0532 000 0000" />
             </FormGroup>
-            <FormGroup label="E-posta">
-              <FormInput type="email" value={form.mail || ''} onChange={(e) => handleChange('mail', e.target.value)} placeholder="ornek@mail.com" />
+            <FormGroup label="E-posta" error={alanHata.mail}>
+              <FormInput type="email" value={form.mail || ''} onChange={(e) => handleChange('mail', e.target.value)} onBlur={() => handleBlur('mail')} placeholder="ornek@mail.com" />
             </FormGroup>
           </div>
           <div className="mt-3">
@@ -164,6 +199,13 @@ export function VekilModal({ open, onClose, vekil, onCreated }: VekilModalProps)
         <SmartBankaSecici
           bankalar={form.bankalar || []}
           onChange={(bankalar) => setForm((prev) => ({ ...prev, bankalar }))}
+        />
+
+        {/* ═══════ ETİKETLER ═══════ */}
+        <EtiketSecici
+          etiketler={form.etiketler || []}
+          onChange={(etiketler) => setForm((prev) => ({ ...prev, etiketler }))}
+          mevcutEtiketler={(mevcutlar || []).flatMap((v) => v.etiketler || [])}
         />
 
         {/* Notlar */}

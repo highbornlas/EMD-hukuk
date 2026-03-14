@@ -80,13 +80,14 @@ export function Modal({ open, onClose, title, maxWidth = 'max-w-lg', children, f
    Form Components — Premium Styled
    ══════════════════════════════════════════════════════════════ */
 
-export function FormGroup({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+export function FormGroup({ label, required, error, children }: { label: string; required?: boolean; error?: string | null; children: React.ReactNode }) {
   return (
     <div>
       <label className="block text-xs font-medium text-text-muted mb-1.5">
         {label} {required && <span className="text-red">*</span>}
       </label>
       {children}
+      {error && <p className="text-[10px] text-red mt-1">{error}</p>}
     </div>
   );
 }

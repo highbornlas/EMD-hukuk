@@ -2,9 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { Modal, FormGroup, FormInput, FormSelect, FormTextarea, BtnGold, BtnOutline } from '@/components/ui/Modal';
-import { useMuvekkilKaydet, type Muvekkil } from '@/lib/hooks/useMuvekkillar';
+import { useMuvekkillar, useMuvekkilKaydet, type Muvekkil } from '@/lib/hooks/useMuvekkillar';
 import { SmartAdresInput, type Adres } from '@/components/ui/SmartAdresInput';
 import { SmartBankaSecici } from '@/components/ui/SmartBankaSecici';
+import { EtiketSecici } from '@/components/ui/EtiketSecici';
+import {
+  tcKimlikDogrula, vknDogrula, ibanDogrula, mersisDogrula,
+  ticaretSicilDogrula, yabanciKimlikDogrula, bankaIbanlarDogrula,
+  telefonDogrula, telefonFormatla, epostaDogrula,
+} from '@/lib/validation';
 
 interface MuvekkilModalProps {
   open: boolean;
@@ -49,6 +55,8 @@ const bos: Partial<Muvekkil> = {
 export function MuvekkilModal({ open, onClose, muvekkil }: MuvekkilModalProps) {
   const [form, setForm] = useState<Partial<Muvekkil>>({ ...bos });
   const [hata, setHata] = useState('');
+  const [alanHata, setAlanHata] = useState<Record<string, string | null>>({});
+  const { data: mevcutlar } = useMuvekkillar();
   const kaydet = useMuvekkilKaydet();
 
   useEffect(() => {
@@ -58,10 +66,24 @@ export function MuvekkilModal({ open, onClose, muvekkil }: MuvekkilModalProps) {
       setForm({ ...bos, id: crypto.randomUUID() });
     }
     setHata('');
+    setAlanHata({});
   }, [muvekkil, open]);
 
   function handleChange(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
+    if (alanHata[field]) setAlanHata((p) => ({ ...p, [field]: null }));
+  }
+
+  // ── Gerçek zamanlı doğrulama (onBlur) ──
+  const ALAN_DOGRULAMA: Record<string, (v: string) => string | null> = {
+    tc: tcKimlikDogrula, vergiNo: vknDogrula, mersis: mersisDogrula as (v: string) => string | null,
+    ticaretSicil: ticaretSicilDogrula, yabanciKimlikNo: yabanciKimlikDogrula,
+    yetkiliTc: tcKimlikDogrula, tel: telefonDogrula, yetkiliTel: telefonDogrula, mail: epostaDogrula,
+  };
+  function handleBlur(field: string) {
+    const fn = ALAN_DOGRULAMA[field];
+    const val = (form as Record<string, unknown>)[field] as string;
+    if (fn && val) setAlanHata((p) => ({ ...p, [field]: fn(val) }));
   }
 
   const isTc = !form.uyruk || form.uyruk === 'T.C.';
@@ -71,6 +93,52 @@ export function MuvekkilModal({ open, onClose, muvekkil }: MuvekkilModalProps) {
       setHata(form.tip === 'tuzel' ? 'Şirket adı zorunludur.' : 'Ad zorunludur.');
       return;
     }
+
+    // ── Zorunluluk kontrolleri ──
+    if (form.tip === 'gercek') {
+      if (isTc) {
+        if (!form.tc?.trim()) { setHata('T.C. Kimlik No zorunludur.'); return; }
+      } else {
+        if (!form.yabanciKimlikNo?.trim()) { setHata('Yabancı Kimlik No zorunludur.'); return; }
+      }
+    }
+    if (form.tip === 'tuzel') {
+      if (!form.vergiNo?.trim()) { setHata('Vergi Kimlik No zorunludur.'); return; }
+    }
+
+    // ── Format doğrulama ──
+    let formatHata: string | null = null;
+    if (form.tc) formatHata = tcKimlikDogrula(form.tc);
+    if (!formatHata && form.vergiNo) formatHata = vknDogrula(form.vergiNo);
+    if (!formatHata && form.mersis) formatHata = mersisDogrula(form.mersis as string);
+    if (!formatHata && form.ticaretSicil) formatHata = ticaretSicilDogrula(form.ticaretSicil);
+    if (!formatHata && form.yabanciKimlikNo) formatHata = yabanciKimlikDogrula(form.yabanciKimlikNo);
+    if (!formatHata && form.yetkiliTc) formatHata = tcKimlikDogrula(form.yetkiliTc);
+    if (!formatHata && form.tel) formatHata = telefonDogrula(form.tel);
+    if (!formatHata && form.yetkiliTel) formatHata = telefonDogrula(form.yetkiliTel);
+    if (!formatHata && form.mail) formatHata = epostaDogrula(form.mail);
+    if (!formatHata && form.bankalar?.length) formatHata = bankaIbanlarDogrula(form.bankalar);
+    if (formatHata) { setHata(formatHata); return; }
+
+    // ── Telefon numaralarını formatla ──
+    if (form.tel) form.tel = telefonFormatla(form.tel);
+    if (form.yetkiliTel) form.yetkiliTel = telefonFormatla(form.yetkiliTel);
+
+    // ── Çoklu kayıt kontrolü ──
+    const digerler = (mevcutlar || []).filter((m) => m.id !== form.id);
+    if (form.tip === 'gercek' && isTc && form.tc) {
+      const ayni = digerler.find((m) => m.tc === form.tc?.trim());
+      if (ayni) { setHata(`Bu TC Kimlik No ile kayıtlı bir müvekkil zaten mevcut: ${[ayni.ad, ayni.soyad].filter(Boolean).join(' ')}`); return; }
+    }
+    if (form.tip === 'gercek' && !isTc && form.yabanciKimlikNo) {
+      const ayni = digerler.find((m) => m.yabanciKimlikNo === form.yabanciKimlikNo?.trim());
+      if (ayni) { setHata(`Bu Yabancı Kimlik No ile kayıtlı bir müvekkil zaten mevcut: ${[ayni.ad, ayni.soyad].filter(Boolean).join(' ')}`); return; }
+    }
+    if (form.tip === 'tuzel' && form.vergiNo) {
+      const ayni = digerler.find((m) => m.vergiNo === form.vergiNo?.trim());
+      if (ayni) { setHata(`Bu Vergi No ile kayıtlı bir müvekkil zaten mevcut: ${ayni.ad}`); return; }
+    }
+
     setHata('');
     try {
       await kaydet.mutateAsync(form as Muvekkil);
@@ -165,13 +233,13 @@ export function MuvekkilModal({ open, onClose, muvekkil }: MuvekkilModalProps) {
 
             {/* TC / Yabancı Kimlik */}
             {isTc ? (
-              <FormGroup label="T.C. Kimlik No">
-                <FormInput value={form.tc || ''} onChange={(e) => handleChange('tc', e.target.value)} placeholder="11 haneli TC Kimlik No" maxLength={11} />
+              <FormGroup label="T.C. Kimlik No" required error={alanHata.tc}>
+                <FormInput value={form.tc || ''} onChange={(e) => handleChange('tc', e.target.value)} onBlur={() => handleBlur('tc')} placeholder="11 haneli TC Kimlik No" maxLength={11} />
               </FormGroup>
             ) : (
               <div className="grid grid-cols-2 gap-4">
-                <FormGroup label="Yabancı Kimlik No">
-                  <FormInput value={form.yabanciKimlikNo || ''} onChange={(e) => handleChange('yabanciKimlikNo', e.target.value)} placeholder="Kimlik / Pasaport No" />
+                <FormGroup label="Yabancı Kimlik No" required error={alanHata.yabanciKimlikNo}>
+                  <FormInput value={form.yabanciKimlikNo || ''} onChange={(e) => handleChange('yabanciKimlikNo', e.target.value)} onBlur={() => handleBlur('yabanciKimlikNo')} placeholder="Kimlik / Pasaport No" />
                 </FormGroup>
                 <FormGroup label="Uyruk (Ülke)">
                   <FormInput value={form.uyruk === 'Yabancı' ? '' : form.uyruk || ''} onChange={(e) => handleChange('uyruk', e.target.value || 'Yabancı')} placeholder="Ör: Almanya" />
@@ -216,8 +284,8 @@ export function MuvekkilModal({ open, onClose, muvekkil }: MuvekkilModalProps) {
 
             {/* Vergi No + Vergi Dairesi */}
             <div className="grid grid-cols-2 gap-4">
-              <FormGroup label="Vergi No">
-                <FormInput value={form.vergiNo || ''} onChange={(e) => handleChange('vergiNo', e.target.value)} placeholder="10 haneli VKN" maxLength={10} />
+              <FormGroup label="Vergi No" required error={alanHata.vergiNo}>
+                <FormInput value={form.vergiNo || ''} onChange={(e) => handleChange('vergiNo', e.target.value)} onBlur={() => handleBlur('vergiNo')} placeholder="10 haneli VKN" maxLength={10} />
               </FormGroup>
               <FormGroup label="Vergi Dairesi">
                 <FormInput value={form.vergiDairesi || ''} onChange={(e) => handleChange('vergiDairesi', e.target.value)} placeholder="Vergi Dairesi" />
@@ -226,11 +294,11 @@ export function MuvekkilModal({ open, onClose, muvekkil }: MuvekkilModalProps) {
 
             {/* MERSİS + Ticaret Sicil */}
             <div className="grid grid-cols-2 gap-4">
-              <FormGroup label="MERSİS No">
-                <FormInput value={(form.mersis as string) || ''} onChange={(e) => handleChange('mersis', e.target.value)} placeholder="MERSİS No" />
+              <FormGroup label="MERSİS No" error={alanHata.mersis}>
+                <FormInput value={(form.mersis as string) || ''} onChange={(e) => handleChange('mersis', e.target.value)} onBlur={() => handleBlur('mersis')} placeholder="MERSİS No" />
               </FormGroup>
-              <FormGroup label="Ticaret Sicil No">
-                <FormInput value={form.ticaretSicil || ''} onChange={(e) => handleChange('ticaretSicil', e.target.value)} placeholder="Ticaret Sicil No" />
+              <FormGroup label="Ticaret Sicil No" error={alanHata.ticaretSicil}>
+                <FormInput value={form.ticaretSicil || ''} onChange={(e) => handleChange('ticaretSicil', e.target.value)} onBlur={() => handleBlur('ticaretSicil')} placeholder="Ticaret Sicil No" />
               </FormGroup>
             </div>
 
@@ -246,11 +314,11 @@ export function MuvekkilModal({ open, onClose, muvekkil }: MuvekkilModalProps) {
                 </FormGroup>
               </div>
               <div className="grid grid-cols-2 gap-4 mt-3">
-                <FormGroup label="Yetkili TC">
-                  <FormInput value={form.yetkiliTc || ''} onChange={(e) => handleChange('yetkiliTc', e.target.value)} placeholder="11 haneli TC" maxLength={11} />
+                <FormGroup label="Yetkili TC" error={alanHata.yetkiliTc}>
+                  <FormInput value={form.yetkiliTc || ''} onChange={(e) => handleChange('yetkiliTc', e.target.value)} onBlur={() => handleBlur('yetkiliTc')} placeholder="11 haneli TC" maxLength={11} />
                 </FormGroup>
-                <FormGroup label="Yetkili Telefon">
-                  <FormInput type="tel" value={form.yetkiliTel || ''} onChange={(e) => handleChange('yetkiliTel', e.target.value)} placeholder="0532 000 0000" />
+                <FormGroup label="Yetkili Telefon" error={alanHata.yetkiliTel}>
+                  <FormInput type="tel" value={form.yetkiliTel || ''} onChange={(e) => handleChange('yetkiliTel', e.target.value)} onBlur={() => handleBlur('yetkiliTel')} placeholder="0532 000 0000" />
                 </FormGroup>
               </div>
             </div>
@@ -261,11 +329,11 @@ export function MuvekkilModal({ open, onClose, muvekkil }: MuvekkilModalProps) {
         <div className="border-t border-border/50 pt-4">
           <div className="text-[11px] font-semibold text-text-muted uppercase tracking-wider mb-3">İletişim Bilgileri</div>
           <div className="grid grid-cols-2 gap-4">
-            <FormGroup label="Telefon">
-              <FormInput type="tel" value={form.tel || ''} onChange={(e) => handleChange('tel', e.target.value)} placeholder="0532 000 0000" />
+            <FormGroup label="Telefon" error={alanHata.tel}>
+              <FormInput type="tel" value={form.tel || ''} onChange={(e) => handleChange('tel', e.target.value)} onBlur={() => handleBlur('tel')} placeholder="0532 000 0000" />
             </FormGroup>
-            <FormGroup label="E-posta">
-              <FormInput type="email" value={form.mail || ''} onChange={(e) => handleChange('mail', e.target.value)} placeholder="ornek@mail.com" />
+            <FormGroup label="E-posta" error={alanHata.mail}>
+              <FormInput type="email" value={form.mail || ''} onChange={(e) => handleChange('mail', e.target.value)} onBlur={() => handleBlur('mail')} placeholder="ornek@mail.com" />
             </FormGroup>
           </div>
           <div className="grid grid-cols-3 gap-4 mt-3">
@@ -294,6 +362,13 @@ export function MuvekkilModal({ open, onClose, muvekkil }: MuvekkilModalProps) {
         <SmartBankaSecici
           bankalar={form.bankalar || []}
           onChange={(bankalar) => setForm((prev) => ({ ...prev, bankalar }))}
+        />
+
+        {/* ═══════ ETİKETLER ═══════ */}
+        <EtiketSecici
+          etiketler={form.etiketler || []}
+          onChange={(etiketler) => setForm((prev) => ({ ...prev, etiketler }))}
+          mevcutEtiketler={(mevcutlar || []).flatMap((m) => m.etiketler || [])}
         />
 
         {/* ═══════ NOTLAR ═══════ */}

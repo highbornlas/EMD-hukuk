@@ -47,6 +47,8 @@ export interface Muvekkil {
   }>;
   // Notlar
   not?: string;
+  // Etiketler
+  etiketler?: string[];
   // İlişkiler
   iliskiler?: Array<{
     id: string;
