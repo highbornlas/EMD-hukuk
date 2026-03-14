@@ -459,10 +459,11 @@ export default function RehberPage() {
               <SortDropdown value={vSort} labels={V_SORT_LABELS} onChange={setVSort} />
             )}
 
-            {/* Dışa Aktar */}
+            {/* Aktar (Dışa + İçe) */}
             <ExportMenu
               onExportPDF={handleExportPDF}
               onExportExcel={handleExportExcel}
+              onImportCSV={() => setIceAktarmaOpen(true)}
               disabled={activeList.length === 0}
             />
 
@@ -483,14 +484,6 @@ export default function RehberPage() {
               }`}
             >
               ☑ Çoklu Seç
-            </button>
-
-            {/* İçe Aktar Butonu */}
-            <button
-              onClick={() => setIceAktarmaOpen(true)}
-              className="px-3 py-2 bg-surface border border-border text-text-muted font-medium rounded-lg text-xs hover:border-gold/40 hover:text-text transition-colors"
-            >
-              📥 İçe Aktar
             </button>
 
             {/* Yeni Ekle Butonu */}
