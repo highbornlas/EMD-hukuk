@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Modal, FormGroup, FormInput, FormSelect, FormTextarea, BtnGold, BtnOutline } from '@/components/ui/Modal';
 import { useDavaKaydet, type Dava } from '@/lib/hooks/useDavalar';
 import { useMuvekkillar } from '@/lib/hooks/useMuvekkillar';
+import { RehberSecici } from '@/components/ui/RehberSecici';
 
 interface DavaModalProps {
   open: boolean;
@@ -27,6 +28,9 @@ const bos: Partial<Dava> = {
   durusma: '',
   deger: 0,
   karsi: '',
+  karsiId: '',
+  karsav: '',
+  karsavId: '',
   not: '',
 };
 
@@ -183,10 +187,30 @@ export function DavaModal({ open, onClose, dava }: DavaModalProps) {
           </div>
         </div>
 
-        {/* Karşı Taraf */}
-        <FormGroup label="Karşı Taraf">
-          <FormInput value={form.karsi || ''} onChange={(e) => handleChange('karsi', e.target.value)} placeholder="Karşı taraf adı" />
-        </FormGroup>
+        {/* Karşı Taraf + Karşı Avukat */}
+        <div className="border-t border-border/50 pt-4">
+          <div className="text-[11px] font-semibold text-text-muted uppercase tracking-wider mb-3">Karşı Taraf Bilgileri</div>
+          <div className="grid grid-cols-2 gap-4">
+            <FormGroup label="Karşı Taraf">
+              <RehberSecici
+                tip="karsiTaraf"
+                value={(form.karsi as string) || ''}
+                selectedId={(form.karsiId as string) || null}
+                onChange={(id, ad) => setForm((prev) => ({ ...prev, karsi: ad, karsiId: id || '' }))}
+                placeholder="Karşı taraf seçin veya yazın..."
+              />
+            </FormGroup>
+            <FormGroup label="Karşı Avukat">
+              <RehberSecici
+                tip="avukat"
+                value={(form.karsav as string) || ''}
+                selectedId={(form.karsavId as string) || null}
+                onChange={(id, ad) => setForm((prev) => ({ ...prev, karsav: ad, karsavId: id || '' }))}
+                placeholder="Karşı avukat seçin veya yazın..."
+              />
+            </FormGroup>
+          </div>
+        </div>
 
         {/* Notlar */}
         <FormGroup label="Notlar">

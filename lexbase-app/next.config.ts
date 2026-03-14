@@ -2,6 +2,9 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   // Cloudflare Workers ile deploy (opennextjs/cloudflare)
+  images: {
+    unoptimized: true,
+  },
 };
 
 // Dev ortamında Cloudflare bindings emülasyonu

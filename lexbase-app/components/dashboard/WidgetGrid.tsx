@@ -1,0 +1,188 @@
+'use client';
+
+import { useMemo, useCallback } from 'react';
+import { Responsive, useContainerWidth, verticalCompactor } from 'react-grid-layout';
+import type { ResponsiveLayouts, Layout } from 'react-grid-layout';
+import 'react-grid-layout/css/styles.css';
+import { WidgetWrapper } from './WidgetWrapper';
+import { KpiWidget } from './widgets/KpiWidget';
+import { PerformansWidget } from './widgets/PerformansWidget';
+import { GundemWidget } from './widgets/GundemWidget';
+import { GorevlerWidget } from './widgets/GorevlerWidget';
+import { KritikWidget } from './widgets/KritikWidget';
+import { FinansUyariWidget } from './widgets/FinansUyariWidget';
+import { MenfaatWidget } from './widgets/MenfaatWidget';
+import { HizmetlerWidget } from './widgets/HizmetlerWidget';
+import { AktiviteWidget } from './widgets/AktiviteWidget';
+import { HizliErisimWidget } from './widgets/HizliErisimWidget';
+import { VekaletnameSureWidget } from './widgets/VekaletnameSureWidget';
+import type { WidgetTanim } from '@/lib/hooks/useDashboardLayout';
+
+/* ══════════════════════════════════════════════════════════════
+   Widget Grid — react-grid-layout ile sürükle-bırak dashboard
+   ══════════════════════════════════════════════════════════════ */
+
+// Widget konfigürasyonları
+const WIDGET_CONFIG: Record<string, { title: string; icon: string; linkText?: string; linkHref?: string; color: string }> = {
+  'kpi': { title: '📊 KPI Göstergeleri', icon: '📊', color: 'gold' },
+  'performans': { title: '💰 Aylık Performans', icon: '💰', linkText: 'Finans ›', linkHref: '/finans', color: 'green' },
+  'gundem': { title: '📋 Gündem', icon: '📋', linkText: 'Takvim ›', linkHref: '/takvim', color: 'blue' },
+  'gorevler': { title: '✅ Bu Hafta Yapılacaklar', icon: '✅', linkText: 'Tümü ›', linkHref: '/gorevler', color: 'purple' },
+  'kritik': { title: '⚠️ Kritik Süreler', icon: '⚠️', linkText: 'Takvim ›', linkHref: '/takvim', color: 'gold' },
+  'finans-uyari': { title: '🔴 Finansal Uyarılar', icon: '🔴', linkText: 'Finans ›', linkHref: '/finans', color: 'red' },
+  'menfaat': { title: '🔍 Menfaat Çakışması', icon: '🔍', color: 'red' },
+  'hizmetler': { title: '⚖️ Devam Eden Hizmetler', icon: '⚖️', linkText: 'Tümü ›', linkHref: '/danismanlik', color: 'gold' },
+  'aktivite': { title: '📋 Son Aktiviteler', icon: '📋', color: 'blue' },
+  'hizli-erisim': { title: '⭐ Hızlı Erişim', icon: '⭐', color: 'purple' },
+  'vekaletname-sure': { title: '📜 Vekaletname Süreleri', icon: '📜', color: 'gold' },
+};
+
+const BREAKPOINTS = { lg: 1100, md: 768, sm: 0 };
+const COLS = { lg: 3, md: 2, sm: 1 };
+
+interface WidgetGridProps {
+  layouts: ResponsiveLayouts;
+  onLayoutChange: (currentLayout: Layout, allLayouts: ResponsiveLayouts) => void;
+  gorunurWidgetler: WidgetTanim[];
+  editMode: boolean;
+  onWidgetGizle: (id: string) => void;
+  // Data props
+  muvekkillar: Array<Record<string, unknown>>;
+  davalar: Array<Record<string, unknown>>;
+  icralar: Array<Record<string, unknown>>;
+  gorevler: Array<Record<string, unknown>>;
+  danismanliklar: Array<Record<string, unknown>>;
+  etkinlikler: Array<Record<string, unknown>>;
+  uyarilar: Array<Record<string, unknown>>;
+  belgeler: Array<Record<string, unknown>>;
+  yilNet: number;
+  muvAdMap: Record<string, string>;
+}
+
+export function WidgetGrid({
+  layouts,
+  onLayoutChange,
+  gorunurWidgetler,
+  editMode,
+  onWidgetGizle,
+  muvekkillar,
+  davalar,
+  icralar,
+  gorevler,
+  danismanliklar,
+  etkinlikler,
+  uyarilar,
+  belgeler,
+  yilNet,
+  muvAdMap,
+}: WidgetGridProps) {
+  const { width, containerRef, mounted } = useContainerWidth({ initialWidth: 1200 });
+
+  // Widget content renderer
+  const renderWidget = useCallback((widgetId: string) => {
+    switch (widgetId) {
+      case 'kpi':
+        return <KpiWidget muvekkillar={muvekkillar} davalar={davalar} icralar={icralar} yilNet={yilNet} />;
+      case 'performans':
+        return <PerformansWidget davalar={davalar} icralar={icralar} />;
+      case 'gundem':
+        return <GundemWidget davalar={davalar} etkinlikler={etkinlikler} muvAdMap={muvAdMap} />;
+      case 'gorevler':
+        return <GorevlerWidget gorevler={gorevler} />;
+      case 'kritik':
+        return <KritikWidget davalar={davalar} icralar={icralar} />;
+      case 'finans-uyari':
+        return <FinansUyariWidget uyarilar={uyarilar} />;
+      case 'menfaat':
+        return <MenfaatWidget muvekkillar={muvekkillar} davalar={davalar} />;
+      case 'hizmetler':
+        return <HizmetlerWidget danismanliklar={danismanliklar} muvAdMap={muvAdMap} />;
+      case 'aktivite':
+        return <AktiviteWidget davalar={davalar} icralar={icralar} gorevler={gorevler} muvAdMap={muvAdMap} />;
+      case 'hizli-erisim':
+        return <HizliErisimWidget />;
+      case 'vekaletname-sure':
+        return <VekaletnameSureWidget belgeler={belgeler} muvAdMap={muvAdMap} />;
+      default:
+        return <div className="text-text-dim text-sm p-4">Widget bulunamadı</div>;
+    }
+  }, [muvekkillar, davalar, icralar, gorevler, danismanliklar, etkinlikler, uyarilar, belgeler, yilNet, muvAdMap]);
+
+  // Görünür layout items — gizli widget'ları filtrele
+  const gorunurIds = useMemo(() => new Set(gorunurWidgetler.map((w) => w.id)), [gorunurWidgetler]);
+
+  const filteredLayouts = useMemo(() => {
+    const result: ResponsiveLayouts = {};
+    for (const [bp, items] of Object.entries(layouts)) {
+      if (!items) continue;
+      result[bp] = items.filter((item) => gorunurIds.has(item.i));
+    }
+    return result;
+  }, [layouts, gorunurIds]);
+
+  // Drag & resize config — editMode'a göre aç/kapa
+  const dragConfig = useMemo(() => ({
+    enabled: editMode,
+    handle: '.widget-drag-handle',
+  }), [editMode]);
+
+  const resizeConfig = useMemo(() => ({
+    enabled: editMode,
+  }), [editMode]);
+
+  return (
+    <div ref={containerRef}>
+      {(!mounted || !width) ? null : <Responsive
+        className="layout"
+        layouts={filteredLayouts}
+        width={width}
+        breakpoints={BREAKPOINTS}
+        cols={COLS}
+        rowHeight={55}
+        margin={[16, 16] as const}
+        containerPadding={[0, 0] as const}
+        dragConfig={dragConfig}
+        resizeConfig={resizeConfig}
+        onLayoutChange={onLayoutChange}
+        compactor={verticalCompactor}
+      >
+        {gorunurWidgetler.map((widget) => {
+          const config = WIDGET_CONFIG[widget.id];
+          if (!config) return null;
+
+          // KPI widget'ı özel — wrapper'sız
+          if (widget.id === 'kpi') {
+            return (
+              <div key={widget.id}>
+                <div className={`h-full ${editMode ? 'ring-1 ring-gold/20 ring-dashed rounded-xl p-2' : ''}`}>
+                  {editMode && (
+                    <div className="flex items-center justify-between mb-2 px-1">
+                      <span className="widget-drag-handle cursor-grab text-text-dim hover:text-gold text-xs">⠿ KPI Göstergeleri</span>
+                      <button onClick={() => onWidgetGizle(widget.id)} className="text-text-dim hover:text-red text-[10px]">✕</button>
+                    </div>
+                  )}
+                  {renderWidget(widget.id)}
+                </div>
+              </div>
+            );
+          }
+
+          return (
+            <div key={widget.id}>
+              <WidgetWrapper
+                title={config.title}
+                linkText={config.linkText}
+                linkHref={config.linkHref}
+                color={config.color}
+                editMode={editMode}
+                onHide={() => onWidgetGizle(widget.id)}
+              >
+                {renderWidget(widget.id)}
+              </WidgetWrapper>
+            </div>
+          );
+        })}
+      </Responsive>}
+    </div>
+  );
+}

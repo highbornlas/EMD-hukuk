@@ -3,11 +3,16 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useKullanici } from '@/lib/hooks/useBuro';
+import { useCopKutusu, getCopKutusuSuresi, setCopKutusuSuresi, SURE_SECENEKLERI } from '@/lib/hooks/useCopKutusu';
+import { useMuvekkilGeriYukle, useMuvekkilKaliciSil } from '@/lib/hooks/useMuvekkillar';
+import { useKarsiTarafGeriYukle, useKarsiTarafKaliciSil } from '@/lib/hooks/useKarsiTaraflar';
+import { useVekilGeriYukle, useVekilKaliciSil } from '@/lib/hooks/useVekillar';
 
 const TABS = [
   { key: 'profil', label: 'Profil', icon: '👤' },
   { key: 'sifre', label: 'Şifre', icon: '🔒' },
   { key: 'buro', label: 'Büro Bilgileri', icon: '🏢' },
+  { key: 'cop', label: 'Çöp Kutusu', icon: '🗑️' },
   { key: 'tema', label: 'Tema', icon: '🎨' },
 ];
 
@@ -42,6 +47,7 @@ export default function AyarlarPage() {
           {aktifTab === 'profil' && <ProfilTab />}
           {aktifTab === 'sifre' && <SifreTab />}
           {aktifTab === 'buro' && <BuroTab />}
+          {aktifTab === 'cop' && <CopKutusuTab />}
           {aktifTab === 'tema' && <TemaTab />}
         </div>
       </div>
@@ -270,6 +276,125 @@ function BuroTab() {
           {yukleniyor ? 'Kaydediliyor...' : 'Kaydet'}
         </button>
       </div>
+    </div>
+  );
+}
+
+// ── Çöp Kutusu ──────────────────────────────────────────────
+function CopKutusuTab() {
+  const { data: silinenler, isLoading } = useCopKutusu();
+  const [sure, setSure] = useState(0);
+
+  const mGeriYukle = useMuvekkilGeriYukle();
+  const mKaliciSil = useMuvekkilKaliciSil();
+  const ktGeriYukle = useKarsiTarafGeriYukle();
+  const ktKaliciSil = useKarsiTarafKaliciSil();
+  const vGeriYukle = useVekilGeriYukle();
+  const vKaliciSil = useVekilKaliciSil();
+
+  useEffect(() => {
+    setSure(getCopKutusuSuresi());
+  }, []);
+
+  function handleSureDegistir(ms: number) {
+    setCopKutusuSuresi(ms);
+    setSure(ms);
+  }
+
+  function handleGeriYukle(tablo: string, id: string) {
+    if (tablo === 'muvekkillar') mGeriYukle.mutate(id);
+    else if (tablo === 'karsi_taraflar') ktGeriYukle.mutate(id);
+    else if (tablo === 'vekillar') vGeriYukle.mutate(id);
+  }
+
+  function handleKaliciSil(tablo: string, id: string) {
+    if (tablo === 'muvekkillar') mKaliciSil.mutate(id);
+    else if (tablo === 'karsi_taraflar') ktKaliciSil.mutate(id);
+    else if (tablo === 'vekillar') vKaliciSil.mutate(id);
+  }
+
+  function kalanSureFormat(ms: number): string {
+    if (ms <= 0) return 'Süresi doldu';
+    const saat = Math.floor(ms / (1000 * 60 * 60));
+    const dk = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+    if (saat > 24) return `${Math.floor(saat / 24)} gün ${saat % 24} saat`;
+    if (saat > 0) return `${saat} saat ${dk} dk`;
+    return `${dk} dk`;
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-semibold text-text">Çöp Kutusu</h3>
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] text-text-muted">Saklama süresi:</span>
+          <select
+            value={sure}
+            onChange={(e) => handleSureDegistir(Number(e.target.value))}
+            className="px-2 py-1 bg-surface2 border border-border rounded-lg text-xs text-text focus:outline-none focus:border-gold"
+          >
+            {SURE_SECENEKLERI.map((s) => (
+              <option key={s.ms} value={s.ms}>{s.label}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <p className="text-[11px] text-text-dim mb-4">
+        Silinen kayıtlar burada saklanır. Saklama süresi dolduğunda otomatik olarak kalıcı silinir.
+      </p>
+
+      {isLoading ? (
+        <div className="text-center py-8 text-text-muted text-sm">Yükleniyor...</div>
+      ) : !silinenler || silinenler.length === 0 ? (
+        <div className="text-center py-12">
+          <div className="text-3xl mb-2">🗑️</div>
+          <p className="text-sm text-text-muted">Çöp kutusu boş</p>
+          <p className="text-[11px] text-text-dim mt-1">Silinen kayıtlar burada görünür</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {silinenler.map((s) => (
+            <div
+              key={`${s.tablo}-${s.id}`}
+              className="flex items-center gap-3 bg-surface2 border border-border/50 rounded-lg px-4 py-3"
+            >
+              {/* Tip badge */}
+              <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                s.tablo === 'muvekkillar' ? 'text-green bg-green-dim' :
+                s.tablo === 'karsi_taraflar' ? 'text-red bg-red/10' :
+                'text-gold bg-gold/10'
+              }`}>
+                {s.tabloLabel}
+              </span>
+
+              {/* Ad */}
+              <div className="flex-1 min-w-0">
+                <span className="text-sm text-text font-medium truncate block">{s.ad || '(adsız)'}</span>
+                <span className="text-[10px] text-text-dim">
+                  Silindi: {new Date(s.silinmeTarihi).toLocaleString('tr-TR')} — Kalan: {kalanSureFormat(s.kalanSure)}
+                </span>
+              </div>
+
+              {/* Geri Yükle */}
+              <button
+                onClick={() => handleGeriYukle(s.tablo, s.id)}
+                className="px-2.5 py-1 text-[11px] font-medium text-green border border-green/30 rounded-lg hover:bg-green/10 transition-colors"
+              >
+                Geri Yükle
+              </button>
+
+              {/* Kalıcı Sil */}
+              <button
+                onClick={() => handleKaliciSil(s.tablo, s.id)}
+                className="px-2.5 py-1 text-[11px] font-medium text-red border border-red/30 rounded-lg hover:bg-red/10 transition-colors"
+              >
+                Kalıcı Sil
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -8,15 +8,12 @@ import { useIcralar } from '@/lib/hooks/useIcra';
 import { useDanismanliklar } from '@/lib/hooks/useDanismanlik';
 import { useTodolar } from '@/lib/hooks/useTodolar';
 import { useFinansUyarilar } from '@/lib/hooks/useFinans';
+import { useRol, yetkiVar } from '@/lib/hooks/useRol';
 
 /* ══════════════════════════════════════════════════════════════
-   Premium Sidebar — Kompakt & Zarif
-   - Genişlik: 200px (w-[200px])
-   - Kompakt item: py-[7px] px-[12px], gap-[8px], font-size 13px
-   - Badge: gold bg + dark text
-   - Finans badge: red bg
-   - Active: gold text + gold-dim bg + font-bold
-   - Hover: gold accent belirgin
+   Premium Sidebar — Responsive + Mobil Toggle
+   - Desktop (lg+): Her zaman görünür, fixed 200px
+   - Mobil (<lg): Gizli, hamburger ile açılır, backdrop overlay
    ══════════════════════════════════════════════════════════════ */
 
 type BadgeType = 'count' | 'red';
@@ -27,6 +24,7 @@ interface MenuItem {
   label: string;
   badge?: BadgeType;
   countKey?: string;
+  yetki?: string; // gerekli yetki (yoksa herkese görünür)
 }
 
 interface SidebarGroup {
@@ -52,7 +50,7 @@ const sidebarGroups: SidebarGroup[] = [
   },
   {
     items: [
-      { href: '/finans', icon: '💰', label: 'Finans', badge: 'red', countKey: 'finans' },
+      { href: '/finans', icon: '💰', label: 'Finans', badge: 'red', countKey: 'finans', yetki: 'finans:oku' },
       { href: '/takvim', icon: '📅', label: 'Takvim', badge: 'count', countKey: 'takvim' },
     ],
   },
@@ -65,7 +63,7 @@ const sidebarGroups: SidebarGroup[] = [
 ];
 
 const bottomItems: MenuItem[] = [
-  { href: '/ayarlar', icon: '⚙️', label: 'Ayarlar' },
+  { href: '/ayarlar', icon: '⚙️', label: 'Ayarlar', yetki: 'ayarlar:oku' },
   { href: '/destek', icon: '🎧', label: 'Destek' },
 ];
 
@@ -91,9 +89,15 @@ function useBadgeCounts(): Record<string, number> {
   };
 }
 
-export function Sidebar() {
+interface SidebarProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+export function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname();
   const badgeCounts = useBadgeCounts();
+  const rol = useRol();
 
   const renderItem = (item: MenuItem) => {
     const isActive =
@@ -107,6 +111,7 @@ export function Sidebar() {
       <Link
         key={item.href}
         href={item.href}
+        onClick={onClose}
         className={`
           flex items-center gap-2 px-3 py-[7px] mx-2 my-[1px]
           text-[13px] rounded-lg transition-all duration-200 group
@@ -136,41 +141,59 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="fixed left-0 top-0 bottom-0 w-[200px] bg-[#0D1117] border-r border-white/[0.06] flex flex-col z-50">
-      {/* Logo */}
-      <div className="h-14 flex items-center px-4 border-b border-white/[0.06]">
-        <Link href="/dashboard" className="font-[var(--font-playfair)] text-lg font-bold tracking-tight hover:opacity-90 transition-opacity">
-          <span className="text-[#D4AF37]">Lex</span><span className="text-white">Base</span>
-        </Link>
-      </div>
+    <>
+      {/* Backdrop overlay — sadece mobilde, sidebar açıkken */}
+      {open && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/50 z-40 transition-opacity duration-300"
+          onClick={onClose}
+        />
+      )}
 
-      {/* Main Navigation */}
-      <nav className="flex-1 pt-4 overflow-y-auto flex flex-col">
-        {sidebarGroups.map((group, gi) => (
-          <div key={gi}>
-            {gi > 0 && <div className="h-px bg-white/[0.04] mx-3 my-1.5" />}
-            <div className="space-y-[1px]">
-              {group.items.map(renderItem)}
+      {/* Sidebar */}
+      <aside
+        className={`
+          fixed left-0 top-0 bottom-0 w-[200px] bg-[#0D1117] border-r border-white/[0.06] flex flex-col z-50
+          transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]
+          lg:translate-x-0
+          ${open ? 'translate-x-0' : '-translate-x-full'}
+        `}
+      >
+        {/* Logo */}
+        <div className="h-14 flex items-center px-4 border-b border-white/[0.06]">
+          <Link href="/dashboard" onClick={onClose} className="font-[var(--font-playfair)] text-lg font-bold tracking-tight hover:opacity-90 transition-opacity">
+            <span className="text-[#D4AF37]">Lex</span><span className="text-white">Base</span>
+          </Link>
+        </div>
+
+        {/* Main Navigation */}
+        <nav className="flex-1 pt-4 overflow-y-auto flex flex-col">
+          {sidebarGroups.map((group, gi) => (
+            <div key={gi}>
+              {gi > 0 && <div className="h-px bg-white/[0.04] mx-3 my-1.5" />}
+              <div className="space-y-[1px]">
+                {group.items.filter((item) => !item.yetki || yetkiVar(rol, item.yetki)).map(renderItem)}
+              </div>
             </div>
+          ))}
+
+          {/* Spacer */}
+          <div className="flex-1" />
+        </nav>
+
+        {/* Bottom Section */}
+        <div className="pb-3">
+          <div className="h-px bg-white/[0.04] mx-3 mb-1.5" />
+          <div className="space-y-[1px]">
+            {bottomItems.filter((item) => !item.yetki || yetkiVar(rol, item.yetki)).map(renderItem)}
           </div>
-        ))}
 
-        {/* Spacer */}
-        <div className="flex-1" />
-      </nav>
-
-      {/* Bottom Section */}
-      <div className="pb-3">
-        <div className="h-px bg-white/[0.04] mx-3 mb-1.5" />
-        <div className="space-y-[1px]">
-          {bottomItems.map(renderItem)}
+          {/* Version */}
+          <div className="text-center mt-2">
+            <span className="text-[9px] text-white/15 tracking-wider">v2.1.0</span>
+          </div>
         </div>
-
-        {/* Version */}
-        <div className="text-center mt-2">
-          <span className="text-[9px] text-white/15 tracking-wider">v2.1.0</span>
-        </div>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 }

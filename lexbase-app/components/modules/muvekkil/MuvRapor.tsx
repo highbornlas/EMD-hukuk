@@ -1,7 +1,12 @@
 'use client';
 
+import { useState, useMemo } from 'react';
 import type { Muvekkil } from '@/lib/hooks/useMuvekkillar';
+import { useMuvIletisimler } from '@/lib/hooks/useIletisimler';
+import { useMuvBelgeler } from '@/lib/hooks/useBelgeler';
 import { fmt } from '@/lib/utils';
+import { exportFaaliyetRaporuPDF, exportFinansRaporuPDF } from '@/lib/export/pdfExport';
+import { exportFaaliyetRaporuXLS } from '@/lib/export/excelExport';
 
 interface Props {
   muv: Muvekkil;
@@ -9,6 +14,47 @@ interface Props {
 }
 
 export function MuvRapor({ muv, finansOzet }: Props) {
+  const [aktifBolum, setAktifBolum] = useState<'finansal' | 'faaliyet'>('finansal');
+  const [baslangic, setBaslangic] = useState(() => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - 3);
+    return d.toISOString().slice(0, 10);
+  });
+  const [bitis, setBitis] = useState(() => new Date().toISOString().slice(0, 10));
+
+  return (
+    <div className="space-y-4">
+      {/* Bölüm Seçici */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => setAktifBolum('finansal')}
+          className={`px-4 py-2 text-xs font-semibold rounded-lg border transition-all ${
+            aktifBolum === 'finansal' ? 'bg-gold text-bg border-gold' : 'bg-surface border-border text-text-muted hover:border-gold/40'
+          }`}
+        >
+          Finansal Rapor
+        </button>
+        <button
+          onClick={() => setAktifBolum('faaliyet')}
+          className={`px-4 py-2 text-xs font-semibold rounded-lg border transition-all ${
+            aktifBolum === 'faaliyet' ? 'bg-gold text-bg border-gold' : 'bg-surface border-border text-text-muted hover:border-gold/40'
+          }`}
+        >
+          Faaliyet Raporu
+        </button>
+      </div>
+
+      {aktifBolum === 'finansal' ? (
+        <FinansalRapor muv={muv} finansOzet={finansOzet} />
+      ) : (
+        <FaaliyetRaporu muvId={muv.id} baslangic={baslangic} bitis={bitis} onBaslangic={setBaslangic} onBitis={setBitis} />
+      )}
+    </div>
+  );
+}
+
+/* ── Finansal Rapor ── */
+function FinansalRapor({ muv, finansOzet }: { muv: Muvekkil; finansOzet: Record<string, unknown> | null | undefined }) {
   if (!finansOzet) {
     return (
       <div className="text-center py-12 text-text-muted">
@@ -43,8 +89,24 @@ export function MuvRapor({ muv, finansOzet }: Props) {
 
   return (
     <div className="bg-surface border border-border rounded-lg p-6 max-w-xl">
-      <h3 className="text-sm font-semibold text-text mb-1">📊 Finansal Rapor</h3>
-      <p className="text-[11px] text-text-dim mb-5">{muv.ad} — Müvekkil Cari Özet</p>
+      <div className="flex items-center justify-between mb-5">
+        <div>
+          <h3 className="text-sm font-semibold text-text mb-0.5">Finansal Rapor</h3>
+          <p className="text-[11px] text-text-dim">{muv.ad} — Cari Özet</p>
+        </div>
+        <button
+          onClick={() => exportFinansRaporuPDF(muv.ad, {
+            toplamUcret: (vekalet?.akdi?.anlasilanToplam ?? 0) + (vekalet?.hakedis?.toplam ?? 0),
+            toplamTahsilat: (tahsilatlar?.karsiTaraf ?? 0) + (vekalet?.akdi?.tahsilEdilen ?? 0),
+            toplamHarcama: masraflar?.toplam ?? 0,
+            toplamAvans: avanslar?.alinan ?? 0,
+            net: bakiye?.genelBakiye ?? 0,
+          })}
+          className="px-2 py-1 text-[10px] font-medium text-text-muted border border-border rounded hover:border-gold/40 hover:text-text transition-colors"
+        >
+          PDF İndir
+        </button>
+      </div>
 
       <div className="space-y-0">
         {rows.map((row, i) => {
@@ -63,6 +125,132 @@ export function MuvRapor({ muv, finansOzet }: Props) {
           );
         })}
       </div>
+    </div>
+  );
+}
+
+/* ── Faaliyet Raporu ── */
+interface FaaliyetItem {
+  tarih: string;
+  tur: string;
+  icon: string;
+  aciklama: string;
+}
+
+function FaaliyetRaporu({
+  muvId,
+  baslangic,
+  bitis,
+  onBaslangic,
+  onBitis,
+}: {
+  muvId: string;
+  baslangic: string;
+  bitis: string;
+  onBaslangic: (v: string) => void;
+  onBitis: (v: string) => void;
+}) {
+  const { data: iletisimler } = useMuvIletisimler(muvId);
+  const { data: belgeler } = useMuvBelgeler(muvId);
+
+  const faaliyetler = useMemo(() => {
+    const items: FaaliyetItem[] = [];
+
+    (iletisimler || []).forEach((i) => {
+      items.push({
+        tarih: i.tarih,
+        tur: 'iletisim',
+        icon: '📞',
+        aciklama: `${i.kanal}: ${i.konu}${i.ozet ? ' — ' + i.ozet : ''}`,
+      });
+    });
+
+    (belgeler || []).forEach((b) => {
+      items.push({
+        tarih: b.tarih,
+        tur: 'belge',
+        icon: '📎',
+        aciklama: `${b.tur === 'vekaletname' ? 'Vekaletname' : 'Belge'} eklendi: ${b.ad}`,
+      });
+    });
+
+    return items
+      .filter((f) => f.tarih >= baslangic && f.tarih <= bitis)
+      .sort((a, b) => b.tarih.localeCompare(a.tarih));
+  }, [iletisimler, belgeler, baslangic, bitis]);
+
+  return (
+    <div className="bg-surface border border-border rounded-lg p-6">
+      <h3 className="text-sm font-semibold text-text mb-1">Faaliyet Raporu</h3>
+      <p className="text-[11px] text-text-dim mb-4">Tarih aralığındaki tüm faaliyetler</p>
+
+      {/* Tarih Filtresi */}
+      <div className="flex items-center gap-3 mb-5">
+        <div>
+          <label className="block text-[10px] text-text-muted mb-1">Başlangıç</label>
+          <input
+            type="date"
+            value={baslangic}
+            onChange={(e) => onBaslangic(e.target.value)}
+            className="h-8 px-2 text-xs bg-bg border border-border rounded-lg text-text focus:border-gold focus:outline-none"
+          />
+        </div>
+        <div>
+          <label className="block text-[10px] text-text-muted mb-1">Bitiş</label>
+          <input
+            type="date"
+            value={bitis}
+            onChange={(e) => onBitis(e.target.value)}
+            className="h-8 px-2 text-xs bg-bg border border-border rounded-lg text-text focus:border-gold focus:outline-none"
+          />
+        </div>
+        <div className="ml-auto flex items-center gap-2">
+          <span className="text-xs text-text-muted">{faaliyetler.length} faaliyet</span>
+          {faaliyetler.length > 0 && (
+            <div className="flex gap-1">
+              <button
+                onClick={() => exportFaaliyetRaporuPDF(
+                  muvId,
+                  faaliyetler.map(f => ({ tarih: f.tarih, tur: f.tur, aciklama: f.aciklama })),
+                  baslangic,
+                  bitis,
+                )}
+                className="px-2 py-1 text-[10px] font-medium text-text-muted border border-border rounded hover:border-gold/40 hover:text-text transition-colors"
+              >
+                PDF
+              </button>
+              <button
+                onClick={() => exportFaaliyetRaporuXLS(
+                  muvId,
+                  faaliyetler.map(f => ({ tarih: f.tarih, tur: f.tur, aciklama: f.aciklama })),
+                )}
+                className="px-2 py-1 text-[10px] font-medium text-text-muted border border-border rounded hover:border-gold/40 hover:text-text transition-colors"
+              >
+                Excel
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {faaliyetler.length === 0 ? (
+        <div className="text-center py-8 text-text-dim text-xs">
+          Bu tarih aralığında faaliyet bulunamadı
+        </div>
+      ) : (
+        <div className="space-y-0 border-l-2 border-border ml-2">
+          {faaliyetler.map((f, i) => (
+            <div key={i} className="flex items-start gap-3 pl-4 py-2 relative">
+              <div className="absolute -left-[5px] top-3 w-2 h-2 rounded-full bg-border" />
+              <div className="text-sm shrink-0">{f.icon}</div>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs text-text">{f.aciklama}</div>
+                <div className="text-[10px] text-text-dim mt-0.5">{f.tarih}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -10,8 +10,10 @@ export interface Muvekkil {
   sira?: number;
   tip?: 'gercek' | 'tuzel';
   ad: string;
+  soyad?: string;
   // Gerçek kişi
   tc?: string;
+  yabanciKimlikNo?: string;
   dogum?: string;
   dogumYeri?: string;
   uyruk?: string;
@@ -70,7 +72,9 @@ export function useMuvekkillar() {
         .eq('buro_id', buroId);
 
       if (error) throw error;
-      return (data || []).map((r) => ({ id: r.id, ...(r.data as object) })) as Muvekkil[];
+      return (data || [])
+        .map((r) => ({ id: r.id, ...(r.data as object) }))
+        .filter((m) => !(m as Record<string, unknown>)._silindi) as Muvekkil[];
     },
     enabled: !!buroId,
   });
@@ -146,6 +150,52 @@ export function useMuvIcralar(muvId: string | null) {
   });
 }
 
+// ── Müvekkile bağlı arabuluculuk dosyaları ────────────────────
+export function useMuvArabuluculuklar(muvId: string | null) {
+  const buroId = useBuroId();
+
+  return useQuery({
+    queryKey: ['arabuluculuk', 'muv', muvId, buroId],
+    queryFn: async () => {
+      if (!buroId || !muvId) return [];
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('arabuluculuk')
+        .select('id, data')
+        .eq('buro_id', buroId);
+
+      if (error) throw error;
+      return (data || [])
+        .map((r) => ({ id: r.id, ...(r.data as object) }))
+        .filter((a: Record<string, unknown>) => a.muvId === muvId);
+    },
+    enabled: !!buroId && !!muvId,
+  });
+}
+
+// ── Müvekkile bağlı ihtarnameler ──────────────────────────────
+export function useMuvIhtarnameler(muvId: string | null) {
+  const buroId = useBuroId();
+
+  return useQuery({
+    queryKey: ['ihtarnameler', 'muv', muvId, buroId],
+    queryFn: async () => {
+      if (!buroId || !muvId) return [];
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('ihtarnameler')
+        .select('id, data')
+        .eq('buro_id', buroId);
+
+      if (error) throw error;
+      return (data || [])
+        .map((r) => ({ id: r.id, ...(r.data as object) }))
+        .filter((h: Record<string, unknown>) => h.muvId === muvId);
+    },
+    enabled: !!buroId && !!muvId,
+  });
+}
+
 // ── Kaydet (upsert) ───────────────────────────────────────────
 export function useMuvekkilKaydet() {
   const buroId = useBuroId();
@@ -189,8 +239,38 @@ export function useMuvekkilKaydet() {
   });
 }
 
-// ── Sil ───────────────────────────────────────────────────────
+// ── Soft Delete (çöp kutusuna taşı) ──────────────────────────
 export function useMuvekkilSil() {
+  const buroId = useBuroId();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      if (!buroId) throw new Error('Büro bulunamadı');
+      const supabase = createClient();
+      const { data: existing } = await supabase
+        .from('muvekkillar')
+        .select('data')
+        .eq('id', id)
+        .eq('buro_id', buroId)
+        .single();
+      if (!existing) throw new Error('Kayıt bulunamadı');
+      const { error } = await supabase
+        .from('muvekkillar')
+        .update({ data: { ...(existing.data as object), _silindi: new Date().toISOString() } })
+        .eq('id', id)
+        .eq('buro_id', buroId);
+      if (error) throw error;
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['muvekkillar'] });
+      queryClient.invalidateQueries({ queryKey: ['cop-kutusu'] });
+    },
+  });
+}
+
+// ── Kalıcı Sil (gerçekten sil) ───────────────────────────────
+export function useMuvekkilKaliciSil() {
   const buroId = useBuroId();
   const queryClient = useQueryClient();
 
@@ -207,6 +287,39 @@ export function useMuvekkilSil() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['muvekkillar'] });
+      queryClient.invalidateQueries({ queryKey: ['cop-kutusu'] });
+    },
+  });
+}
+
+// ── Geri Yükle (soft delete'i kaldır) ────────────────────────
+export function useMuvekkilGeriYukle() {
+  const buroId = useBuroId();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      if (!buroId) throw new Error('Büro bulunamadı');
+      const supabase = createClient();
+      const { data: existing } = await supabase
+        .from('muvekkillar')
+        .select('data')
+        .eq('id', id)
+        .eq('buro_id', buroId)
+        .single();
+      if (!existing) throw new Error('Kayıt bulunamadı');
+      const { _silindi, ...temizData } = existing.data as Record<string, unknown>;
+      void _silindi;
+      const { error } = await supabase
+        .from('muvekkillar')
+        .update({ data: temizData })
+        .eq('id', id)
+        .eq('buro_id', buroId);
+      if (error) throw error;
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['muvekkillar'] });
+      queryClient.invalidateQueries({ queryKey: ['cop-kutusu'] });
     },
   });
 }

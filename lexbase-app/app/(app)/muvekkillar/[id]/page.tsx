@@ -1,34 +1,93 @@
 'use client';
 
-import { use, useState } from 'react';
+import { use, useState, useMemo } from 'react';
 import Link from 'next/link';
-import { useMuvekkil, useMuvDavalar, useMuvIcralar } from '@/lib/hooks/useMuvekkillar';
+import { useMuvekkil, useMuvDavalar, useMuvIcralar, useMuvArabuluculuklar, useMuvIhtarnameler } from '@/lib/hooks/useMuvekkillar';
 import { useFinansOzet } from '@/lib/hooks/useFinans';
-import { fmt } from '@/lib/utils';
 import { MuvKpiCards } from '@/components/modules/muvekkil/MuvKpiCards';
 import { MuvKimlik } from '@/components/modules/muvekkil/MuvKimlik';
 import { MuvDosyalar } from '@/components/modules/muvekkil/MuvDosyalar';
 import { MuvRapor } from '@/components/modules/muvekkil/MuvRapor';
+import { MuvekkilModal } from '@/components/modules/MuvekkilModal';
+import { DavaModal } from '@/components/modules/DavaModal';
+import { IcraModal } from '@/components/modules/IcraModal';
+import { ArabuluculukModal } from '@/components/modules/ArabuluculukModal';
+import { IhtarnameModal } from '@/components/modules/IhtarnameModal';
+import { MuvNotlar } from '@/components/modules/muvekkil/MuvNotlar';
+import { MuvMasrafAvans } from '@/components/modules/muvekkil/MuvMasrafAvans';
+import { MuvAlacak } from '@/components/modules/muvekkil/MuvAlacak';
+import { MuvIletisimGecmisi } from '@/components/modules/muvekkil/MuvIletisimGecmisi';
+import { MuvIliskiler } from '@/components/modules/muvekkil/MuvIliskiler';
+import { MuvPlanlama } from '@/components/modules/muvekkil/MuvPlanlama';
+import { MuvDanismanlik } from '@/components/modules/muvekkil/MuvDanismanlik';
+import { MuvBelgeler } from '@/components/modules/muvekkil/MuvBelgeler';
+import { useMuvekkilKaydet } from '@/lib/hooks/useMuvekkillar';
+
+/* ══════════════════════════════════════════════════════════════
+   Müvekkil Detay Sayfası — 11 Sekmeli ERP Yapısı
+   ══════════════════════════════════════════════════════════════ */
 
 const TABS = [
-  { key: 'davalar', label: '📁 Davalar', icon: '📁' },
-  { key: 'kimlik', label: '🪪 Kimlik & İletişim', icon: '🪪' },
-  { key: 'harcamalar', label: '💸 Harcamalar', icon: '💸' },
-  { key: 'avans', label: '💰 Avans & Alacak', icon: '💰' },
-  { key: 'rapor', label: '📊 Rapor', icon: '📊' },
-  { key: 'notlar', label: '📝 Notlar', icon: '📝' },
+  { key: 'dosyalar', label: '📁 Dosyalar' },
+  { key: 'kimlik', label: '🪪 Kimlik & İletişim' },
+  { key: 'masraf', label: '💸 Masraf & Avans' },
+  { key: 'alacak', label: '💰 Alacak' },
+  { key: 'iletisim', label: '📞 İletişim Geçmişi' },
+  { key: 'iliskiler', label: '🔗 İlişkiler' },
+  { key: 'planlama', label: '📋 Planlama' },
+  { key: 'danismanlik', label: '💼 Danışmanlık' },
+  { key: 'belgeler', label: '📎 Belgeler' },
+  { key: 'rapor', label: '📊 Rapor' },
+  { key: 'notlar', label: '📝 Notlar' },
 ] as const;
 
 type TabKey = (typeof TABS)[number]['key'];
 
 export default function MuvekkilDetayPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+
+  /* ── Veri Hook'ları ── */
   const { data: muv, isLoading } = useMuvekkil(id);
   const { data: finansOzet } = useFinansOzet(id);
   const { data: davalar } = useMuvDavalar(id);
   const { data: icralar } = useMuvIcralar(id);
-  const [aktifTab, setAktifTab] = useState<TabKey>('davalar');
+  const { data: arabuluculuklar } = useMuvArabuluculuklar(id);
+  const { data: ihtarnameler } = useMuvIhtarnameler(id);
 
+  /* ── Mutation ── */
+  const kaydetMutation = useMuvekkilKaydet();
+
+  /* ── UI State ── */
+  const [aktifTab, setAktifTab] = useState<TabKey>('dosyalar');
+  const [editOpen, setEditOpen] = useState(false);
+  const [yeniDavaOpen, setYeniDavaOpen] = useState(false);
+  const [yeniIcraOpen, setYeniIcraOpen] = useState(false);
+  const [yeniArabuluculukOpen, setYeniArabuluculukOpen] = useState(false);
+  const [yeniIhtarnameOpen, setYeniIhtarnameOpen] = useState(false);
+
+  /* ── Dosya sayıları (KPI) ── */
+  const davaArr = davalar || [];
+  const icraArr = icralar || [];
+  const arabArr = arabuluculuklar || [];
+  const ihtArr = ihtarnameler || [];
+
+  const dosyaSayisi = davaArr.length + icraArr.length + arabArr.length + ihtArr.length;
+  const aktifDosya = useMemo(() => {
+    const aktifDurumlar = ['Aktif', 'derdest', 'Devam Ediyor', 'Başvuru', 'Görüşme', 'Hazırlandı', 'Gönderildi', 'Taslak'];
+    const count = (arr: Record<string, unknown>[]) =>
+      arr.filter((d) => aktifDurumlar.includes((d.durum as string) || '')).length;
+    return count(davaArr) + count(icraArr) + count(arabArr) + count(ihtArr);
+  }, [davaArr, icraArr, arabArr, ihtArr]);
+
+  /* ── Yeni dosya ekleme handler ── */
+  const handleYeniEkle = (tur: 'dava' | 'icra' | 'arabuluculuk' | 'ihtarname') => {
+    if (tur === 'dava') setYeniDavaOpen(true);
+    else if (tur === 'icra') setYeniIcraOpen(true);
+    else if (tur === 'arabuluculuk') setYeniArabuluculukOpen(true);
+    else setYeniIhtarnameOpen(true);
+  };
+
+  /* ── Loading / Not Found ── */
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -81,16 +140,26 @@ export default function MuvekkilDetayPage({ params }: { params: Promise<{ id: st
         </div>
 
         <div className="flex items-center gap-2">
-          <button className="px-3 py-1.5 text-xs font-medium text-text-muted border border-border rounded-lg hover:border-gold hover:text-gold transition-colors">
+          <button
+            onClick={() => setEditOpen(true)}
+            className="px-3 py-1.5 text-xs font-medium text-text-muted border border-border rounded-lg hover:border-gold hover:text-gold transition-colors"
+          >
             ✏️ Düzenle
           </button>
         </div>
       </div>
 
+      {/* Modal'lar */}
+      <MuvekkilModal open={editOpen} onClose={() => setEditOpen(false)} muvekkil={muv} />
+      <DavaModal open={yeniDavaOpen} onClose={() => setYeniDavaOpen(false)} />
+      <IcraModal open={yeniIcraOpen} onClose={() => setYeniIcraOpen(false)} />
+      <ArabuluculukModal open={yeniArabuluculukOpen} onClose={() => setYeniArabuluculukOpen(false)} />
+      <IhtarnameModal open={yeniIhtarnameOpen} onClose={() => setYeniIhtarnameOpen(false)} />
+
       {/* KPI Cards */}
       <MuvKpiCards
-        davaSayisi={davalar?.length ?? 0}
-        aktifDava={davalar?.filter((d: Record<string, unknown>) => d.durum === 'Aktif' || d.durum === 'derdest').length ?? 0}
+        dosyaSayisi={dosyaSayisi}
+        aktifDosya={aktifDosya}
         finansOzet={finansOzet}
       />
 
@@ -115,129 +184,55 @@ export default function MuvekkilDetayPage({ params }: { params: Promise<{ id: st
 
       {/* Tab Content */}
       <div>
-        {aktifTab === 'davalar' && <MuvDosyalar davalar={davalar || []} icralar={icralar || []} />}
+        {aktifTab === 'dosyalar' && (
+          <MuvDosyalar
+            davalar={davaArr}
+            icralar={icraArr}
+            arabuluculuklar={arabArr}
+            ihtarnameler={ihtArr}
+            onYeniEkle={handleYeniEkle}
+          />
+        )}
         {aktifTab === 'kimlik' && <MuvKimlik muv={muv} />}
-        {aktifTab === 'harcamalar' && <HarcamalarTab davalar={davalar || []} icralar={icralar || []} />}
-        {aktifTab === 'avans' && <AvansTab finansOzet={finansOzet} />}
+        {aktifTab === 'masraf' && (
+          <MuvMasrafAvans
+            davalar={davaArr}
+            icralar={icraArr}
+            arabuluculuklar={arabArr}
+            ihtarnameler={ihtArr}
+            finansOzet={finansOzet}
+            onMasrafEkle={() => {/* MasrafModal — sonraki iterasyonda */}}
+          />
+        )}
+        {aktifTab === 'alacak' && (
+          <MuvAlacak
+            davalar={davaArr}
+            icralar={icraArr}
+            arabuluculuklar={arabArr}
+            ihtarnameler={ihtArr}
+            finansOzet={finansOzet}
+          />
+        )}
+        {aktifTab === 'iletisim' && <MuvIletisimGecmisi muvId={id} />}
+        {aktifTab === 'iliskiler' && <MuvIliskiler muv={muv} />}
+        {aktifTab === 'planlama' && <MuvPlanlama muvId={id} />}
+        {aktifTab === 'danismanlik' && <MuvDanismanlik muvId={id} />}
+        {aktifTab === 'belgeler' && <MuvBelgeler muvId={id} />}
         {aktifTab === 'rapor' && <MuvRapor muv={muv} finansOzet={finansOzet} />}
-        {aktifTab === 'notlar' && <NotlarTab not={muv.not} />}
+        {aktifTab === 'notlar' && <MuvNotlar muv={muv} onKaydet={(g) => kaydetMutation.mutateAsync(g)} />}
       </div>
     </div>
   );
 }
 
-// ── Harcamalar Tab ────────────────────────────────────────────
-function HarcamalarTab({ davalar, icralar }: { davalar: Record<string, unknown>[]; icralar: Record<string, unknown>[] }) {
-  const tumHarcamalar: Array<{ tarih: string; tutar: number; kat: string; acik: string; dosyaNo: string; dosyaTur: string }> = [];
-
-  [...davalar, ...icralar].forEach((dosya) => {
-    const harcamalar = (dosya.harcamalar || []) as Array<Record<string, string>>;
-    const tur = (dosya as Record<string, unknown>).konu ? 'Dava' : 'İcra';
-    harcamalar.forEach((h) => {
-      tumHarcamalar.push({
-        tarih: h.tarih || '',
-        tutar: parseFloat(h.tutar) || 0,
-        kat: h.kat || 'Harcama',
-        acik: h.acik || '',
-        dosyaNo: (dosya.no as string) || '',
-        dosyaTur: tur,
-      });
-    });
-  });
-
-  tumHarcamalar.sort((a, b) => b.tarih.localeCompare(a.tarih));
-
-  if (!tumHarcamalar.length) {
-    return (
-      <div className="text-center py-12 text-text-muted">
-        <div className="text-4xl mb-3">💸</div>
-        <div className="text-sm">Henüz harcama kaydı yok</div>
-      </div>
-    );
-  }
-
+/* ── Placeholder (henüz geliştirilmemiş sekmeler) ── */
+function PlaceholderTab({ icon, baslik, aciklama }: { icon: string; baslik: string; aciklama: string }) {
   return (
-    <div className="bg-surface border border-border rounded-lg overflow-hidden">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-border text-left">
-            <th className="px-4 py-3 text-xs font-semibold text-text-muted">Tarih</th>
-            <th className="px-4 py-3 text-xs font-semibold text-text-muted">Kategori</th>
-            <th className="px-4 py-3 text-xs font-semibold text-text-muted">Açıklama</th>
-            <th className="px-4 py-3 text-xs font-semibold text-text-muted">Dosya</th>
-            <th className="px-4 py-3 text-xs font-semibold text-text-muted text-right">Tutar</th>
-          </tr>
-        </thead>
-        <tbody>
-          {tumHarcamalar.map((h, i) => (
-            <tr key={i} className="border-b border-border/50 hover:bg-surface2 transition-colors">
-              <td className="px-4 py-2.5 text-text-muted text-xs">{h.tarih}</td>
-              <td className="px-4 py-2.5">
-                <span className="text-[10px] px-2 py-0.5 rounded bg-surface2 border border-border text-text-muted">
-                  {h.kat}
-                </span>
-              </td>
-              <td className="px-4 py-2.5 text-text text-xs">{h.acik || '—'}</td>
-              <td className="px-4 py-2.5 text-gold text-xs font-medium">{h.dosyaNo}</td>
-              <td className="px-4 py-2.5 text-right text-text font-semibold text-xs">{fmt(h.tutar)}</td>
-            </tr>
-          ))}
-        </tbody>
-        <tfoot>
-          <tr className="border-t border-border">
-            <td colSpan={4} className="px-4 py-3 text-xs font-semibold text-text-muted text-right">
-              Toplam:
-            </td>
-            <td className="px-4 py-3 text-right text-gold font-bold text-sm">
-              {fmt(tumHarcamalar.reduce((s, h) => s + h.tutar, 0))}
-            </td>
-          </tr>
-        </tfoot>
-      </table>
+    <div className="text-center py-16 text-text-muted bg-surface border border-border rounded-lg">
+      <div className="text-4xl mb-3">{icon}</div>
+      <div className="text-sm font-semibold mb-1">{baslik}</div>
+      <div className="text-xs text-text-dim">{aciklama}</div>
     </div>
   );
 }
 
-// ── Avans Tab ─────────────────────────────────────────────────
-function AvansTab({ finansOzet }: { finansOzet: Record<string, unknown> | null | undefined }) {
-  const avanslar = finansOzet?.avanslar as Record<string, number> | undefined;
-
-  return (
-    <div className="grid grid-cols-3 gap-4">
-      <div className="bg-surface border border-border rounded-lg p-5">
-        <div className="text-[11px] text-text-muted uppercase tracking-wider mb-1">Alınan Avans</div>
-        <div className="font-[var(--font-playfair)] text-xl text-green font-bold">
-          {fmt(avanslar?.alinan ?? 0)}
-        </div>
-      </div>
-      <div className="bg-surface border border-border rounded-lg p-5">
-        <div className="text-[11px] text-text-muted uppercase tracking-wider mb-1">Bekleyen Avans</div>
-        <div className="font-[var(--font-playfair)] text-xl text-gold font-bold">
-          {fmt(avanslar?.bekleyen ?? 0)}
-        </div>
-      </div>
-      <div className="bg-surface border border-border rounded-lg p-5">
-        <div className="text-[11px] text-text-muted uppercase tracking-wider mb-1">Masraf Bakiyesi</div>
-        <div className={`font-[var(--font-playfair)] text-xl font-bold ${(avanslar?.kalan ?? 0) >= 0 ? 'text-green' : 'text-red'}`}>
-          {fmt(avanslar?.kalan ?? 0)}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Notlar Tab ────────────────────────────────────────────────
-function NotlarTab({ not }: { not?: string }) {
-  return (
-    <div className="bg-surface border border-border rounded-lg p-6">
-      {not ? (
-        <div className="text-sm text-text whitespace-pre-wrap leading-relaxed">{not}</div>
-      ) : (
-        <div className="text-center py-8 text-text-muted">
-          <div className="text-4xl mb-3">📝</div>
-          <div className="text-sm">Henüz not eklenmemiş</div>
-        </div>
-      )}
-    </div>
-  );
-}

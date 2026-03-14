@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Modal, FormGroup, FormInput, FormSelect, FormTextarea, BtnGold, BtnOutline } from '@/components/ui/Modal';
 import { useIcraKaydet, type Icra } from '@/lib/hooks/useIcra';
 import { useMuvekkillar } from '@/lib/hooks/useMuvekkillar';
+import { RehberSecici } from '@/components/ui/RehberSecici';
 
 interface IcraModalProps {
   open: boolean;
@@ -25,6 +26,9 @@ const bos: Partial<Icra> = {
   tarih: new Date().toISOString().split('T')[0],
   muvRol: 'alacakli',
   karsi: '',
+  karsiId: '',
+  karsav: '',
+  karsavId: '',
   dayanak: '',
   not: '',
 };
@@ -178,6 +182,31 @@ export function IcraModal({ open, onClose, icra }: IcraModalProps) {
             </FormGroup>
             <FormGroup label="Alacak Tutarı (TL)">
               <FormInput type="number" value={form.alacak || ''} onChange={(e) => handleChange('alacak', Number(e.target.value))} placeholder="0" />
+            </FormGroup>
+          </div>
+        </div>
+
+        {/* Karşı Taraf + Karşı Avukat */}
+        <div className="border-t border-border/50 pt-4">
+          <div className="text-[11px] font-semibold text-text-muted uppercase tracking-wider mb-3">Karşı Taraf Bilgileri</div>
+          <div className="grid grid-cols-2 gap-4">
+            <FormGroup label="Karşı Taraf">
+              <RehberSecici
+                tip="karsiTaraf"
+                value={(form.karsi as string) || ''}
+                selectedId={(form.karsiId as string) || null}
+                onChange={(id, ad) => setForm((prev) => ({ ...prev, karsi: ad, karsiId: id || '' }))}
+                placeholder="Karşı taraf seçin veya yazın..."
+              />
+            </FormGroup>
+            <FormGroup label="Karşı Avukat">
+              <RehberSecici
+                tip="avukat"
+                value={(form.karsav as string) || ''}
+                selectedId={(form.karsavId as string) || null}
+                onChange={(id, ad) => setForm((prev) => ({ ...prev, karsav: ad, karsavId: id || '' }))}
+                placeholder="Karşı avukat seçin veya yazın..."
+              />
             </FormGroup>
           </div>
         </div>

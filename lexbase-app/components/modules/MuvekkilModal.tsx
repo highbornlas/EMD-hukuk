@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Modal, FormGroup, FormInput, FormTextarea, BtnGold, BtnOutline } from '@/components/ui/Modal';
+import { Modal, FormGroup, FormInput, FormSelect, FormTextarea, BtnGold, BtnOutline } from '@/components/ui/Modal';
 import { useMuvekkilKaydet, type Muvekkil } from '@/lib/hooks/useMuvekkillar';
+import { SmartAdresInput, type Adres } from '@/components/ui/SmartAdresInput';
+import { SmartBankaSecici } from '@/components/ui/SmartBankaSecici';
 
 interface MuvekkilModalProps {
   open: boolean;
@@ -10,14 +12,37 @@ interface MuvekkilModalProps {
   muvekkil?: Muvekkil | null;
 }
 
+const SIRKET_TURLERI = ['A.Ş.', 'Ltd. Şti.', 'Şahıs Firması', 'Kooperatif', 'Dernek', 'Vakıf', 'Kamu Kurumu', 'Diğer'];
+
 const bos: Partial<Muvekkil> = {
   tip: 'gercek',
   ad: '',
+  soyad: '',
   tc: '',
-  tel: '',
-  mail: '',
+  yabanciKimlikNo: '',
+  dogum: '',
+  dogumYeri: '',
+  uyruk: 'T.C.',
+  pasaport: '',
+  meslek: '',
+  // tüzel
+  sirketTur: '',
   vergiNo: '',
   vergiDairesi: '',
+  mersis: '',
+  ticaretSicil: '',
+  yetkiliAd: '',
+  yetkiliUnvan: '',
+  yetkiliTc: '',
+  yetkiliTel: '',
+  // iletişim
+  tel: '',
+  mail: '',
+  faks: '',
+  web: '',
+  uets: '',
+  adres: {},
+  bankalar: [],
   not: '',
 };
 
@@ -39,9 +64,11 @@ export function MuvekkilModal({ open, onClose, muvekkil }: MuvekkilModalProps) {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
+  const isTc = !form.uyruk || form.uyruk === 'T.C.';
+
   async function handleSubmit() {
     if (!form.ad?.trim()) {
-      setHata('Ad Soyad zorunludur.');
+      setHata(form.tip === 'tuzel' ? 'Şirket adı zorunludur.' : 'Ad zorunludur.');
       return;
     }
     setHata('');
@@ -58,7 +85,7 @@ export function MuvekkilModal({ open, onClose, muvekkil }: MuvekkilModalProps) {
       open={open}
       onClose={onClose}
       title={muvekkil ? 'Müvekkil Düzenle' : 'Yeni Müvekkil'}
-      maxWidth="max-w-2xl"
+      maxWidth="max-w-3xl"
       footer={
         <>
           <BtnOutline onClick={onClose}>İptal</BtnOutline>
@@ -95,68 +122,181 @@ export function MuvekkilModal({ open, onClose, muvekkil }: MuvekkilModalProps) {
           </div>
         </FormGroup>
 
-        <div className="grid grid-cols-2 gap-4">
-          <FormGroup label={form.tip === 'tuzel' ? 'Şirket Adı' : 'Ad Soyad'} required>
-            <FormInput value={form.ad || ''} onChange={(e) => handleChange('ad', e.target.value)} placeholder={form.tip === 'tuzel' ? 'Şirket Unvanı' : 'Ad Soyad'} />
-          </FormGroup>
+        {/* ═══════ GERÇEK KİŞİ ═══════ */}
+        {form.tip === 'gercek' && (
+          <>
+            {/* Ad + Soyad */}
+            <div className="grid grid-cols-2 gap-4">
+              <FormGroup label="Ad" required>
+                <FormInput value={form.ad || ''} onChange={(e) => handleChange('ad', e.target.value)} placeholder="Ad" />
+              </FormGroup>
+              <FormGroup label="Soyad">
+                <FormInput value={form.soyad || ''} onChange={(e) => handleChange('soyad', e.target.value)} placeholder="Soyad" />
+              </FormGroup>
+            </div>
 
-          {form.tip === 'gercek' ? (
-            <FormGroup label="TC Kimlik No">
-              <FormInput value={form.tc || ''} onChange={(e) => handleChange('tc', e.target.value)} placeholder="11 haneli TC" maxLength={11} />
+            {/* Uyruk Seçimi */}
+            <FormGroup label="Uyruk">
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => handleChange('uyruk', 'T.C.')}
+                  className={`flex-1 py-2 rounded-[10px] text-xs font-medium border transition-all duration-200 ${
+                    isTc
+                      ? 'bg-gold text-bg border-gold'
+                      : 'bg-surface2 text-text-muted border-border hover:border-gold/50'
+                  }`}
+                >
+                  🇹🇷 T.C. Vatandaşı
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleChange('uyruk', 'Yabancı')}
+                  className={`flex-1 py-2 rounded-[10px] text-xs font-medium border transition-all duration-200 ${
+                    !isTc
+                      ? 'bg-gold text-bg border-gold'
+                      : 'bg-surface2 text-text-muted border-border hover:border-gold/50'
+                  }`}
+                >
+                  🌍 Yabancı Uyruklu
+                </button>
+              </div>
             </FormGroup>
-          ) : (
-            <FormGroup label="Vergi No">
-              <FormInput value={form.vergiNo || ''} onChange={(e) => handleChange('vergiNo', e.target.value)} placeholder="10 haneli VKN" maxLength={10} />
-            </FormGroup>
-          )}
-        </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <FormGroup label="Telefon">
-            <FormInput type="tel" value={form.tel || ''} onChange={(e) => handleChange('tel', e.target.value)} placeholder="0532 000 0000" />
-          </FormGroup>
-          <FormGroup label="E-posta">
-            <FormInput type="email" value={form.mail || ''} onChange={(e) => handleChange('mail', e.target.value)} placeholder="ornek@mail.com" />
-          </FormGroup>
-        </div>
+            {/* TC / Yabancı Kimlik */}
+            {isTc ? (
+              <FormGroup label="T.C. Kimlik No">
+                <FormInput value={form.tc || ''} onChange={(e) => handleChange('tc', e.target.value)} placeholder="11 haneli TC Kimlik No" maxLength={11} />
+              </FormGroup>
+            ) : (
+              <div className="grid grid-cols-2 gap-4">
+                <FormGroup label="Yabancı Kimlik No">
+                  <FormInput value={form.yabanciKimlikNo || ''} onChange={(e) => handleChange('yabanciKimlikNo', e.target.value)} placeholder="Kimlik / Pasaport No" />
+                </FormGroup>
+                <FormGroup label="Uyruk (Ülke)">
+                  <FormInput value={form.uyruk === 'Yabancı' ? '' : form.uyruk || ''} onChange={(e) => handleChange('uyruk', e.target.value || 'Yabancı')} placeholder="Ör: Almanya" />
+                </FormGroup>
+              </div>
+            )}
 
-        {form.tip === 'tuzel' && (
-          <div className="grid grid-cols-2 gap-4">
-            <FormGroup label="Vergi Dairesi">
-              <FormInput value={form.vergiDairesi || ''} onChange={(e) => handleChange('vergiDairesi', e.target.value)} placeholder="Vergi Dairesi" />
+            {/* Doğum + Doğum Yeri */}
+            <div className="grid grid-cols-2 gap-4">
+              <FormGroup label="Doğum Tarihi">
+                <FormInput type="date" value={form.dogum || ''} onChange={(e) => handleChange('dogum', e.target.value)} />
+              </FormGroup>
+              <FormGroup label="Doğum Yeri">
+                <FormInput value={form.dogumYeri || ''} onChange={(e) => handleChange('dogumYeri', e.target.value)} placeholder="Doğum yeri" />
+              </FormGroup>
+            </div>
+
+            {/* Meslek */}
+            <FormGroup label="Meslek">
+              <FormInput value={form.meslek || ''} onChange={(e) => handleChange('meslek', e.target.value)} placeholder="Meslek" />
             </FormGroup>
-            <FormGroup label="MERSİS No">
-              <FormInput value={(form.mersis as string) || ''} onChange={(e) => handleChange('mersis', e.target.value)} placeholder="MERSİS No" />
-            </FormGroup>
-          </div>
+          </>
         )}
 
-        <FormGroup label="Adres">
-          <FormTextarea
-            value={(form.adres as Record<string, string>)?.acik || ''}
-            onChange={(e) => setForm((prev) => ({ ...prev, adres: { ...((prev.adres as Record<string, string>) || {}), acik: e.target.value } }))}
-            rows={2}
-            placeholder="Açık adres"
-          />
-        </FormGroup>
+        {/* ═══════ TÜZEL KİŞİ ═══════ */}
+        {form.tip === 'tuzel' && (
+          <>
+            {/* Şirket Adı + Şirket Türü */}
+            <div className="grid grid-cols-2 gap-4">
+              <FormGroup label="Şirket Adı" required>
+                <FormInput value={form.ad || ''} onChange={(e) => handleChange('ad', e.target.value)} placeholder="Şirket Unvanı" />
+              </FormGroup>
+              <FormGroup label="Şirket Türü">
+                <FormSelect value={form.sirketTur || ''} onChange={(e) => handleChange('sirketTur', e.target.value)}>
+                  <option value="">Seçiniz</option>
+                  {SIRKET_TURLERI.map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </FormSelect>
+              </FormGroup>
+            </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <FormGroup label="İl">
-            <FormInput
-              value={(form.adres as Record<string, string>)?.il || ''}
-              onChange={(e) => setForm((prev) => ({ ...prev, adres: { ...((prev.adres as Record<string, string>) || {}), il: e.target.value } }))}
-              placeholder="İl"
-            />
-          </FormGroup>
-          <FormGroup label="İlçe">
-            <FormInput
-              value={(form.adres as Record<string, string>)?.ilce || ''}
-              onChange={(e) => setForm((prev) => ({ ...prev, adres: { ...((prev.adres as Record<string, string>) || {}), ilce: e.target.value } }))}
-              placeholder="İlçe"
-            />
-          </FormGroup>
+            {/* Vergi No + Vergi Dairesi */}
+            <div className="grid grid-cols-2 gap-4">
+              <FormGroup label="Vergi No">
+                <FormInput value={form.vergiNo || ''} onChange={(e) => handleChange('vergiNo', e.target.value)} placeholder="10 haneli VKN" maxLength={10} />
+              </FormGroup>
+              <FormGroup label="Vergi Dairesi">
+                <FormInput value={form.vergiDairesi || ''} onChange={(e) => handleChange('vergiDairesi', e.target.value)} placeholder="Vergi Dairesi" />
+              </FormGroup>
+            </div>
+
+            {/* MERSİS + Ticaret Sicil */}
+            <div className="grid grid-cols-2 gap-4">
+              <FormGroup label="MERSİS No">
+                <FormInput value={(form.mersis as string) || ''} onChange={(e) => handleChange('mersis', e.target.value)} placeholder="MERSİS No" />
+              </FormGroup>
+              <FormGroup label="Ticaret Sicil No">
+                <FormInput value={form.ticaretSicil || ''} onChange={(e) => handleChange('ticaretSicil', e.target.value)} placeholder="Ticaret Sicil No" />
+              </FormGroup>
+            </div>
+
+            {/* Yetkili Bilgileri */}
+            <div className="border-t border-border/50 pt-4">
+              <div className="text-[11px] font-semibold text-text-muted uppercase tracking-wider mb-3">Yetkili Bilgileri</div>
+              <div className="grid grid-cols-2 gap-4">
+                <FormGroup label="Yetkili Adı">
+                  <FormInput value={form.yetkiliAd || ''} onChange={(e) => handleChange('yetkiliAd', e.target.value)} placeholder="Yetkili kişi adı" />
+                </FormGroup>
+                <FormGroup label="Yetkili Unvanı">
+                  <FormInput value={form.yetkiliUnvan || ''} onChange={(e) => handleChange('yetkiliUnvan', e.target.value)} placeholder="Ör: Genel Müdür" />
+                </FormGroup>
+              </div>
+              <div className="grid grid-cols-2 gap-4 mt-3">
+                <FormGroup label="Yetkili TC">
+                  <FormInput value={form.yetkiliTc || ''} onChange={(e) => handleChange('yetkiliTc', e.target.value)} placeholder="11 haneli TC" maxLength={11} />
+                </FormGroup>
+                <FormGroup label="Yetkili Telefon">
+                  <FormInput type="tel" value={form.yetkiliTel || ''} onChange={(e) => handleChange('yetkiliTel', e.target.value)} placeholder="0532 000 0000" />
+                </FormGroup>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* ═══════ İLETİŞİM (her iki tip için) ═══════ */}
+        <div className="border-t border-border/50 pt-4">
+          <div className="text-[11px] font-semibold text-text-muted uppercase tracking-wider mb-3">İletişim Bilgileri</div>
+          <div className="grid grid-cols-2 gap-4">
+            <FormGroup label="Telefon">
+              <FormInput type="tel" value={form.tel || ''} onChange={(e) => handleChange('tel', e.target.value)} placeholder="0532 000 0000" />
+            </FormGroup>
+            <FormGroup label="E-posta">
+              <FormInput type="email" value={form.mail || ''} onChange={(e) => handleChange('mail', e.target.value)} placeholder="ornek@mail.com" />
+            </FormGroup>
+          </div>
+          <div className="grid grid-cols-3 gap-4 mt-3">
+            <FormGroup label="Faks">
+              <FormInput value={form.faks || ''} onChange={(e) => handleChange('faks', e.target.value)} placeholder="Faks numarası" />
+            </FormGroup>
+            <FormGroup label="UETS / KEP">
+              <FormInput value={form.uets || ''} onChange={(e) => handleChange('uets', e.target.value)} placeholder="UETS adresi" />
+            </FormGroup>
+            <FormGroup label="Web">
+              <FormInput type="url" value={form.web || ''} onChange={(e) => handleChange('web', e.target.value)} placeholder="www.example.com" />
+            </FormGroup>
+          </div>
         </div>
 
+        {/* ═══════ ADRES ═══════ */}
+        <div className="border-t border-border/50 pt-4">
+          <div className="text-[11px] font-semibold text-text-muted uppercase tracking-wider mb-3">Adres</div>
+          <SmartAdresInput
+            value={(form.adres as Adres) || {}}
+            onChange={(adres) => setForm((prev) => ({ ...prev, adres: adres as Record<string, string> }))}
+          />
+        </div>
+
+        {/* ═══════ BANKA HESAPLARI ═══════ */}
+        <SmartBankaSecici
+          bankalar={form.bankalar || []}
+          onChange={(bankalar) => setForm((prev) => ({ ...prev, bankalar }))}
+        />
+
+        {/* ═══════ NOTLAR ═══════ */}
         <FormGroup label="Notlar">
           <FormTextarea value={(form.not as string) || ''} onChange={(e) => handleChange('not', e.target.value)} rows={3} placeholder="Ek notlar..." />
         </FormGroup>
