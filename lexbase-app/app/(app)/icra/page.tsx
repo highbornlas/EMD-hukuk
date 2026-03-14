@@ -23,7 +23,7 @@ const DURUM_RENK: Record<string, string> = {
 };
 
 /* ── Siralama tipleri ── */
-type SortKey = 'kayitNo' | 'esasNo' | 'alacak' | 'tarih';
+type SortKey = 'kayitNo' | 'esasNo' | 'daire' | 'alacakli' | 'borclu' | 'acilisTarihi' | 'tebligTarihi' | 'durum' | 'alacak' | 'tahsilat' | 'sure';
 type SortDir = 'asc' | 'desc';
 
 /* ── Süre gün sayisi (tür bazli) ── */
@@ -131,13 +131,50 @@ export default function IcraPage() {
           cmp = ea.localeCompare(eb, 'tr');
           break;
         }
+        case 'daire': {
+          const da = tamIcraDairesiAdi(a.il, a.daire);
+          const db = tamIcraDairesiAdi(b.il, b.daire);
+          cmp = da.localeCompare(db, 'tr');
+          break;
+        }
+        case 'alacakli': {
+          const aa = alacakliBelirle(a.muvRol, muvAdMap[a.muvId || ''] || '', a.borclu || '').alacakli;
+          const ab = alacakliBelirle(b.muvRol, muvAdMap[b.muvId || ''] || '', b.borclu || '').alacakli;
+          cmp = aa.localeCompare(ab, 'tr');
+          break;
+        }
+        case 'borclu': {
+          const ba = alacakliBelirle(a.muvRol, muvAdMap[a.muvId || ''] || '', a.borclu || '').borclu;
+          const bb = alacakliBelirle(b.muvRol, muvAdMap[b.muvId || ''] || '', b.borclu || '').borclu;
+          cmp = ba.localeCompare(bb, 'tr');
+          break;
+        }
+        case 'acilisTarihi': {
+          const ta = a.tarih || '9999';
+          const tb = b.tarih || '9999';
+          cmp = ta.localeCompare(tb);
+          break;
+        }
+        case 'tebligTarihi': {
+          const ta = a.tebligTarihi || '9999';
+          const tb = b.tebligTarihi || '9999';
+          cmp = ta.localeCompare(tb);
+          break;
+        }
+        case 'durum': {
+          cmp = (a.durum || '').localeCompare(b.durum || '', 'tr');
+          break;
+        }
         case 'alacak':
           cmp = (a.alacak || 0) - (b.alacak || 0);
           break;
-        case 'tarih': {
-          const ta = a.tarih || '';
-          const tb = b.tarih || '';
-          cmp = ta.localeCompare(tb);
+        case 'tahsilat':
+          cmp = (a.tahsil || 0) - (b.tahsil || 0);
+          break;
+        case 'sure': {
+          const sa = sureMap[a.id]?.kalanGun ?? 9999;
+          const sb = sureMap[b.id]?.kalanGun ?? 9999;
+          cmp = sa - sb;
           break;
         }
       }
@@ -158,7 +195,7 @@ export default function IcraPage() {
   }
 
   function sortIcon(key: SortKey) {
-    if (sortKey !== key) return '';
+    if (sortKey !== key) return ' ↕';
     return sortDir === 'asc' ? ' ↑' : ' ↓';
   }
 
@@ -280,34 +317,19 @@ export default function IcraPage() {
         </div>
       ) : (
         <div className="bg-surface border border-border rounded-lg overflow-hidden overflow-x-auto">
-          {/* Tablo Baslik — UYAP Tarzı */}
-          <div className="grid grid-cols-[36px_minmax(200px,2fr)_minmax(100px,1fr)_minmax(100px,1fr)_80px_100px_90px_70px] gap-2 px-4 py-2.5 border-b border-border text-[11px] text-text-muted font-medium uppercase tracking-wider min-w-[900px]">
-            <span>#</span>
-            <button
-              type="button"
-              onClick={() => toggleSort('esasNo')}
-              className="text-left hover:text-text transition-colors"
-            >
-              Icra Dairesi / Esas No{sortIcon('esasNo')}
-            </button>
-            <span>Alacakli</span>
-            <span>Borclu</span>
-            <span>Durum</span>
-            <button
-              type="button"
-              onClick={() => toggleSort('alacak')}
-              className="text-left hover:text-text transition-colors"
-            >
-              Alacak{sortIcon('alacak')}
-            </button>
-            <span>Tahsilat</span>
-            <button
-              type="button"
-              onClick={() => toggleSort('tarih')}
-              className="text-left hover:text-text transition-colors"
-            >
-              Sure{sortIcon('tarih')}
-            </button>
+          {/* Tablo Baslik */}
+          <div className="grid grid-cols-[36px_minmax(80px,1fr)_minmax(120px,2fr)_minmax(90px,1fr)_minmax(90px,1fr)_82px_82px_75px_90px_80px_60px] gap-2 px-4 py-2.5 border-b border-border text-[11px] text-text-muted font-medium uppercase tracking-wider min-w-[1050px]">
+            <button type="button" onClick={() => toggleSort('kayitNo')} className="text-left hover:text-text transition-colors">#{sortIcon('kayitNo')}</button>
+            <button type="button" onClick={() => toggleSort('esasNo')} className="text-left hover:text-text transition-colors">Esas No{sortIcon('esasNo')}</button>
+            <button type="button" onClick={() => toggleSort('daire')} className="text-left hover:text-text transition-colors">İcra Dairesi{sortIcon('daire')}</button>
+            <button type="button" onClick={() => toggleSort('alacakli')} className="text-left hover:text-text transition-colors">Alacaklı{sortIcon('alacakli')}</button>
+            <button type="button" onClick={() => toggleSort('borclu')} className="text-left hover:text-text transition-colors">Borçlu{sortIcon('borclu')}</button>
+            <button type="button" onClick={() => toggleSort('acilisTarihi')} className="text-left hover:text-text transition-colors">Açılış{sortIcon('acilisTarihi')}</button>
+            <button type="button" onClick={() => toggleSort('tebligTarihi')} className="text-left hover:text-text transition-colors">Tebliğ{sortIcon('tebligTarihi')}</button>
+            <button type="button" onClick={() => toggleSort('durum')} className="text-left hover:text-text transition-colors">Durum{sortIcon('durum')}</button>
+            <button type="button" onClick={() => toggleSort('alacak')} className="text-left hover:text-text transition-colors">Alacak{sortIcon('alacak')}</button>
+            <button type="button" onClick={() => toggleSort('tahsilat')} className="text-left hover:text-text transition-colors">Tahsilat{sortIcon('tahsilat')}</button>
+            <button type="button" onClick={() => toggleSort('sure')} className="text-left hover:text-text transition-colors">Süre{sortIcon('sure')}</button>
           </div>
 
           {/* Satirlar */}
@@ -326,35 +348,43 @@ export default function IcraPage() {
               <Link
                 key={ic.id}
                 href={`/icra/${ic.id}`}
-                className={`grid grid-cols-[36px_minmax(200px,2fr)_minmax(100px,1fr)_minmax(100px,1fr)_80px_100px_90px_70px] gap-2 px-4 py-3 border-b border-border/50 hover:bg-gold-dim transition-colors group items-center min-w-[900px] ${rowVurgu}`}
+                className={`grid grid-cols-[36px_minmax(80px,1fr)_minmax(120px,2fr)_minmax(90px,1fr)_minmax(90px,1fr)_82px_82px_75px_90px_80px_60px] gap-2 px-4 py-3 border-b border-border/50 hover:bg-gold-dim transition-colors group items-center min-w-[1050px] ${rowVurgu}`}
               >
                 {/* Sıra */}
                 <span className="text-[11px] text-text-dim">{idx + 1}</span>
 
-                {/* İcra Dairesi + Esas No (UYAP birincil tanımlayıcı) */}
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-[var(--font-playfair)] text-sm font-bold text-gold truncate">
-                      {esasStr || '—'}
+                {/* Esas No */}
+                <div className="min-w-0 flex items-center gap-1.5">
+                  <span className="font-[var(--font-playfair)] text-sm font-bold text-gold truncate">
+                    {esasStr || '—'}
+                  </span>
+                  {ic.tur && (
+                    <span className="text-[9px] px-1 py-0.5 rounded bg-surface2 text-text-dim border border-border/50 whitespace-nowrap flex-shrink-0">
+                      {ic.tur}
                     </span>
-                    {ic.tur && (
-                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-surface2 text-text-dim border border-border/50 whitespace-nowrap flex-shrink-0">
-                        {ic.tur}
-                      </span>
-                    )}
-                  </div>
-                  {daireFull && (
-                    <div className="text-[11px] text-text-muted truncate mt-0.5" title={daireFull}>
-                      {daireFull}
-                    </div>
                   )}
                 </div>
+
+                {/* İcra Dairesi */}
+                <span className="text-xs text-text truncate" title={daireFull}>
+                  {daireFull || '—'}
+                </span>
 
                 {/* Alacakli */}
                 <span className="text-xs text-text truncate" title={alacakli}>{alacakli || '—'}</span>
 
                 {/* Borclu */}
                 <span className="text-xs text-text-muted truncate" title={borclu}>{borclu || '—'}</span>
+
+                {/* Açılış Tarihi */}
+                <span className="text-[11px] text-text-muted">
+                  {ic.tarih ? fmtTarih(ic.tarih) : '—'}
+                </span>
+
+                {/* Tebliğ Tarihi */}
+                <span className="text-[11px] text-text-muted">
+                  {ic.tebligTarihi ? fmtTarih(ic.tebligTarihi) : '—'}
+                </span>
 
                 {/* Durum */}
                 <span>

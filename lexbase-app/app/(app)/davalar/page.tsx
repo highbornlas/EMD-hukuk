@@ -8,6 +8,7 @@ import { DavaModal } from '@/components/modules/DavaModal';
 import { ExportMenu } from '@/components/ui/ExportMenu';
 import { DurusmaBadge } from '@/components/ui/SureBadge';
 import { tamMahkemeAdi, esasNoGoster, dosyaNoOlustur, davaciBelirle, durusmayaKalanGun } from '@/lib/utils/uyapHelpers';
+import { fmtTarih } from '@/lib/utils';
 import { DAVA_TURLERI, DAVA_DURUMLARI, DAVA_ASAMALARI } from '@/lib/constants/uyap';
 import { exportDavaListeUYAPXLS } from '@/lib/export/excelExport';
 import { exportDavaListePDF } from '@/lib/export/pdfExport';
@@ -30,16 +31,10 @@ const DURUM_RENK: Record<string, string> = {
   'Kapalı': 'text-text-dim bg-surface2 border-border',
 };
 
-// ── Sıralama seçenekleri ─────────────────────────────────────
+// ── Sıralama ─────────────────────────────────────────────────
 
-type SiralamaKey = 'kayitNo' | 'esasNo' | 'durusmaTarihi' | 'davaTarihi';
-
-const SIRALAMA_SECENEKLERI: { key: SiralamaKey; label: string }[] = [
-  { key: 'kayitNo', label: 'Kayıt No' },
-  { key: 'esasNo', label: 'Esas No' },
-  { key: 'durusmaTarihi', label: 'Duruşma Tarihi' },
-  { key: 'davaTarihi', label: 'Dava Tarihi' },
-];
+type SortKey = 'kayitNo' | 'esasNo' | 'mahkeme' | 'davaci' | 'davali' | 'acilisTarihi' | 'asama' | 'durum' | 'durusmaTarihi';
+type SortDir = 'asc' | 'desc';
 
 // ══════════════════════════════════════════════════════════════
 //  Davalar Sayfası
@@ -56,7 +51,8 @@ export default function DavalarPage() {
   const [davaTuruFiltre, setDavaTuruFiltre] = useState<string>('hepsi');
   const [tarihBaslangic, setTarihBaslangic] = useState('');
   const [tarihBitis, setTarihBitis] = useState('');
-  const [siralama, setSiralama] = useState<SiralamaKey>('kayitNo');
+  const [sortKey, setSortKey] = useState<SortKey>('kayitNo');
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [modalAcik, setModalAcik] = useState(false);
   const [seciliDava, setSeciliDava] = useState<Dava | null>(null);
 
@@ -132,31 +128,78 @@ export default function DavalarPage() {
     const list = [...filtrelenmis];
 
     list.sort((a, b) => {
-      switch (siralama) {
+      let cmp = 0;
+      switch (sortKey) {
         case 'kayitNo':
-          return (a.kayitNo ?? a.sira ?? 0) - (b.kayitNo ?? b.sira ?? 0);
+          cmp = (a.kayitNo ?? a.sira ?? 0) - (b.kayitNo ?? b.sira ?? 0);
+          break;
         case 'esasNo': {
           const aEsas = esasNoGoster(a.esasYil, a.esasNo);
           const bEsas = esasNoGoster(b.esasYil, b.esasNo);
-          return aEsas.localeCompare(bEsas, 'tr');
+          cmp = aEsas.localeCompare(bEsas, 'tr');
+          break;
+        }
+        case 'mahkeme': {
+          const aM = tamMahkemeAdi(a.il, a.mno, a.mtur);
+          const bM = tamMahkemeAdi(b.il, b.mno, b.mtur);
+          cmp = aM.localeCompare(bM, 'tr');
+          break;
+        }
+        case 'davaci': {
+          const aD = davaciBelirle(a.taraf, muvAdMap[a.muvId || ''] || '', a.karsi || '').davaci;
+          const bD = davaciBelirle(b.taraf, muvAdMap[b.muvId || ''] || '', b.karsi || '').davaci;
+          cmp = aD.localeCompare(bD, 'tr');
+          break;
+        }
+        case 'davali': {
+          const aD = davaciBelirle(a.taraf, muvAdMap[a.muvId || ''] || '', a.karsi || '').davali;
+          const bD = davaciBelirle(b.taraf, muvAdMap[b.muvId || ''] || '', b.karsi || '').davali;
+          cmp = aD.localeCompare(bD, 'tr');
+          break;
+        }
+        case 'acilisTarihi': {
+          const aT = a.tarih || '9999';
+          const bT = b.tarih || '9999';
+          cmp = aT.localeCompare(bT);
+          break;
+        }
+        case 'asama': {
+          cmp = (a.asama || '').localeCompare(b.asama || '', 'tr');
+          break;
+        }
+        case 'durum': {
+          cmp = (a.durum || '').localeCompare(b.durum || '', 'tr');
+          break;
         }
         case 'durusmaTarihi': {
           const aD = a.durusma || '9999';
           const bD = b.durusma || '9999';
-          return aD.localeCompare(bD);
-        }
-        case 'davaTarihi': {
-          const aT = a.tarih || '9999';
-          const bT = b.tarih || '9999';
-          return aT.localeCompare(bT);
+          cmp = aD.localeCompare(bD);
+          break;
         }
         default:
-          return 0;
+          cmp = 0;
       }
+      return sortDir === 'desc' ? -cmp : cmp;
     });
 
     return list;
-  }, [filtrelenmis, siralama]);
+  }, [filtrelenmis, sortKey, sortDir, muvAdMap]);
+
+  // ── Sıralama toggle ──────────────────────────────────────
+  function toggleSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  }
+
+  function sortIcon(key: SortKey) {
+    if (sortKey !== key) return ' ↕';
+    return sortDir === 'asc' ? ' ↑' : ' ↓';
+  }
 
   // ── Row highlight class ────────────────────────────────────
   const satırVurgu = useCallback((d: Dava): string => {
@@ -270,16 +313,7 @@ export default function DavalarPage() {
           ))}
         </select>
 
-        {/* Siralama */}
-        <select
-          value={siralama}
-          onChange={(e) => setSiralama(e.target.value as SiralamaKey)}
-          className="px-3 py-2.5 bg-surface border border-border rounded-lg text-xs text-text focus:outline-none focus:border-gold"
-        >
-          {SIRALAMA_SECENEKLERI.map((s) => (
-            <option key={s.key} value={s.key}>{s.label}</option>
-          ))}
-        </select>
+        {/* Sıralama artık sütün başlıklarından yapılıyor */}
       </div>
 
       {/* Tarih araligi filtre */}
@@ -332,17 +366,19 @@ export default function DavalarPage() {
         </div>
       ) : (
         <div className="bg-surface border border-border rounded-lg overflow-x-auto">
-          {/* Tablo Baslik — UYAP Tarzı */}
+          {/* Tablo Baslik */}
           <div
-            className="grid grid-cols-[36px_minmax(200px,2fr)_minmax(120px,1fr)_minmax(120px,1fr)_100px_80px_110px] gap-2 px-4 py-2.5 border-b border-border text-[11px] text-text-muted font-medium uppercase tracking-wider min-w-[850px]"
+            className="grid grid-cols-[36px_minmax(80px,1fr)_minmax(140px,2fr)_minmax(100px,1fr)_minmax(100px,1fr)_90px_80px_75px_100px] gap-2 px-4 py-2.5 border-b border-border text-[11px] text-text-muted font-medium uppercase tracking-wider min-w-[950px]"
           >
-            <span>#</span>
-            <span>Mahkeme / Esas No</span>
-            <span>Davaci</span>
-            <span>Davali</span>
-            <span>Asama</span>
-            <span>Durum</span>
-            <span>Durusma</span>
+            <button type="button" onClick={() => toggleSort('kayitNo')} className="text-left hover:text-text transition-colors">#{ sortIcon('kayitNo')}</button>
+            <button type="button" onClick={() => toggleSort('esasNo')} className="text-left hover:text-text transition-colors">Esas No{sortIcon('esasNo')}</button>
+            <button type="button" onClick={() => toggleSort('mahkeme')} className="text-left hover:text-text transition-colors">Mahkeme{sortIcon('mahkeme')}</button>
+            <button type="button" onClick={() => toggleSort('davaci')} className="text-left hover:text-text transition-colors">Davacı{sortIcon('davaci')}</button>
+            <button type="button" onClick={() => toggleSort('davali')} className="text-left hover:text-text transition-colors">Davalı{sortIcon('davali')}</button>
+            <button type="button" onClick={() => toggleSort('acilisTarihi')} className="text-left hover:text-text transition-colors">Açılış{sortIcon('acilisTarihi')}</button>
+            <button type="button" onClick={() => toggleSort('asama')} className="text-left hover:text-text transition-colors">Aşama{sortIcon('asama')}</button>
+            <button type="button" onClick={() => toggleSort('durum')} className="text-left hover:text-text transition-colors">Durum{sortIcon('durum')}</button>
+            <button type="button" onClick={() => toggleSort('durusmaTarihi')} className="text-left hover:text-text transition-colors">Duruşma{sortIcon('durusmaTarihi')}</button>
           </div>
 
           {/* Satirlar */}
@@ -358,32 +394,27 @@ export default function DavalarPage() {
               <Link
                 key={d.id}
                 href={`/davalar/${d.id}`}
-                className={`grid grid-cols-[36px_minmax(200px,2fr)_minmax(120px,1fr)_minmax(120px,1fr)_100px_80px_110px] gap-2 px-4 py-3 border-b border-border/50 hover:bg-gold-dim transition-colors group items-center min-w-[850px] ${vurgu}`}
+                className={`grid grid-cols-[36px_minmax(80px,1fr)_minmax(140px,2fr)_minmax(100px,1fr)_minmax(100px,1fr)_90px_80px_75px_100px] gap-2 px-4 py-3 border-b border-border/50 hover:bg-gold-dim transition-colors group items-center min-w-[950px] ${vurgu}`}
               >
                 {/* Sıra */}
                 <span className="text-[11px] text-text-dim">{idx + 1}</span>
 
-                {/* Mahkeme + Esas No (UYAP birincil tanımlayıcı) */}
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-[var(--font-playfair)] text-sm font-bold text-gold truncate">
-                      {esasStr || '—'}
+                {/* Esas No */}
+                <div className="min-w-0 flex items-center gap-1.5">
+                  <span className="font-[var(--font-playfair)] text-sm font-bold text-gold truncate">
+                    {esasStr || '—'}
+                  </span>
+                  {d.davaTuru && (
+                    <span className="text-[9px] px-1 py-0.5 rounded bg-surface2 text-text-dim border border-border/50 whitespace-nowrap flex-shrink-0">
+                      {d.davaTuru}
                     </span>
-                    {d.davaTuru && (
-                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-surface2 text-text-dim border border-border/50 whitespace-nowrap flex-shrink-0">
-                        {d.davaTuru}
-                      </span>
-                    )}
-                  </div>
-                  {mahkeme && (
-                    <div className="text-[11px] text-text-muted truncate mt-0.5" title={mahkeme}>
-                      {mahkeme}
-                    </div>
-                  )}
-                  {!mahkeme && d.konu && (
-                    <div className="text-[11px] text-text-dim truncate mt-0.5">{d.konu}</div>
                   )}
                 </div>
+
+                {/* Mahkeme */}
+                <span className="text-xs text-text truncate" title={mahkeme || d.konu || ''}>
+                  {mahkeme || d.konu || '—'}
+                </span>
 
                 {/* Davaci */}
                 <span className="text-xs text-text truncate" title={davaci}>
@@ -393,6 +424,11 @@ export default function DavalarPage() {
                 {/* Davali */}
                 <span className="text-xs text-text truncate" title={davali}>
                   {davali || '—'}
+                </span>
+
+                {/* Açılış Tarihi */}
+                <span className="text-[11px] text-text-muted">
+                  {d.tarih ? fmtTarih(d.tarih) : '—'}
                 </span>
 
                 {/* Asama */}
