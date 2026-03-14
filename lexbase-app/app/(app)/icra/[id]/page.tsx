@@ -2,28 +2,76 @@
 
 import { use, useState, useMemo } from 'react';
 import Link from 'next/link';
-import { useIcra } from '@/lib/hooks/useIcra';
+import { useIcra, useIcraKaydet } from '@/lib/hooks/useIcra';
+import { useDavalar } from '@/lib/hooks/useDavalar';
 import { useMuvekkillar } from '@/lib/hooks/useMuvekkillar';
 import { fmt, fmtTarih } from '@/lib/utils';
+import {
+  tamIcraDairesiAdi,
+  esasNoGoster,
+  alacakliBelirle,
+  sureHesapla,
+} from '@/lib/utils/uyapHelpers';
+import { SureBadge } from '@/components/ui/SureBadge';
+import { IcraModal } from '@/components/modules/IcraModal';
+import { DosyaEvrakTab } from '@/components/modules/DosyaEvrakTab';
 
 const TABS = [
+  { key: 'ozet', label: 'Özet', icon: '📋' },
   { key: 'evrak', label: 'Evraklar', icon: '📄' },
   { key: 'harcama', label: 'Harcamalar', icon: '💸' },
   { key: 'tahsilat', label: 'Tahsilat', icon: '💰' },
+  { key: 'sureler', label: 'Süreler', icon: '⏳' },
   { key: 'notlar', label: 'Notlar', icon: '📝' },
   { key: 'anlasma', label: 'Anlaşma', icon: '🤝' },
 ];
+
+const DURUM_RENK: Record<string, string> = {
+  'Aktif': 'bg-green-dim text-green border-green/20',
+  'Takipte': 'bg-blue-400/10 text-blue-400 border-blue-400/20',
+  'Haciz Aşaması': 'bg-orange-400/10 text-orange-400 border-orange-400/20',
+  'Satış Aşaması': 'bg-purple-400/10 text-purple-400 border-purple-400/20',
+  'Kapandı': 'bg-surface2 text-text-dim border-border',
+};
 
 export default function IcraDetayPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { data: icra, isLoading } = useIcra(id);
   const { data: muvekkillar } = useMuvekkillar();
-  const [aktifTab, setAktifTab] = useState('evrak');
+  const { data: davalar } = useDavalar();
+  const icraKaydet = useIcraKaydet();
+  const [aktifTab, setAktifTab] = useState('ozet');
+  const [duzenleModu, setDuzenleModu] = useState(false);
 
+  // Müvekkil adı
   const muvAd = useMemo(() => {
     if (!icra?.muvId || !muvekkillar) return '—';
     return muvekkillar.find((m) => m.id === icra.muvId)?.ad || '—';
   }, [icra, muvekkillar]);
+
+  // Tam icra dairesi adı
+  const daireAdi = useMemo(() => {
+    if (!icra) return '';
+    return tamIcraDairesiAdi(icra.il, icra.daire);
+  }, [icra]);
+
+  // Esas no
+  const esasNo = useMemo(() => {
+    if (!icra) return '';
+    return esasNoGoster(icra.esasYil, icra.esasNo) || icra.esas || '';
+  }, [icra]);
+
+  // Alacaklı / Borçlu
+  const taraflar = useMemo(() => {
+    if (!icra) return { alacakli: '—', borclu: '—' };
+    return alacakliBelirle(icra.muvRol, muvAd, icra.borclu || '—');
+  }, [icra, muvAd]);
+
+  // İlişkili Dava
+  const iliskiliDava = useMemo(() => {
+    if (!icra?.iliskiliDavaId || !davalar) return null;
+    return davalar.find((d) => d.id === icra.iliskiliDavaId) || null;
+  }, [icra, davalar]);
 
   // Hesaplamalar
   const hesap = useMemo(() => {
@@ -35,20 +83,23 @@ export default function IcraDetayPage({ params }: { params: Promise<{ id: string
     return { masraf, tahsilat, tahsilOran, kalan: alacak - tahsilat, evrakSayisi: (icra.evraklar || []).length };
   }, [icra]);
 
-  // İtiraz süresi hesaplama
+  // İtiraz süresi hesaplama (tebliğ tarihinden)
   const itirazBilgi = useMemo(() => {
-    if (!icra?.otarih) return null;
-    const itirazTarih = icra.itarih || icra.itirazSonTarih;
-    if (!itirazTarih) return null;
-    const sonTarih = new Date(itirazTarih);
-    const bugun = new Date();
-    const kalanGun = Math.ceil((sonTarih.getTime() - bugun.getTime()) / 86400000);
-    return {
-      tarih: itirazTarih,
-      kalanGun,
-      gecmis: kalanGun < 0,
-      acil: kalanGun >= 0 && kalanGun <= 2,
-    };
+    if (!icra?.tebligTarihi) {
+      // Eski format: otarih + itarih
+      if (!icra?.otarih) return null;
+      const itirazTarih = icra.itarih || icra.itirazSonTarih;
+      if (!itirazTarih) return null;
+      const sonTarih = new Date(itirazTarih);
+      const bugun = new Date();
+      const kalanGun = Math.ceil((sonTarih.getTime() - bugun.getTime()) / 86400000);
+      return { kalanGun, sonTarih: itirazTarih, gecmis: kalanGun < 0, acil: kalanGun >= 0 && kalanGun <= 2 };
+    }
+
+    // Yeni format: tebliğ + süre hesaplama
+    const gunSayisi = icra.tur === 'Kambiyo Senetlerine Özgü Takip' ? 5 : 7;
+    const sonuc = sureHesapla(icra.tebligTarihi, gunSayisi);
+    return { kalanGun: sonuc.kalanGun, sonTarih: sonuc.sonTarih, gecmis: sonuc.gecmis, acil: sonuc.acil };
   }, [icra]);
 
   if (isLoading) {
@@ -71,20 +122,41 @@ export default function IcraDetayPage({ params }: { params: Promise<{ id: string
       <div className="flex items-center gap-2 text-xs text-text-muted mb-4">
         <Link href="/icra" className="hover:text-gold transition-colors">İcra Dosyaları</Link>
         <span>›</span>
-        <span className="text-text">{icra.no || icra.id}</span>
+        <span className="text-text">{esasNo || icra.no || icra.id.slice(0, 8)}</span>
       </div>
 
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="font-[var(--font-playfair)] text-2xl text-gold font-bold">{icra.no || '—'}</h1>
-          <div className="text-sm text-text mt-1">Borçlu: {icra.borclu || '—'}</div>
-          <div className="text-xs text-text-muted mt-0.5">
-            Müvekkil: <span className="text-text">{muvAd}</span>
-            {icra.daire && <> · {icra.daire}</>}
+          <div className="flex items-center gap-3">
+            <h1 className="font-[var(--font-playfair)] text-2xl text-gold font-bold">
+              {esasNo || icra.no || '—'}
+            </h1>
+            {icra.tur && (
+              <span className="text-[10px] font-bold px-2 py-1 rounded bg-surface2 text-text-muted border border-border">
+                {icra.tur}
+              </span>
+            )}
+          </div>
+
+          {daireAdi && (
+            <div className="text-xs text-gold/80 mt-1 font-medium">{daireAdi}</div>
+          )}
+
+          <div className="text-xs text-text-muted mt-1">
+            Alacaklı: <span className="text-text">{taraflar.alacakli}</span>
+            <span className="mx-1.5 text-text-dim">→</span>
+            Borçlu: <span className="text-text">{taraflar.borclu}</span>
           </div>
         </div>
+
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setDuzenleModu(true)}
+            className="text-xs px-3 py-1.5 rounded bg-gold/10 text-gold border border-gold/20 hover:bg-gold/20 transition-colors"
+          >
+            Düzenle
+          </button>
           {icra.muvRol && (
             <span className={`text-[10px] font-bold px-2 py-1 rounded border ${
               icra.muvRol === 'alacakli' ? 'bg-green-dim text-green border-green/20' : 'bg-red-dim text-red border-red/20'
@@ -93,11 +165,7 @@ export default function IcraDetayPage({ params }: { params: Promise<{ id: string
             </span>
           )}
           {icra.durum && (
-            <span className={`text-[10px] font-bold px-2 py-1 rounded border ${
-              icra.durum === 'Aktif' ? 'bg-green-dim text-green border-green/20' :
-              icra.durum === 'Kapandı' ? 'bg-surface2 text-text-dim border-border' :
-              'bg-gold-dim text-gold border-gold/20'
-            }`}>
+            <span className={`text-[10px] font-bold px-2 py-1 rounded border ${DURUM_RENK[icra.durum] || 'bg-gold-dim text-gold border-gold/20'}`}>
               {icra.durum}
             </span>
           )}
@@ -112,46 +180,84 @@ export default function IcraDetayPage({ params }: { params: Promise<{ id: string
           <div className="text-sm font-bold text-green mb-1">{fmt(icra.tahsil || 0)}</div>
           <div className="h-1.5 bg-surface2 rounded-full overflow-hidden">
             <div
-              className={`h-full rounded-full ${hesap.tahsilOran >= 100 ? 'bg-green' : hesap.tahsilOran > 50 ? 'bg-gold' : 'bg-red'}`}
+              className={`h-full rounded-full transition-all ${hesap.tahsilOran >= 100 ? 'bg-green' : hesap.tahsilOran > 50 ? 'bg-gold' : 'bg-red'}`}
               style={{ width: `${hesap.tahsilOran}%` }}
             />
           </div>
+          <div className="text-[10px] text-text-dim mt-0.5 text-right">%{hesap.tahsilOran.toFixed(0)}</div>
         </div>
         <KpiCard label="Kalan" value={fmt(hesap.kalan)} color="text-red" />
-        {itirazBilgi && (
+        {itirazBilgi ? (
           <div className={`bg-surface border rounded-lg p-3 ${itirazBilgi.gecmis ? 'border-text-dim' : itirazBilgi.acil ? 'border-red bg-red-dim' : 'border-gold bg-gold-dim'}`}>
             <div className="text-[10px] text-text-muted uppercase tracking-wider mb-0.5">İtiraz Süresi</div>
-            <div className={`text-sm font-bold ${itirazBilgi.gecmis ? 'text-text-dim' : itirazBilgi.acil ? 'text-red' : 'text-gold'}`}>
-              {itirazBilgi.gecmis ? 'Süre doldu' : `${itirazBilgi.kalanGun} gün`}
-            </div>
-            <div className="text-[10px] text-text-dim mt-0.5">{fmtTarih(itirazBilgi.tarih)}</div>
+            <SureBadge kalanGun={itirazBilgi.kalanGun} label="itiraz" />
+            <div className="text-[10px] text-text-dim mt-0.5">{fmtTarih(itirazBilgi.sonTarih)}</div>
           </div>
+        ) : (
+          <KpiCard label="İtiraz Süresi" value="—" />
         )}
         <KpiCard label="Masraf" value={fmt(hesap.masraf)} />
         <KpiCard label="Evrak" value={hesap.evrakSayisi.toString()} />
       </div>
 
+      {/* Kapanış Bilgisi */}
+      {icra.durum === 'Kapandı' && icra.kapanisSebebi && (
+        <div className="bg-surface2 border border-border rounded-lg p-4 mb-6 flex items-center gap-3">
+          <span className="text-lg">🔒</span>
+          <div>
+            <div className="text-xs font-semibold text-text">Dosya Kapatıldı</div>
+            <div className="text-[11px] text-text-muted">
+              Sebep: <span className="text-text">{icra.kapanisSebebi}</span>
+              {icra.kapanisTarih && <> · {fmtTarih(icra.kapanisTarih)}</>}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Bilgi Grid */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         <InfoCard title="İcra Bilgileri">
-          <InfoRow label="Tür" value={icra.tur || '—'} />
+          <InfoRow label="Takip Türü" value={icra.tur || '—'} />
+          <InfoRow label="Alacak Türü" value={icra.atur || '—'} />
           <InfoRow label="İl / Adliye" value={[icra.il, icra.adliye].filter(Boolean).join(' / ') || '—'} />
-          <InfoRow label="İcra Dairesi" value={icra.daire || '—'} />
-          <InfoRow label="Esas" value={icra.esas || '—'} />
+          <InfoRow label="İcra Dairesi" value={daireAdi || icra.daire || '—'} />
+          <InfoRow label="Esas No" value={esasNo || '—'} />
           <InfoRow label="Dayanak" value={icra.dayanak || '—'} />
+          <InfoRow label="Faiz" value={icra.faiz ? `%${icra.faiz}` : '—'} />
         </InfoCard>
 
         <InfoCard title="Tarihler">
-          <InfoRow label="Kayıt Tarihi" value={fmtTarih(icra.tarih) || '—'} />
+          <InfoRow label="Takip Tarihi" value={fmtTarih(icra.tarih) || '—'} />
           <InfoRow label="Ödeme Emri" value={fmtTarih(icra.otarih) || '—'} />
-          <InfoRow label="İtiraz Son Tarih" value={fmtTarih(icra.itarih || icra.itirazSonTarih) || '—'} />
-          <InfoRow label="İlişkili Dava" value={icra.davno || '—'} />
+          <InfoRow label="Tebliğ Tarihi" value={fmtTarih(icra.tebligTarihi) || '—'} />
+          <InfoRow label="İtiraz Son Tarih" value={itirazBilgi ? fmtTarih(itirazBilgi.sonTarih) : '—'} />
+          {itirazBilgi && !itirazBilgi.gecmis && (
+            <div className="mt-1 flex justify-end">
+              <SureBadge kalanGun={itirazBilgi.kalanGun} label="itiraz" />
+            </div>
+          )}
+          <div className="border-t border-border pt-2 mt-2">
+            {iliskiliDava ? (
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-text-muted">İlişkili Dava</span>
+                <Link
+                  href={`/davalar/${iliskiliDava.id}`}
+                  className="text-gold hover:underline font-medium"
+                >
+                  {esasNoGoster(iliskiliDava.esasYil, iliskiliDava.esasNo) || iliskiliDava.no || 'Dosya'}
+                </Link>
+              </div>
+            ) : (
+              <InfoRow label="İlişkili Dava" value={icra.davno || '—'} />
+            )}
+          </div>
         </InfoCard>
 
         <InfoCard title="Taraflar">
           <InfoRow label="Müvekkil" value={muvAd} />
           <InfoRow label="Müvekkil Rolü" value={icra.muvRol === 'alacakli' ? 'Alacaklı' : icra.muvRol === 'borclu' ? 'Borçlu' : '—'} />
-          <InfoRow label="Borçlu" value={icra.borclu || '—'} />
+          <InfoRow label="Alacaklı" value={taraflar.alacakli} />
+          <InfoRow label="Borçlu" value={taraflar.borclu} />
           <InfoRow label="Borçlu TC" value={icra.btc || '—'} />
           <InfoRow label="Karşı Vekil" value={icra.karsav || '—'} />
         </InfoCard>
@@ -170,18 +276,39 @@ export default function IcraDetayPage({ params }: { params: Promise<{ id: string
             }`}
           >
             {tab.icon} {tab.label}
+            {tab.key === 'sureler' && (icra.sureler || []).length > 0 && (
+              <span className="ml-1 text-[10px] bg-gold/10 text-gold px-1 rounded">{icra.sureler!.length}</span>
+            )}
+            {tab.key === 'evrak' && hesap.evrakSayisi > 0 && (
+              <span className="ml-1 text-[10px] bg-surface2 text-text-muted px-1 rounded">{hesap.evrakSayisi}</span>
+            )}
           </button>
         ))}
       </div>
 
       {/* Tab İçerikleri */}
       <div className="bg-surface border border-border rounded-lg p-5">
-        {aktifTab === 'evrak' && <EvrakTab evraklar={icra.evraklar || []} />}
+        {aktifTab === 'ozet' && <OzetTab icra={icra} muvAd={muvAd} daireAdi={daireAdi} taraflar={taraflar} esasNo={esasNo} hesap={hesap} itirazBilgi={itirazBilgi} />}
+        {aktifTab === 'evrak' && <DosyaEvrakTab dosyaId={id} dosyaTipi="icra" muvId={icra.muvId} />}
         {aktifTab === 'harcama' && <HarcamaTab harcamalar={icra.harcamalar || []} />}
         {aktifTab === 'tahsilat' && <TahsilatTab tahsilatlar={icra.tahsilatlar || []} />}
+        {aktifTab === 'sureler' && <SurelerTab sureler={icra.sureler || []} />}
         {aktifTab === 'notlar' && <NotlarTab notlar={icra.notlar || []} notText={icra.not} />}
         {aktifTab === 'anlasma' && <AnlasmaTab anlasma={icra.anlasma} />}
       </div>
+
+      {/* Düzenleme Modal */}
+      {duzenleModu && (
+        <IcraModal
+          open={duzenleModu}
+          onClose={() => setDuzenleModu(false)}
+          icra={icra}
+          onCreated={(ic) => {
+            icraKaydet.mutate(ic);
+            setDuzenleModu(false);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -215,23 +342,131 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function EvrakTab({ evraklar }: { evraklar: Record<string, unknown>[] }) {
-  if (evraklar.length === 0) return <EmptyTab icon="📄" message="Henüz evrak eklenmemiş" />;
+// ── Özet Sekmesi ─────────────────────────────────────────────
+function OzetTab({
+  icra,
+  muvAd,
+  daireAdi,
+  taraflar,
+  esasNo: esas,
+  hesap,
+  itirazBilgi,
+}: {
+  icra: import('@/lib/hooks/useIcra').Icra;
+  muvAd: string;
+  daireAdi: string;
+  taraflar: { alacakli: string; borclu: string };
+  esasNo: string;
+  hesap: { masraf: number; tahsilat: number; tahsilOran: number; kalan: number; evrakSayisi: number };
+  itirazBilgi: { kalanGun: number; sonTarih: string; gecmis: boolean; acil: boolean } | null;
+}) {
   return (
-    <div className="space-y-2">
-      {evraklar.map((e, i) => (
-        <div key={(e.id as string) || i} className="flex items-center gap-3 p-3 bg-surface2 rounded-lg">
-          <span className="text-sm">📄</span>
-          <div className="flex-1">
-            <div className="text-xs font-medium text-text">{(e.ad as string) || 'Belge'}</div>
-            {(e.tarih as string) && <div className="text-[11px] text-text-muted">{fmtTarih(e.tarih as string)}</div>}
+    <div className="space-y-5">
+      {/* UYAP Tarzı Dosya Kartı */}
+      <div className="bg-surface2 rounded-lg p-5 border border-border">
+        <div className="grid grid-cols-2 gap-x-8 gap-y-3">
+          <div className="col-span-2 border-b border-border pb-3 mb-1">
+            <div className="text-[10px] text-text-muted uppercase tracking-wider mb-1">Dosya Bilgileri</div>
+            <div className="text-sm font-bold text-gold">{esas || '—'}</div>
+            {daireAdi && <div className="text-xs text-text-muted mt-0.5">{daireAdi}</div>}
+          </div>
+
+          <OzetSatir label="Takip Türü" value={icra.tur || '—'} />
+          <OzetSatir label="Alacak Türü" value={icra.atur || '—'} />
+          <OzetSatir label="Alacaklı" value={taraflar.alacakli} />
+          <OzetSatir label="Borçlu" value={taraflar.borclu} />
+          <OzetSatir label="Müvekkil" value={muvAd} />
+          <OzetSatir label="Karşı Vekil" value={icra.karsav || '—'} />
+          <OzetSatir label="Durum" value={icra.durum || '—'} />
+          <OzetSatir label="Dayanak" value={icra.dayanak || '—'} />
+          <OzetSatir label="Takip Tarihi" value={fmtTarih(icra.tarih) || '—'} />
+          <OzetSatir label="Tebliğ Tarihi" value={fmtTarih(icra.tebligTarihi) || '—'} />
+        </div>
+      </div>
+
+      {/* İtiraz Süresi */}
+      {itirazBilgi && !itirazBilgi.gecmis && (
+        <div className={`border rounded-lg p-4 ${itirazBilgi.acil ? 'bg-red-dim border-red/20' : 'bg-gold-dim border-gold/20'}`}>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className={`text-[10px] uppercase tracking-wider font-bold mb-1 ${itirazBilgi.acil ? 'text-red' : 'text-gold'}`}>
+                İtiraz Süresi
+              </div>
+              <div className="text-xs text-text-muted">Son tarih: {fmtTarih(itirazBilgi.sonTarih)}</div>
+            </div>
+            <SureBadge kalanGun={itirazBilgi.kalanGun} label="itiraz" />
           </div>
         </div>
-      ))}
+      )}
+
+      {/* Finansal Özet */}
+      <div className="grid grid-cols-4 gap-3">
+        <MiniKpi label="Alacak" value={fmt(icra.alacak || 0)} color="text-gold" />
+        <MiniKpi label="Tahsilat" value={fmt(hesap.tahsilat)} color="text-green" />
+        <MiniKpi label="Kalan" value={fmt(hesap.kalan)} color="text-red" />
+        <MiniKpi label="Masraf" value={fmt(hesap.masraf)} />
+      </div>
+
+      {/* Tahsilat Progress */}
+      <div className="bg-surface2 rounded-lg p-4">
+        <div className="flex justify-between text-xs mb-2">
+          <span className="text-text-muted">Tahsilat Oranı</span>
+          <span className="font-bold text-text">%{hesap.tahsilOran.toFixed(1)}</span>
+        </div>
+        <div className="h-2 bg-surface rounded-full overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all ${hesap.tahsilOran >= 100 ? 'bg-green' : hesap.tahsilOran > 50 ? 'bg-gold' : 'bg-red'}`}
+            style={{ width: `${Math.min(hesap.tahsilOran, 100)}%` }}
+          />
+        </div>
+      </div>
     </div>
   );
 }
 
+function OzetSatir({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div className="text-[10px] text-text-dim uppercase tracking-wider">{label}</div>
+      <div className="text-xs text-text font-medium truncate">{value}</div>
+    </div>
+  );
+}
+
+function MiniKpi({ label, value, color }: { label: string; value: string; color?: string }) {
+  return (
+    <div className="bg-surface2 rounded-lg p-3 text-center">
+      <div className="text-[10px] text-text-muted mb-0.5">{label}</div>
+      <div className={`text-sm font-bold ${color || 'text-text'}`}>{value}</div>
+    </div>
+  );
+}
+
+// ── Süreler Sekmesi ──────────────────────────────────────────
+function SurelerTab({ sureler }: { sureler: Array<{ id: string; tip: string; baslangic: string; gun: number }> }) {
+  if (sureler.length === 0) return <EmptyTab icon="⏳" message="Henüz süre tanımlanmamış" />;
+  return (
+    <div className="space-y-2">
+      {sureler.map((s) => {
+        const hesap = sureHesapla(s.baslangic, s.gun);
+        return (
+          <div key={s.id} className="flex items-center gap-3 p-3 bg-surface2 rounded-lg">
+            <SureBadge kalanGun={hesap.kalanGun} compact />
+            <div className="flex-1">
+              <div className="text-xs font-medium text-text">{s.tip}</div>
+              <div className="text-[11px] text-text-muted">
+                {fmtTarih(s.baslangic)} → {fmtTarih(hesap.sonTarih)} ({s.gun} gün)
+              </div>
+            </div>
+            <SureBadge kalanGun={hesap.kalanGun} label={s.tip} />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Harcama Sekmesi ──────────────────────────────────────────
 function HarcamaTab({ harcamalar }: { harcamalar: Array<{ id: string; kat?: string; acik?: string; tarih?: string; tutar: number }> }) {
   if (harcamalar.length === 0) return <EmptyTab icon="💸" message="Henüz harcama kaydı yok" />;
   const toplam = harcamalar.reduce((t, h) => t + (h.tutar || 0), 0);
@@ -252,6 +487,7 @@ function HarcamaTab({ harcamalar }: { harcamalar: Array<{ id: string; kat?: stri
   );
 }
 
+// ── Tahsilat Sekmesi ─────────────────────────────────────────
 function TahsilatTab({ tahsilatlar }: { tahsilatlar: Array<{ id: string; tur: string; tutar: number; tarih?: string; acik?: string }> }) {
   if (tahsilatlar.length === 0) return <EmptyTab icon="💰" message="Henüz tahsilat kaydı yok" />;
   const turLabel: Record<string, string> = {
@@ -278,6 +514,7 @@ function TahsilatTab({ tahsilatlar }: { tahsilatlar: Array<{ id: string; tur: st
   );
 }
 
+// ── Notlar Sekmesi ───────────────────────────────────────────
 function NotlarTab({ notlar, notText }: { notlar: Record<string, unknown>[]; notText?: string }) {
   return (
     <div className="space-y-3">
@@ -293,6 +530,7 @@ function NotlarTab({ notlar, notText }: { notlar: Record<string, unknown>[]; not
   );
 }
 
+// ── Anlaşma Sekmesi ──────────────────────────────────────────
 function AnlasmaTab({ anlasma }: { anlasma?: Record<string, unknown> }) {
   if (!anlasma || Object.keys(anlasma).length === 0) return <EmptyTab icon="🤝" message="Henüz anlaşma tanımlanmamış" />;
   const turLabel: Record<string, string> = { pesin: 'Peşin', taksit: 'Taksitli', basari: 'Başarıya Göre', tahsilat: 'Tahsilata Göre', karma: 'Karma' };
@@ -306,6 +544,7 @@ function AnlasmaTab({ anlasma }: { anlasma?: Record<string, unknown> }) {
   );
 }
 
+// ── Boş Sekme ────────────────────────────────────────────────
 function EmptyTab({ icon, message }: { icon: string; message: string }) {
   return (
     <div className="text-center py-10">

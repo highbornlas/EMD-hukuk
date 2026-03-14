@@ -17,6 +17,10 @@ export interface Belge {
   storagePath: string;
   etiketler?: string[];
   meta?: VekaletnameMeta;
+  // Dosya bağlantıları (opsiyonel — dava/icra evrakları için)
+  davaId?: string;
+  icraId?: string;
+  evrakTuru?: string; // DavaEvrakTuru | IcraEvrakTuru
   [key: string]: unknown;
 }
 
@@ -84,10 +88,58 @@ export function useMuvBelgeler(muvId: string | null) {
       if (error) throw error;
       return (data || [])
         .map((r) => ({ id: r.id, ...(r.data as object) }) as Belge)
-        .filter((b) => b.muvId === muvId)
+        .filter((b) => b.muvId === muvId && !b.davaId && !b.icraId) // dava/icra evrakları müvekkil belgelerine karışmasın
         .sort((a, b) => (b.tarih || '').localeCompare(a.tarih || ''));
     },
     enabled: !!buroId && !!muvId,
+  });
+}
+
+// ── Davaya bağlı belgeler ─────────────────────────────────────
+export function useDavaBelgeler(davaId: string | null) {
+  const buroId = useBuroId();
+
+  return useQuery<Belge[]>({
+    queryKey: ['belgeler', 'dava', davaId, buroId],
+    queryFn: async () => {
+      if (!buroId || !davaId) return [];
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('belgeler')
+        .select('id, data')
+        .eq('buro_id', buroId);
+
+      if (error) throw error;
+      return (data || [])
+        .map((r) => ({ id: r.id, ...(r.data as object) }) as Belge)
+        .filter((b) => b.davaId === davaId)
+        .sort((a, b) => (b.tarih || '').localeCompare(a.tarih || ''));
+    },
+    enabled: !!buroId && !!davaId,
+  });
+}
+
+// ── İcraya bağlı belgeler ─────────────────────────────────────
+export function useIcraBelgeler(icraId: string | null) {
+  const buroId = useBuroId();
+
+  return useQuery<Belge[]>({
+    queryKey: ['belgeler', 'icra', icraId, buroId],
+    queryFn: async () => {
+      if (!buroId || !icraId) return [];
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('belgeler')
+        .select('id, data')
+        .eq('buro_id', buroId);
+
+      if (error) throw error;
+      return (data || [])
+        .map((r) => ({ id: r.id, ...(r.data as object) }) as Belge)
+        .filter((b) => b.icraId === icraId)
+        .sort((a, b) => (b.tarih || '').localeCompare(a.tarih || ''));
+    },
+    enabled: !!buroId && !!icraId,
   });
 }
 
@@ -203,7 +255,8 @@ export function useBelgeYukle() {
 
       // Benzersiz path oluştur
       const ext = dosya.name.split('.').pop() || 'bin';
-      const storagePath = `${buroId}/${belge.muvId}/${belge.id}.${ext}`;
+      const klasor = belge.muvId || (belge.davaId ? `dava-${belge.davaId}` : belge.icraId ? `icra-${belge.icraId}` : 'genel');
+      const storagePath = `${buroId}/${klasor}/${belge.id}.${ext}`;
 
       // Storage'a yükle
       const { error: uploadError } = await supabase.storage

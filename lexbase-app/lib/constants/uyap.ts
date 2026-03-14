@@ -172,6 +172,39 @@ export const DURUSMA_SAATLERI = [
   '17:00',
 ] as const;
 
+// ── Dava Evrak Türleri ──
+export const DAVA_EVRAK_TURLERI = [
+  { key: 'dava_dilekce', label: 'Dava Dilekçesi', icon: '📝' },
+  { key: 'cevap_dilekce', label: 'Cevap Dilekçesi', icon: '📝' },
+  { key: 'replik', label: 'Replik / Düplik', icon: '📝' },
+  { key: 'tensip_zapti', label: 'Tensip Zaptı', icon: '📋' },
+  { key: 'durusma_zapti', label: 'Duruşma Zaptı', icon: '📋' },
+  { key: 'bilirkisi_raporu', label: 'Bilirkişi Raporu', icon: '🔍' },
+  { key: 'karar', label: 'Karar', icon: '⚖️' },
+  { key: 'istinaf_dilekce', label: 'İstinaf Dilekçesi', icon: '📝' },
+  { key: 'temyiz_dilekce', label: 'Temyiz Dilekçesi', icon: '📝' },
+  { key: 'harc_makbuz', label: 'Harç Makbuzu', icon: '🧾' },
+  { key: 'vekaletname', label: 'Vekaletname', icon: '📜' },
+  { key: 'delil', label: 'Delil / Ek', icon: '📎' },
+  { key: 'tebligat', label: 'Tebligat', icon: '📬' },
+  { key: 'diger', label: 'Diğer', icon: '📄' },
+] as const;
+
+// ── İcra Evrak Türleri ──
+export const ICRA_EVRAK_TURLERI = [
+  { key: 'takip_talebi', label: 'Takip Talebi', icon: '📝' },
+  { key: 'odeme_emri', label: 'Ödeme / İcra Emri', icon: '📋' },
+  { key: 'itiraz_dilekce', label: 'İtiraz Dilekçesi', icon: '📝' },
+  { key: 'haciz_tutanagi', label: 'Haciz Tutanağı', icon: '📋' },
+  { key: 'kiymet_takdiri', label: 'Kıymet Takdiri', icon: '🔍' },
+  { key: 'satis_ilani', label: 'Satış İlanı', icon: '📢' },
+  { key: 'harc_makbuz', label: 'Harç Makbuzu', icon: '🧾' },
+  { key: 'vekaletname', label: 'Vekaletname', icon: '📜' },
+  { key: 'borclu_mal_beyan', label: 'Borçlu Mal Beyanı', icon: '📄' },
+  { key: 'tebligat', label: 'Tebligat', icon: '📬' },
+  { key: 'diger', label: 'Diğer', icon: '📄' },
+] as const;
+
 // ── İller ──
 export const ILLER = [
   'Adana', 'Adıyaman', 'Afyonkarahisar', 'Ağrı', 'Aksaray', 'Amasya', 'Ankara', 'Antalya',
