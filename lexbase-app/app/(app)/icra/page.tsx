@@ -104,6 +104,7 @@ export default function IcraPage() {
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [modalAcik, setModalAcik] = useState(false);
   const [seciliIcra, setSeciliIcra] = useState<Icra | null>(null);
+  const [sorguPaneliAcik, setSorguPaneliAcik] = useState(true);
 
   // Sayfalama
   const [sayfa, setSayfa] = useState(1);
@@ -355,27 +356,74 @@ export default function IcraPage() {
         <MiniKpi label="Yaklaşan Süre" value={kpis.yaklasanSure.toString()} color={kpis.yaklasanSure > 0 ? 'text-orange-400' : 'text-text-muted'} />
       </div>
 
-      {/* Arama + Filtreler */}
-      <div className="flex flex-wrap items-center gap-3 mb-5">
-        <div className="flex-1 min-w-[220px] relative">
-          <input type="text" value={arama} onChange={(e) => setArama(e.target.value)} placeholder="Esas no, daire, alacaklı/borçlu adı, tür ile ara..." className="w-full px-4 py-2.5 pl-9 bg-surface border border-border rounded-lg text-sm text-text placeholder:text-text-dim focus:outline-none focus:border-gold transition-colors" />
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim text-sm">&#x1F50D;</span>
-        </div>
-        <select value={durumFiltre} onChange={(e) => setDurumFiltre(e.target.value)} className="px-3 py-2.5 bg-surface border border-border rounded-lg text-xs text-text focus:outline-none focus:border-gold">
-          <option value="hepsi">Tüm Durumlar</option>
-          {ICRA_DURUMLARI.map((d) => <option key={d} value={d}>{d}</option>)}
-        </select>
-        <select value={turFiltre} onChange={(e) => setTurFiltre(e.target.value)} className="px-3 py-2.5 bg-surface border border-border rounded-lg text-xs text-text focus:outline-none focus:border-gold max-w-[200px]">
-          <option value="hepsi">Tüm Türler</option>
-          {ICRA_TURLERI.map((t) => <option key={t} value={t}>{t}</option>)}
-        </select>
-        <div className="flex items-center gap-1.5">
-          <input type="date" value={tarihBaslangic} onChange={(e) => setTarihBaslangic(e.target.value)} className="px-2 py-2 bg-surface border border-border rounded-lg text-xs text-text focus:outline-none focus:border-gold" title="Başlangıç tarihi" />
-          <span className="text-text-dim text-xs">-</span>
-          <input type="date" value={tarihBitis} onChange={(e) => setTarihBitis(e.target.value)} className="px-2 py-2 bg-surface border border-border rounded-lg text-xs text-text focus:outline-none focus:border-gold" title="Bitiş tarihi" />
-        </div>
-        {filtreAktif && (
-          <button onClick={() => { setArama(''); setDurumFiltre('hepsi'); setTurFiltre('hepsi'); setTarihBaslangic(''); setTarihBitis(''); }} className="text-[11px] text-gold hover:text-gold-light transition-colors underline">Filtreleri temizle</button>
+      {/* ── UYAP Dosya Sorgulama Paneli ──────────────────────── */}
+      <div className="bg-surface border border-border rounded-lg mb-5 overflow-hidden">
+        {/* Panel Başlık */}
+        <button
+          type="button"
+          onClick={() => setSorguPaneliAcik((p) => !p)}
+          className="w-full flex items-center justify-between px-4 py-2.5 bg-surface2/50 border-b border-border hover:bg-surface2 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-sm">&#x1F50D;</span>
+            <span className="text-xs font-semibold text-text uppercase tracking-wider">Dosya Sorgulama</span>
+            {filtreAktif && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-gold text-bg font-bold">Filtre Aktif</span>}
+          </div>
+          <span className="text-text-dim text-xs">{sorguPaneliAcik ? '\u25B2' : '\u25BC'}</span>
+        </button>
+
+        {/* Panel İçerik */}
+        {sorguPaneliAcik && (
+          <div className="px-4 py-4">
+            {/* 1. Satır — Genel Arama */}
+            <div className="mb-4">
+              <label className="block text-[10px] text-text-dim uppercase tracking-wider mb-1.5 font-medium">Genel Arama</label>
+              <div className="relative">
+                <input type="text" value={arama} onChange={(e) => setArama(e.target.value)} placeholder="Esas no, daire, alacaklı/borçlu adı, tür ile ara..." className="w-full px-4 py-2 pl-9 bg-bg border border-border rounded text-sm text-text placeholder:text-text-dim focus:outline-none focus:border-gold transition-colors" />
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim text-xs">&#x1F50D;</span>
+              </div>
+            </div>
+
+            {/* 2. Satır — Filtre Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-3 mb-4">
+              <div>
+                <label className="block text-[10px] text-text-dim uppercase tracking-wider mb-1.5 font-medium">Durum</label>
+                <select value={durumFiltre} onChange={(e) => setDurumFiltre(e.target.value)} className="w-full px-3 py-2 bg-bg border border-border rounded text-xs text-text focus:outline-none focus:border-gold">
+                  <option value="hepsi">Tümü</option>
+                  {ICRA_DURUMLARI.map((d) => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[10px] text-text-dim uppercase tracking-wider mb-1.5 font-medium">İcra Türü</label>
+                <select value={turFiltre} onChange={(e) => setTurFiltre(e.target.value)} className="w-full px-3 py-2 bg-bg border border-border rounded text-xs text-text focus:outline-none focus:border-gold">
+                  <option value="hepsi">Tümü</option>
+                  {ICRA_TURLERI.map((t) => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[10px] text-text-dim uppercase tracking-wider mb-1.5 font-medium">Başlangıç Tarihi</label>
+                <input type="date" value={tarihBaslangic} onChange={(e) => setTarihBaslangic(e.target.value)} className="w-full px-3 py-2 bg-bg border border-border rounded text-xs text-text focus:outline-none focus:border-gold" />
+              </div>
+              <div>
+                <label className="block text-[10px] text-text-dim uppercase tracking-wider mb-1.5 font-medium">Bitiş Tarihi</label>
+                <input type="date" value={tarihBitis} onChange={(e) => setTarihBitis(e.target.value)} className="w-full px-3 py-2 bg-bg border border-border rounded text-xs text-text focus:outline-none focus:border-gold" />
+              </div>
+            </div>
+
+            {/* 3. Satır — Aksiyon Butonları */}
+            <div className="flex items-center justify-between pt-3 border-t border-border/50">
+              <div className="text-[11px] text-text-dim">
+                {filtreAktif ? `${filtrelenmis.length} / ${icralar?.length ?? 0} sonuç` : `${filtrelenmis.length} dosya listeleniyor`}
+              </div>
+              <div className="flex items-center gap-2">
+                {filtreAktif && (
+                  <button onClick={() => { setArama(''); setDurumFiltre('hepsi'); setTurFiltre('hepsi'); setTarihBaslangic(''); setTarihBitis(''); }} className="px-3 py-1.5 text-[11px] text-text-muted bg-bg border border-border rounded hover:border-red hover:text-red transition-colors">
+                    Temizle
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
         )}
       </div>
 
