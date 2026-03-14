@@ -280,26 +280,18 @@ export default function IcraPage() {
         </div>
       ) : (
         <div className="bg-surface border border-border rounded-lg overflow-hidden overflow-x-auto">
-          {/* Tablo Baslik */}
-          <div className="grid grid-cols-[70px_100px_90px_1fr_1fr_1fr_90px_100px_100px_80px] gap-2 px-4 py-2.5 border-b border-border text-[11px] text-text-muted font-medium uppercase tracking-wider min-w-[1000px]">
-            <button
-              type="button"
-              onClick={() => toggleSort('kayitNo')}
-              className="text-left hover:text-text transition-colors"
-            >
-              Kayit No{sortIcon('kayitNo')}
-            </button>
+          {/* Tablo Baslik — UYAP Tarzı */}
+          <div className="grid grid-cols-[36px_minmax(200px,2fr)_minmax(100px,1fr)_minmax(100px,1fr)_80px_100px_90px_70px] gap-2 px-4 py-2.5 border-b border-border text-[11px] text-text-muted font-medium uppercase tracking-wider min-w-[900px]">
+            <span>#</span>
             <button
               type="button"
               onClick={() => toggleSort('esasNo')}
               className="text-left hover:text-text transition-colors"
             >
-              Esas No{sortIcon('esasNo')}
+              Icra Dairesi / Esas No{sortIcon('esasNo')}
             </button>
-            <span>Takip Turu</span>
             <span>Alacakli</span>
             <span>Borclu</span>
-            <span>Icra Mud.</span>
             <span>Durum</span>
             <button
               type="button"
@@ -308,7 +300,7 @@ export default function IcraPage() {
             >
               Alacak{sortIcon('alacak')}
             </button>
-            <span>Tahsilat %</span>
+            <span>Tahsilat</span>
             <button
               type="button"
               onClick={() => toggleSort('tarih')}
@@ -321,7 +313,6 @@ export default function IcraPage() {
           {/* Satirlar */}
           {filtrelenmis.map((ic, idx) => {
             const tahsilOran = ic.alacak && ic.alacak > 0 ? Math.min(((ic.tahsil || 0) / ic.alacak) * 100, 100) : 0;
-            const kayitNoStr = dosyaNoOlustur('I', ic.kayitNo || ic.sira);
             const esasStr = esasNoGoster(ic.esasYil, ic.esasNo) || ic.esas || '';
             const daireFull = tamIcraDairesiAdi(ic.il, ic.daire);
             const muvAd = muvAdMap[ic.muvId || ''] || '';
@@ -335,25 +326,35 @@ export default function IcraPage() {
               <Link
                 key={ic.id}
                 href={`/icra/${ic.id}`}
-                className={`grid grid-cols-[70px_100px_90px_1fr_1fr_1fr_90px_100px_100px_80px] gap-2 px-4 py-3 border-b border-border/50 hover:bg-gold-dim transition-colors group items-center min-w-[1000px] ${rowVurgu}`}
+                className={`grid grid-cols-[36px_minmax(200px,2fr)_minmax(100px,1fr)_minmax(100px,1fr)_80px_100px_90px_70px] gap-2 px-4 py-3 border-b border-border/50 hover:bg-gold-dim transition-colors group items-center min-w-[900px] ${rowVurgu}`}
               >
-                {/* Kayit No */}
-                <span className="font-[var(--font-playfair)] text-[11px] font-bold text-gold">{kayitNoStr || `I-${String(idx + 1).padStart(3, '0')}`}</span>
+                {/* Sıra */}
+                <span className="text-[11px] text-text-dim">{idx + 1}</span>
 
-                {/* Esas No */}
-                <span className="text-xs font-semibold text-text truncate">{esasStr || '—'}</span>
-
-                {/* Takip Turu */}
-                <span className="text-[10px] text-text-muted truncate">{ic.tur || '—'}</span>
+                {/* İcra Dairesi + Esas No (UYAP birincil tanımlayıcı) */}
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-[var(--font-playfair)] text-sm font-bold text-gold truncate">
+                      {esasStr || '—'}
+                    </span>
+                    {ic.tur && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-surface2 text-text-dim border border-border/50 whitespace-nowrap flex-shrink-0">
+                        {ic.tur}
+                      </span>
+                    )}
+                  </div>
+                  {daireFull && (
+                    <div className="text-[11px] text-text-muted truncate mt-0.5" title={daireFull}>
+                      {daireFull}
+                    </div>
+                  )}
+                </div>
 
                 {/* Alacakli */}
                 <span className="text-xs text-text truncate" title={alacakli}>{alacakli || '—'}</span>
 
                 {/* Borclu */}
                 <span className="text-xs text-text-muted truncate" title={borclu}>{borclu || '—'}</span>
-
-                {/* Icra Mudurlugu */}
-                <span className="text-[10px] text-text-dim truncate" title={daireFull}>{daireFull || '—'}</span>
 
                 {/* Durum */}
                 <span>
@@ -366,14 +367,14 @@ export default function IcraPage() {
                 <span className="text-xs font-semibold text-text font-[var(--font-playfair)]">{fmt(ic.alacak || 0)}</span>
 
                 {/* Tahsilat % */}
-                <span className="flex items-center gap-2">
+                <span className="flex items-center gap-1.5">
                   <div className="flex-1 h-1.5 bg-surface2 rounded-full overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all ${tahsilOran >= 100 ? 'bg-green' : tahsilOran > 50 ? 'bg-gold' : 'bg-red'}`}
                       style={{ width: `${tahsilOran}%` }}
                     />
                   </div>
-                  <span className="text-[10px] text-text-dim w-8 text-right">{Math.round(tahsilOran)}%</span>
+                  <span className="text-[10px] text-text-dim w-7 text-right">{Math.round(tahsilOran)}%</span>
                 </span>
 
                 {/* Sure */}

@@ -332,51 +332,58 @@ export default function DavalarPage() {
         </div>
       ) : (
         <div className="bg-surface border border-border rounded-lg overflow-x-auto">
-          {/* Tablo Baslik */}
+          {/* Tablo Baslik — UYAP Tarzı */}
           <div
-            className="grid grid-cols-[70px_100px_100px_1fr_1fr_1fr_100px_90px_120px] gap-2 px-4 py-2.5 border-b border-border text-[11px] text-text-muted font-medium uppercase tracking-wider min-w-[900px]"
+            className="grid grid-cols-[36px_minmax(200px,2fr)_minmax(120px,1fr)_minmax(120px,1fr)_100px_80px_110px] gap-2 px-4 py-2.5 border-b border-border text-[11px] text-text-muted font-medium uppercase tracking-wider min-w-[850px]"
           >
-            <span>Kayit No</span>
-            <span>Esas No</span>
-            <span>Dava Turu</span>
+            <span>#</span>
+            <span>Mahkeme / Esas No</span>
             <span>Davaci</span>
             <span>Davali</span>
-            <span>Mahkeme</span>
             <span>Asama</span>
             <span>Durum</span>
             <span>Durusma</span>
           </div>
 
           {/* Satirlar */}
-          {sirali.map((d) => {
+          {sirali.map((d, idx) => {
             const muvAd = muvAdMap[d.muvId || ''] || '';
             const karsiAd = d.karsi || '';
             const { davaci, davali } = davaciBelirle(d.taraf, muvAd, karsiAd);
             const mahkeme = tamMahkemeAdi(d.il, d.mno, d.mtur);
             const esasStr = esasNoGoster(d.esasYil, d.esasNo);
-            const kayitNoStr = dosyaNoOlustur('D', d.kayitNo ?? d.sira);
             const vurgu = satırVurgu(d);
 
             return (
               <Link
                 key={d.id}
                 href={`/davalar/${d.id}`}
-                className={`grid grid-cols-[70px_100px_100px_1fr_1fr_1fr_100px_90px_120px] gap-2 px-4 py-3 border-b border-border/50 hover:bg-gold-dim transition-colors group items-center min-w-[900px] ${vurgu}`}
+                className={`grid grid-cols-[36px_minmax(200px,2fr)_minmax(120px,1fr)_minmax(120px,1fr)_100px_80px_110px] gap-2 px-4 py-3 border-b border-border/50 hover:bg-gold-dim transition-colors group items-center min-w-[850px] ${vurgu}`}
               >
-                {/* Kayit No */}
-                <span className="font-[var(--font-playfair)] text-[11px] text-text-dim font-bold">
-                  {kayitNoStr || '—'}
-                </span>
+                {/* Sıra */}
+                <span className="text-[11px] text-text-dim">{idx + 1}</span>
 
-                {/* Esas No */}
-                <span className="text-xs font-bold text-gold truncate">
-                  {esasStr || '—'}
-                </span>
-
-                {/* Dava Turu */}
-                <span className="text-[11px] text-text-muted truncate">
-                  {d.davaTuru || '—'}
-                </span>
+                {/* Mahkeme + Esas No (UYAP birincil tanımlayıcı) */}
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-[var(--font-playfair)] text-sm font-bold text-gold truncate">
+                      {esasStr || '—'}
+                    </span>
+                    {d.davaTuru && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-surface2 text-text-dim border border-border/50 whitespace-nowrap flex-shrink-0">
+                        {d.davaTuru}
+                      </span>
+                    )}
+                  </div>
+                  {mahkeme && (
+                    <div className="text-[11px] text-text-muted truncate mt-0.5" title={mahkeme}>
+                      {mahkeme}
+                    </div>
+                  )}
+                  {!mahkeme && d.konu && (
+                    <div className="text-[11px] text-text-dim truncate mt-0.5">{d.konu}</div>
+                  )}
+                </div>
 
                 {/* Davaci */}
                 <span className="text-xs text-text truncate" title={davaci}>
@@ -386,11 +393,6 @@ export default function DavalarPage() {
                 {/* Davali */}
                 <span className="text-xs text-text truncate" title={davali}>
                   {davali || '—'}
-                </span>
-
-                {/* Mahkeme */}
-                <span className="text-[11px] text-text-muted truncate" title={mahkeme}>
-                  {mahkeme || '—'}
                 </span>
 
                 {/* Asama */}
