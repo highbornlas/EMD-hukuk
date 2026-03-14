@@ -7,17 +7,10 @@ import { SmartBankaSecici } from '@/components/ui/SmartBankaSecici';
 import { EtiketSecici } from '@/components/ui/EtiketSecici';
 import { baroSicilDogrula, tbbSicilDogrula, bankaIbanlarDogrula, telefonDogrula, telefonFormatla, epostaDogrula } from '@/lib/validation';
 
-/* ══════════════════════════════════════════════════════════════
-   Vekil (Avukat) Modal — Oluştur / Düzenle
-   Basit form — tip seçimi yok, tüm avukatlar gerçek kişi
-   BankaWidget entegre
-   ══════════════════════════════════════════════════════════════ */
-
 interface VekilModalProps {
   open: boolean;
   onClose: () => void;
   vekil?: Vekil | null;
-  /** Modal kapanınca oluşturulan kaydı döndür (RehberSecici için) */
   onCreated?: (v: Vekil) => void;
 }
 
@@ -47,10 +40,18 @@ const bos: Partial<Vekil> = {
   aciklama: '',
 };
 
+type Adim = 1 | 2 | 3;
+const ADIM_BASLIKLAR: Record<Adim, string> = {
+  1: 'Kimlik Bilgileri',
+  2: 'İletişim',
+  3: 'Finans & Diğer',
+};
+
 export function VekilModal({ open, onClose, vekil, onCreated }: VekilModalProps) {
   const [form, setForm] = useState<Partial<Vekil>>({ ...bos });
   const [hata, setHata] = useState('');
   const [alanHata, setAlanHata] = useState<Record<string, string | null>>({});
+  const [adim, setAdim] = useState<Adim>(1);
   const { data: mevcutlar } = useVekillar();
   const kaydet = useVekilKaydet();
 
@@ -62,6 +63,7 @@ export function VekilModal({ open, onClose, vekil, onCreated }: VekilModalProps)
     }
     setHata('');
     setAlanHata({});
+    setAdim(1);
   }, [vekil, open]);
 
   function handleChange(field: string, value: string) {
@@ -78,31 +80,48 @@ export function VekilModal({ open, onClose, vekil, onCreated }: VekilModalProps)
     if (fn && val) setAlanHata((p) => ({ ...p, [field]: fn(val) }));
   }
 
-  async function handleSubmit() {
-    if (!form.ad?.trim()) {
-      setHata('Avukat adı zorunludur.');
-      return;
-    }
-
-    // ── Format doğrulama ──
+  function adim1Dogrula(): boolean {
+    if (!form.ad?.trim()) { setHata('Avukat adı zorunludur.'); return false; }
     let formatHata: string | null = null;
     if (form.baroSicil) formatHata = baroSicilDogrula(form.baroSicil);
     if (!formatHata && form.tbbSicil) formatHata = tbbSicilDogrula(form.tbbSicil);
-    if (!formatHata && form.tel) formatHata = telefonDogrula(form.tel);
-    if (!formatHata && form.mail) formatHata = epostaDogrula(form.mail);
-    if (!formatHata && form.bankalar?.length) formatHata = bankaIbanlarDogrula(form.bankalar);
-    if (formatHata) { setHata(formatHata); return; }
+    if (formatHata) { setHata(formatHata); return false; }
 
-    // ── Telefon numarasını formatla ──
-    if (form.tel) form.tel = telefonFormatla(form.tel);
-
-    // ── Çoklu kayıt kontrolü (Baro + Baro Sicil kombinasyonu) ──
     if (form.baro && form.baroSicil?.trim()) {
       const digerler = (mevcutlar || []).filter((v) => v.id !== form.id);
       const ayni = digerler.find((v) => v.baro === form.baro && v.baroSicil === form.baroSicil?.trim());
-      if (ayni) { setHata(`${form.baro} Barosu ${form.baroSicil} sicil numaralı avukat zaten kayıtlı: ${[ayni.ad, ayni.soyad].filter(Boolean).join(' ')}`); return; }
+      if (ayni) { setHata(`${form.baro} Barosu ${form.baroSicil} sicil numaralı avukat zaten kayıtlı: ${[ayni.ad, ayni.soyad].filter(Boolean).join(' ')}`); return false; }
     }
+    setHata('');
+    return true;
+  }
 
+  function adim2Dogrula(): boolean {
+    let formatHata: string | null = null;
+    if (form.tel) formatHata = telefonDogrula(form.tel);
+    if (!formatHata && form.mail) formatHata = epostaDogrula(form.mail);
+    if (formatHata) { setHata(formatHata); return false; }
+    if (form.tel) form.tel = telefonFormatla(form.tel);
+    setHata('');
+    return true;
+  }
+
+  function ileri() {
+    if (adim === 1 && adim1Dogrula()) setAdim(2);
+    else if (adim === 2 && adim2Dogrula()) setAdim(3);
+  }
+
+  function geri() {
+    setHata('');
+    if (adim === 2) setAdim(1);
+    else if (adim === 3) setAdim(2);
+  }
+
+  async function handleSubmit() {
+    if (form.bankalar?.length) {
+      const bankaHata = bankaIbanlarDogrula(form.bankalar);
+      if (bankaHata) { setHata(bankaHata); return; }
+    }
     setHata('');
     try {
       await kaydet.mutateAsync(form as Vekil);
@@ -120,98 +139,118 @@ export function VekilModal({ open, onClose, vekil, onCreated }: VekilModalProps)
       title={vekil ? 'Avukat Düzenle' : 'Yeni Avukat'}
       maxWidth="max-w-2xl"
       footer={
-        <>
-          <BtnOutline onClick={onClose}>İptal</BtnOutline>
-          <BtnGold onClick={handleSubmit} disabled={kaydet.isPending}>
-            {kaydet.isPending ? 'Kaydediliyor...' : 'Kaydet'}
-          </BtnGold>
-        </>
+        <div className="flex items-center justify-between w-full">
+          <div>{adim > 1 && <BtnOutline onClick={geri}>← Geri</BtnOutline>}</div>
+          <div className="flex gap-2">
+            <BtnOutline onClick={onClose}>İptal</BtnOutline>
+            {adim < 3 ? (
+              <BtnGold onClick={ileri}>İleri →</BtnGold>
+            ) : (
+              <BtnGold onClick={handleSubmit} disabled={kaydet.isPending}>
+                {kaydet.isPending ? 'Kaydediliyor...' : '✓ Kaydet'}
+              </BtnGold>
+            )}
+          </div>
+        </div>
       }
     >
       <div className="space-y-4">
+        {/* ═══ ADIM İNDİKATÖRÜ ═══ */}
+        <div className="flex items-center gap-2 mb-2">
+          {([1, 2, 3] as Adim[]).map((a) => (
+            <button
+              key={a}
+              type="button"
+              onClick={() => {
+                if (a < adim) { setHata(''); setAdim(a); }
+                else if (a === adim + 1 && adim === 1 && adim1Dogrula()) setAdim(a);
+                else if (a === adim + 1 && adim === 2 && adim2Dogrula()) setAdim(a);
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all ${
+                a === adim
+                  ? 'bg-gold text-bg shadow-[0_2px_8px_rgba(201,168,76,0.3)]'
+                  : a < adim
+                  ? 'bg-green-500/15 text-green-400 cursor-pointer hover:bg-green-500/25'
+                  : 'bg-surface2 text-text-dim'
+              }`}
+            >
+              {a < adim ? '✓' : a}
+              <span className="hidden sm:inline">{ADIM_BASLIKLAR[a]}</span>
+            </button>
+          ))}
+        </div>
+
         {hata && (
-          <div className="bg-red-dim border border-red/20 rounded-[10px] px-3 py-2 text-xs text-red">
-            {hata}
-          </div>
+          <div className="bg-red-dim border border-red/20 rounded-[10px] px-3 py-2 text-xs text-red">{hata}</div>
         )}
 
-        {/* Ad + Soyad */}
-        <div className="grid grid-cols-2 gap-4">
-          <FormGroup label="Ad" required>
-            <FormInput
-              value={form.ad || ''}
-              onChange={(e) => handleChange('ad', e.target.value)}
-              placeholder="Ad"
-            />
-          </FormGroup>
-          <FormGroup label="Soyad">
-            <FormInput
-              value={form.soyad || ''}
-              onChange={(e) => handleChange('soyad', e.target.value)}
-              placeholder="Soyad"
-            />
-          </FormGroup>
-        </div>
+        {/* ═══ ADIM 1: KİMLİK ═══ */}
+        {adim === 1 && (
+          <>
+            <div className="grid grid-cols-2 gap-4">
+              <FormGroup label="Ad" required>
+                <FormInput value={form.ad || ''} onChange={(e) => handleChange('ad', e.target.value)} placeholder="Ad" />
+              </FormGroup>
+              <FormGroup label="Soyad">
+                <FormInput value={form.soyad || ''} onChange={(e) => handleChange('soyad', e.target.value)} placeholder="Soyad" />
+              </FormGroup>
+            </div>
 
-        {/* Baro + Sicil */}
-        <div className="grid grid-cols-2 gap-4">
-          <FormGroup label="Baro">
-            <select
-              value={form.baro || ''}
-              onChange={(e) => handleChange('baro', e.target.value)}
-              className="form-input"
-            >
-              <option value="">Baro Seçin</option>
-              {BAROLAR.map((b) => (
-                <option key={b} value={b}>{b} Barosu</option>
-              ))}
-            </select>
-          </FormGroup>
-          <FormGroup label="Baro Sicil No" error={alanHata.baroSicil}>
-            <FormInput value={form.baroSicil || ''} onChange={(e) => handleChange('baroSicil', e.target.value)} onBlur={() => handleBlur('baroSicil')} placeholder="Sicil No" />
-          </FormGroup>
-        </div>
+            <div className="grid grid-cols-2 gap-4">
+              <FormGroup label="Baro">
+                <select value={form.baro || ''} onChange={(e) => handleChange('baro', e.target.value)} className="form-input">
+                  <option value="">Baro Seçin</option>
+                  {BAROLAR.map((b) => <option key={b} value={b}>{b} Barosu</option>)}
+                </select>
+              </FormGroup>
+              <FormGroup label="Baro Sicil No" error={alanHata.baroSicil}>
+                <FormInput value={form.baroSicil || ''} onChange={(e) => handleChange('baroSicil', e.target.value)} onBlur={() => handleBlur('baroSicil')} placeholder="Sicil No" />
+              </FormGroup>
+            </div>
 
-        {/* TBB Sicil */}
-        <FormGroup label="TBB Sicil No" error={alanHata.tbbSicil}>
-          <FormInput value={form.tbbSicil || ''} onChange={(e) => handleChange('tbbSicil', e.target.value)} onBlur={() => handleBlur('tbbSicil')} placeholder="Türkiye Barolar Birliği Sicil No" />
-        </FormGroup>
-
-        {/* İletişim */}
-        <div className="border-t border-border/50 pt-4">
-          <div className="text-[11px] font-semibold text-text-muted uppercase tracking-wider mb-3">İletişim Bilgileri</div>
-          <div className="grid grid-cols-2 gap-4">
-            <FormGroup label="Telefon" error={alanHata.tel}>
-              <FormInput type="tel" value={form.tel || ''} onChange={(e) => handleChange('tel', e.target.value)} onBlur={() => handleBlur('tel')} placeholder="0532 000 0000" />
+            <FormGroup label="TBB Sicil No" error={alanHata.tbbSicil}>
+              <FormInput value={form.tbbSicil || ''} onChange={(e) => handleChange('tbbSicil', e.target.value)} onBlur={() => handleBlur('tbbSicil')} placeholder="Türkiye Barolar Birliği Sicil No" />
             </FormGroup>
-            <FormGroup label="E-posta" error={alanHata.mail}>
-              <FormInput type="email" value={form.mail || ''} onChange={(e) => handleChange('mail', e.target.value)} onBlur={() => handleBlur('mail')} placeholder="ornek@mail.com" />
-            </FormGroup>
-          </div>
-          <div className="mt-3">
+          </>
+        )}
+
+        {/* ═══ ADIM 2: İLETİŞİM ═══ */}
+        {adim === 2 && (
+          <>
+            <div className="text-[11px] font-semibold text-text-muted uppercase tracking-wider mb-1">İletişim Bilgileri</div>
+            <div className="grid grid-cols-2 gap-4">
+              <FormGroup label="Telefon" error={alanHata.tel}>
+                <FormInput type="tel" value={form.tel || ''} onChange={(e) => handleChange('tel', e.target.value)} onBlur={() => handleBlur('tel')} placeholder="0532 000 0000" />
+              </FormGroup>
+              <FormGroup label="E-posta" error={alanHata.mail}>
+                <FormInput type="email" value={form.mail || ''} onChange={(e) => handleChange('mail', e.target.value)} onBlur={() => handleBlur('mail')} placeholder="ornek@mail.com" />
+              </FormGroup>
+            </div>
             <FormGroup label="UETS / KEP Adresi">
               <FormInput value={form.uets || ''} onChange={(e) => handleChange('uets', e.target.value)} placeholder="UETS adresi" />
             </FormGroup>
-          </div>
-        </div>
+          </>
+        )}
 
-        {/* ═══════ BANKA HESAPLARI ═══════ */}
-        <SmartBankaSecici
-          bankalar={form.bankalar || []}
-          onChange={(bankalar) => setForm((prev) => ({ ...prev, bankalar }))}
-        />
+        {/* ═══ ADIM 3: FİNANS ═══ */}
+        {adim === 3 && (
+          <>
+            <SmartBankaSecici
+              bankalar={form.bankalar || []}
+              onChange={(bankalar) => setForm((prev) => ({ ...prev, bankalar }))}
+            />
 
-        {/* ═══════ ETİKETLER ═══════ */}
-        <EtiketSecici
-          etiketler={form.etiketler || []}
-          onChange={(etiketler) => setForm((prev) => ({ ...prev, etiketler }))}
-          mevcutEtiketler={(mevcutlar || []).flatMap((v) => v.etiketler || [])}
-        />
+            <EtiketSecici
+              etiketler={form.etiketler || []}
+              onChange={(etiketler) => setForm((prev) => ({ ...prev, etiketler }))}
+              mevcutEtiketler={(mevcutlar || []).flatMap((v) => v.etiketler || [])}
+            />
 
-        {/* Notlar */}
-        <FormGroup label="Notlar">
-          <FormTextarea value={form.aciklama || ''} onChange={(e) => handleChange('aciklama', e.target.value)} rows={3} placeholder="Ek notlar..." />
-        </FormGroup>
+            <FormGroup label="Notlar">
+              <FormTextarea value={form.aciklama || ''} onChange={(e) => handleChange('aciklama', e.target.value)} rows={3} placeholder="Ek notlar..." />
+            </FormGroup>
+          </>
+        )}
       </div>
     </Modal>
   );
