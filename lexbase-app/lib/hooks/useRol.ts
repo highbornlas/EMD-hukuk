@@ -70,8 +70,9 @@ const YETKI_HARITASI: Record<Rol, Set<string>> = {
 };
 
 // ── useRol — Kullanıcının rolünü döndürür ─────────────────────
-export function useRol(): Rol {
-  const [rol, setRol] = useState<Rol>('avukat');
+export function useRol(): { rol: Rol | null; loading: boolean } {
+  const [rol, setRol] = useState<Rol | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
@@ -88,21 +89,27 @@ export function useRol(): Rol {
         .single();
 
       const GECERLI_ROLLER: Rol[] = ['yonetici', 'avukat', 'stajyer', 'sekreter'];
-      if (!cancelled && kul?.rol && GECERLI_ROLLER.includes(kul.rol as Rol)) {
-        setRol(kul.rol as Rol);
+      if (!cancelled) {
+        if (kul?.rol && GECERLI_ROLLER.includes(kul.rol as Rol)) {
+          setRol(kul.rol as Rol);
+        } else {
+          setRol('avukat'); // fallback only after fetch completes
+        }
+        setLoading(false);
       }
     })();
 
     return () => { cancelled = true; };
   }, []);
 
-  return rol;
+  return { rol, loading };
 }
 
 // ── useYetki — Belirli bir yetkiye sahip mi? ──────────────────
-export function useYetki(yetki: string): boolean {
-  const rol = useRol();
-  return YETKI_HARITASI[rol]?.has(yetki) ?? false;
+export function useYetki(yetki: string): { yetkili: boolean; loading: boolean } {
+  const { rol, loading } = useRol();
+  if (loading || !rol) return { yetkili: false, loading };
+  return { yetkili: YETKI_HARITASI[rol]?.has(yetki) ?? false, loading: false };
 }
 
 // ── yetkiVar — Non-hook versiyon (rol biliniyorsa) ────────────

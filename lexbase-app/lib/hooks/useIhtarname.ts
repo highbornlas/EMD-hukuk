@@ -98,10 +98,14 @@ export function useIhtarnameKaydet() {
 /* Soft delete — _silindi timestamp */
 export function useIhtarnameSil() {
   const kaydet = useIhtarnameKaydet();
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (ihtarname: Ihtarname) => {
       await kaydet.mutateAsync({ ...ihtarname, _silindi: new Date().toISOString() });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['cop-kutusu'] });
     },
   });
 }
@@ -120,6 +124,7 @@ export function useIhtarnameHardSil() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['ihtarnameler'] });
+      queryClient.invalidateQueries({ queryKey: ['cop-kutusu'] });
     },
   });
 }

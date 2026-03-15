@@ -209,6 +209,7 @@ export function useDavaSil() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['davalar'] });
+      queryClient.invalidateQueries({ queryKey: ['cop-kutusu'] });
     },
   });
 }
@@ -231,6 +232,7 @@ export function useDavaKaliciSil() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['davalar'] });
+      queryClient.invalidateQueries({ queryKey: ['cop-kutusu'] });
     },
   });
 }
@@ -264,6 +266,7 @@ export function useDavaGeriYukle() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['davalar'] });
+      queryClient.invalidateQueries({ queryKey: ['cop-kutusu'] });
     },
   });
 }

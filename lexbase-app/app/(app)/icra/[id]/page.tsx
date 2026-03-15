@@ -2,7 +2,7 @@
 
 import { use, useState, useMemo } from 'react';
 import Link from 'next/link';
-import { useIcra, useIcraKaydet } from '@/lib/hooks/useIcra';
+import { useIcra, useIcraKaydet, useIcraSil, useIcraArsivle } from '@/lib/hooks/useIcra';
 import { useDavalar } from '@/lib/hooks/useDavalar';
 import { useMuvekkillar } from '@/lib/hooks/useMuvekkillar';
 import { fmt, fmtTarih } from '@/lib/utils';
@@ -42,6 +42,8 @@ export default function IcraDetayPage({ params }: { params: Promise<{ id: string
   const { data: muvekkillar } = useMuvekkillar();
   const { data: davalar } = useDavalar();
   const icraKaydet = useIcraKaydet();
+  const silMut = useIcraSil();
+  const arsivleMut = useIcraArsivle();
   const [aktifTab, setAktifTab] = useState('ozet');
   const [duzenleModu, setDuzenleModu] = useState(false);
   const [tahsilatModal, setTahsilatModal] = useState(false);
@@ -160,6 +162,25 @@ export default function IcraDetayPage({ params }: { params: Promise<{ id: string
             className="text-xs px-3 py-1.5 rounded bg-gold/10 text-gold border border-gold/20 hover:bg-gold/20 transition-colors"
           >
             Düzenle
+          </button>
+          <button
+            onClick={() => { arsivleMut.mutate(id); }}
+            className="text-xs px-3 py-1.5 rounded bg-surface text-text-muted border border-border hover:border-gold/40 transition-colors"
+            title="Arşive kaldır"
+          >
+            📦
+          </button>
+          <button
+            onClick={() => {
+              if (confirm(`"${esasNo || 'Bu icra dosyası'}" silinecek. Emin misiniz?`)) {
+                silMut.mutate(id);
+                window.location.href = '/icra';
+              }
+            }}
+            className="text-xs px-3 py-1.5 rounded bg-surface text-red border border-red/20 hover:bg-red-dim transition-colors"
+            title="Sil"
+          >
+            🗑️
           </button>
           {icra.muvRol && (
             <span className={`text-[10px] font-bold px-2 py-1 rounded border ${

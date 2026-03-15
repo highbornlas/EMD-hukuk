@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
 
 /* ══════════════════════════════════════════════════════════════
    PTT Gönderi Sorgulama — Server-side CORS Bypass
@@ -7,6 +8,14 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(req: NextRequest) {
   try {
+    // Auth kontrolü — sadece oturum açmış kullanıcılar erişebilir
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ hata: 'Yetkilendirme gerekli' }, { status: 401 });
+    }
+
     const { barkod } = await req.json();
 
     if (!barkod || typeof barkod !== 'string' || barkod.trim().length < 5) {

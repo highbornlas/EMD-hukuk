@@ -14,8 +14,9 @@ interface Props {
 }
 
 export function YetkiKoruma({ yetki, children, fallback = null }: Props) {
-  const yetkili = useYetki(yetki);
+  const { yetkili, loading } = useYetki(yetki);
 
+  if (loading) return null;
   if (!yetkili) return fallback;
   return children;
 }

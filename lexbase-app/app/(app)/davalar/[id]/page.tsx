@@ -2,7 +2,7 @@
 
 import { use, useState, useMemo } from 'react';
 import Link from 'next/link';
-import { useDava, useDavaKaydet } from '@/lib/hooks/useDavalar';
+import { useDava, useDavaKaydet, useDavaSil, useDavaArsivle } from '@/lib/hooks/useDavalar';
 import { useIcralar } from '@/lib/hooks/useIcra';
 import { useMuvekkillar } from '@/lib/hooks/useMuvekkillar';
 import { fmt, fmtTarih } from '@/lib/utils';
@@ -48,6 +48,8 @@ export default function DavaDetayPage({ params }: { params: Promise<{ id: string
   const { data: muvekkillar } = useMuvekkillar();
   const { data: icralar } = useIcralar();
   const davaKaydet = useDavaKaydet();
+  const silMut = useDavaSil();
+  const arsivleMut = useDavaArsivle();
   const [aktifTab, setAktifTab] = useState('ozet');
   const [duzenleModu, setDuzenleModu] = useState(false);
   const [tahsilatModal, setTahsilatModal] = useState(false);
@@ -156,6 +158,25 @@ export default function DavaDetayPage({ params }: { params: Promise<{ id: string
             className="text-xs px-3 py-1.5 rounded bg-gold/10 text-gold border border-gold/20 hover:bg-gold/20 transition-colors"
           >
             Düzenle
+          </button>
+          <button
+            onClick={() => { arsivleMut.mutate(id); }}
+            className="text-xs px-3 py-1.5 rounded bg-surface text-text-muted border border-border hover:border-gold/40 transition-colors"
+            title="Arşive kaldır"
+          >
+            📦
+          </button>
+          <button
+            onClick={() => {
+              if (confirm(`"${esasNo || dava.konu || 'Bu dava'}" silinecek. Emin misiniz?`)) {
+                silMut.mutate(id);
+                window.location.href = '/davalar';
+              }
+            }}
+            className="text-xs px-3 py-1.5 rounded bg-surface text-red border border-red/20 hover:bg-red-dim transition-colors"
+            title="Sil"
+          >
+            🗑️
           </button>
           {dava.asama && (
             <span className={`text-[10px] font-bold px-2 py-1 rounded border ${ASAMA_RENK[dava.asama] || 'bg-surface2 text-text-muted border-border'}`}>

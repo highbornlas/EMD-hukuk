@@ -222,6 +222,7 @@ export function useIcraSil() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['icra'] });
+      queryClient.invalidateQueries({ queryKey: ['cop-kutusu'] });
     },
   });
 }
@@ -244,6 +245,7 @@ export function useIcraKaliciSil() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['icra'] });
+      queryClient.invalidateQueries({ queryKey: ['cop-kutusu'] });
     },
   });
 }
@@ -277,6 +279,7 @@ export function useIcraGeriYukle() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['icra'] });
+      queryClient.invalidateQueries({ queryKey: ['cop-kutusu'] });
     },
   });
 }

@@ -13,10 +13,28 @@ import { NextResponse } from 'next/server';
  * 3. Bu route code'u session cookie'ye çevirir
  * 4. Kullanıcıyı hedef sayfaya yönlendirir
  */
+// Allowed hosts for x-forwarded-host validation
+const ALLOWED_HOSTS = ['lexbase.app', 'www.lexbase.app', 'localhost'];
+
+function isValidRedirectPath(path: string): boolean {
+  // Must start with / and not contain // (prevents protocol-relative URLs like //evil.com)
+  // Also block backslash which some browsers treat as forward slash
+  return path.startsWith('/') && !path.startsWith('//') && !path.includes('\\');
+}
+
+function isAllowedHost(host: string): boolean {
+  // Strip port for localhost comparison
+  const hostWithoutPort = host.split(':')[0];
+  return ALLOWED_HOSTS.includes(hostWithoutPort);
+}
+
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  const next = searchParams.get('next') ?? '/dashboard';
+  const nextParam = searchParams.get('next') ?? '/dashboard';
+
+  // Validate redirect path to prevent open redirect
+  const next = isValidRedirectPath(nextParam) ? nextParam : '/dashboard';
 
   if (code) {
     const cookieStore = await cookies();
@@ -50,7 +68,7 @@ export async function GET(request: Request) {
 
       if (isLocalEnv) {
         return NextResponse.redirect(`${origin}${next}`);
-      } else if (forwardedHost) {
+      } else if (forwardedHost && isAllowedHost(forwardedHost)) {
         return NextResponse.redirect(`https://${forwardedHost}${next}`);
       } else {
         return NextResponse.redirect(`${origin}${next}`);

@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
-  useArabuluculuk, useArabuluculukKaydet,
+  useArabuluculuk, useArabuluculukKaydet, useArabuluculukSil, useArabuluculukArsivle,
   type Arabuluculuk, type OturumKaydi,
   YASAL_SURE_HAFTA, hesaplaYasalSureBitis,
 } from '@/lib/hooks/useArabuluculuk';
@@ -34,6 +34,8 @@ export default function ArabuluculukDetayPage() {
   const { data: davalar } = useDavalar();
   const { data: icralar } = useIcralar();
   const kaydet = useArabuluculukKaydet();
+  const silMut = useArabuluculukSil();
+  const arsivleMut = useArabuluculukArsivle();
   const [aktifTab, setAktifTab] = useState<TabKey>('ozet');
 
   // Oturum ekleme
@@ -136,6 +138,25 @@ export default function ArabuluculukDetayPage() {
           <button onClick={() => setDuzenleModu(true)}
             className="text-xs px-3 py-1.5 rounded bg-gold/10 text-gold border border-gold/20 hover:bg-gold/20 transition-colors">
             Düzenle
+          </button>
+          <button
+            onClick={() => { arsivleMut.mutate(arb); }}
+            className="text-xs px-3 py-1.5 rounded bg-surface text-text-muted border border-border hover:border-gold/40 transition-colors"
+            title="Arşive kaldır"
+          >
+            📦
+          </button>
+          <button
+            onClick={() => {
+              if (confirm(`"${arb.konu || arb.no || 'Bu dosya'}" silinecek. Emin misiniz?`)) {
+                silMut.mutate(arb);
+                router.push('/arabuluculuk');
+              }
+            }}
+            className="text-xs px-3 py-1.5 rounded bg-surface text-red border border-red/20 hover:bg-red-dim transition-colors"
+            title="Sil"
+          >
+            🗑️
           </button>
           <button onClick={() => router.push('/arabuluculuk')} className="px-3 py-1.5 bg-surface border border-border rounded-lg text-xs text-text-muted hover:text-text transition-colors">
             ← Listeye Dön

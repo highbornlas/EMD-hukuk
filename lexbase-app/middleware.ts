@@ -1,22 +1,19 @@
-import { type NextRequest, NextResponse } from 'next/server';
+import { type NextRequest } from 'next/server';
+import { updateSession } from '@/lib/supabase/middleware';
 
-/**
- * Minimal middleware — Cloudflare Workers free plan uyumlu
- *
- * NOT: Ağır Supabase server client + getUser() çağrısı kaldırıldı.
- * Auth koruması tamamen client-side AuthGuard ile yapılıyor.
- * Bu middleware sadece auth callback için cookie ayarlaması yapar.
- *
- * Workers free plan CPU limiti: 10ms — her istekte
- * Supabase getUser() tek başına bu limiti aşıyordu.
- */
 export async function middleware(request: NextRequest) {
-  return NextResponse.next();
+  return await updateSession(request);
 }
 
 export const config = {
   matcher: [
-    // Sadece auth callback route'una müdahale et, diğer her şeyi geç
-    '/auth/callback',
+    /*
+     * Match all request paths except:
+     * - _next/static (static files)
+     * - _next/image (image optimization)
+     * - favicon.ico, sitemap.xml, robots.txt
+     * - Public assets (images, svg, etc.)
+     */
+    '/((?!_next/static|_next/image|favicon\\.ico|sitemap\\.xml|robots\\.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
   ],
 };

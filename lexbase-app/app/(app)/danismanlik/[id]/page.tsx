@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useDanismanlik, useDanismanlikKaydet, type Danismanlik, type EforKaydi, EFOR_KATEGORILERI } from '@/lib/hooks/useDanismanlik';
+import { useDanismanlik, useDanismanlikKaydet, useDanismanlikSil, useDanismanlikArsivle, type Danismanlik, type EforKaydi, EFOR_KATEGORILERI } from '@/lib/hooks/useDanismanlik';
 import { useMuvekkillar } from '@/lib/hooks/useMuvekkillar';
 import { fmt, fmtTarih } from '@/lib/utils';
 import { DanismanlikModal } from '@/components/modules/DanismanlikModal';
@@ -28,6 +28,8 @@ export default function DanismanlikDetayPage() {
   const { data: dan, isLoading } = useDanismanlik(id);
   const { data: muvekkillar } = useMuvekkillar();
   const kaydet = useDanismanlikKaydet();
+  const silMut = useDanismanlikSil();
+  const arsivleMut = useDanismanlikArsivle();
   const [aktifTab, setAktifTab] = useState<TabKey>('ozet');
 
   // Efor ekleme
@@ -118,6 +120,25 @@ export default function DanismanlikDetayPage() {
           <button onClick={() => setDuzenleModu(true)}
             className="text-xs px-3 py-1.5 rounded bg-gold/10 text-gold border border-gold/20 hover:bg-gold/20 transition-colors">
             Düzenle
+          </button>
+          <button
+            onClick={() => { arsivleMut.mutate(dan); }}
+            className="text-xs px-3 py-1.5 rounded bg-surface text-text-muted border border-border hover:border-gold/40 transition-colors"
+            title="Arşive kaldır"
+          >
+            📦
+          </button>
+          <button
+            onClick={() => {
+              if (confirm(`"${dan.konu || dan.no || 'Bu danışmanlık'}" silinecek. Emin misiniz?`)) {
+                silMut.mutate(dan);
+                router.push('/danismanlik');
+              }
+            }}
+            className="text-xs px-3 py-1.5 rounded bg-surface text-red border border-red/20 hover:bg-red-dim transition-colors"
+            title="Sil"
+          >
+            🗑️
           </button>
           <button onClick={() => router.push('/danismanlik')} className="px-3 py-1.5 bg-surface border border-border rounded-lg text-xs text-text-muted hover:text-text transition-colors">
             ← Listeye Dön

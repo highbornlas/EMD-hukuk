@@ -8,7 +8,7 @@ export function useFinansOzet(muvId: string | null) {
   const buroId = useBuroId();
 
   return useQuery({
-    queryKey: ['finans', 'ozet', muvId],
+    queryKey: ['finans', 'ozet', buroId, muvId],
     queryFn: async () => {
       if (!buroId || !muvId) return null;
       const supabase = createClient();
@@ -27,7 +27,7 @@ export function useBuroKarZarar(yil?: number, ay?: number) {
   const buroId = useBuroId();
 
   return useQuery({
-    queryKey: ['finans', 'karzarar', yil, ay],
+    queryKey: ['finans', 'karzarar', buroId, yil, ay],
     queryFn: async () => {
       if (!buroId) return null;
       const supabase = createClient();
@@ -47,7 +47,7 @@ export function useFinansUyarilar() {
   const buroId = useBuroId();
 
   return useQuery({
-    queryKey: ['finans', 'uyarilar'],
+    queryKey: ['finans', 'uyarilar', buroId],
     queryFn: async () => {
       if (!buroId) return [];
       const supabase = createClient();
@@ -65,7 +65,7 @@ export function useDosyaKarlilik(filtre?: Record<string, string>) {
   const buroId = useBuroId();
 
   return useQuery({
-    queryKey: ['finans', 'karlilik', filtre],
+    queryKey: ['finans', 'karlilik', buroId, filtre],
     queryFn: async () => {
       if (!buroId) return null;
       const supabase = createClient();
@@ -84,7 +84,7 @@ export function useBeklenenGelir() {
   const buroId = useBuroId();
 
   return useQuery({
-    queryKey: ['finans', 'beklenen'],
+    queryKey: ['finans', 'beklenen', buroId],
     queryFn: async () => {
       if (!buroId) return null;
       const supabase = createClient();

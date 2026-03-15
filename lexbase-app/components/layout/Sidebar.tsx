@@ -99,7 +99,7 @@ interface SidebarProps {
 export function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname();
   const badgeCounts = useBadgeCounts();
-  const rol = useRol();
+  const { rol, loading: rolLoading } = useRol();
 
   const renderItem = (item: MenuItem) => {
     const isActive =
@@ -174,7 +174,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             <div key={gi}>
               {gi > 0 && <div className="h-px bg-white/[0.04] mx-3 my-1.5" />}
               <div className="space-y-[1px]">
-                {group.items.filter((item) => !item.yetki || yetkiVar(rol, item.yetki)).map(renderItem)}
+                {group.items.filter((item) => !item.yetki || (rol && yetkiVar(rol, item.yetki))).map(renderItem)}
               </div>
             </div>
           ))}
@@ -187,7 +187,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         <div className="pb-3">
           <div className="h-px bg-white/[0.04] mx-3 mb-1.5" />
           <div className="space-y-[1px]">
-            {bottomItems.filter((item) => !item.yetki || yetkiVar(rol, item.yetki)).map(renderItem)}
+            {bottomItems.filter((item) => !item.yetki || (rol && yetkiVar(rol, item.yetki))).map(renderItem)}
           </div>
 
           {/* Version */}

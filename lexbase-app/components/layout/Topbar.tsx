@@ -46,8 +46,8 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
   const [bildirimOpen, setBildirimOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [havaOpen, setHavaOpen] = useState(false);
-  const rol = useRol();
-  const rolInfo = ROL_ETIKETLERI[rol] || ROL_ETIKETLERI.avukat;
+  const { rol, loading: rolLoading } = useRol();
+  const rolInfo = rol ? (ROL_ETIKETLERI[rol] || ROL_ETIKETLERI.avukat) : ROL_ETIKETLERI.avukat;
 
   /* ── Bildirim hook'ları ────────────────────────────────── */
   const { data: bildirimler } = useBildirimler();

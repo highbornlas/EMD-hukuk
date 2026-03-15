@@ -21,7 +21,7 @@ import { MuvIliskiler } from '@/components/modules/muvekkil/MuvIliskiler';
 import { MuvPlanlama } from '@/components/modules/muvekkil/MuvPlanlama';
 import { MuvDanismanlik } from '@/components/modules/muvekkil/MuvDanismanlik';
 import { MuvBelgeler } from '@/components/modules/muvekkil/MuvBelgeler';
-import { useMuvekkilKaydet } from '@/lib/hooks/useMuvekkillar';
+import { useMuvekkilKaydet, useMuvekkilSil } from '@/lib/hooks/useMuvekkillar';
 
 /* ══════════════════════════════════════════════════════════════
    Müvekkil Detay Sayfası — 11 Sekmeli ERP Yapısı
@@ -56,6 +56,7 @@ export default function MuvekkilDetayPage({ params }: { params: Promise<{ id: st
 
   /* ── Mutation ── */
   const kaydetMutation = useMuvekkilKaydet();
+  const silMut = useMuvekkilSil();
 
   /* ── UI State ── */
   const [aktifTab, setAktifTab] = useState<TabKey>('dosyalar');
@@ -151,6 +152,18 @@ export default function MuvekkilDetayPage({ params }: { params: Promise<{ id: st
             className="px-3 py-1.5 text-xs font-medium text-text-muted border border-border rounded-lg hover:border-gold hover:text-gold transition-colors"
           >
             ✏️ Düzenle
+          </button>
+          <button
+            onClick={() => {
+              if (confirm(`"${muv.ad}" silinecek. Emin misiniz?`)) {
+                silMut.mutate(id);
+                window.location.href = '/muvekkillar';
+              }
+            }}
+            className="px-3 py-1.5 text-xs font-medium text-red border border-red/20 rounded-lg hover:bg-red-dim transition-colors"
+            title="Sil"
+          >
+            🗑️ Sil
           </button>
         </div>
       </div>
