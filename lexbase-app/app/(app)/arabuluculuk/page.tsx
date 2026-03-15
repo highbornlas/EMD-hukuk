@@ -36,6 +36,8 @@ type SortKey = 'no' | 'tur' | 'muvekkil' | 'konu' | 'arabulucu' | 'durum' | 'tal
 type SortDir = 'asc' | 'desc';
 
 export default function ArabuluculukPage() {
+  useEffect(() => { document.title = 'Arabuluculuk | LexBase'; }, []);
+
   const { data: arabuluculuklar, isLoading } = useArabuluculuklar();
   const { data: muvekkillar } = useMuvekkillar();
   const silMut = useArabuluculukSil();

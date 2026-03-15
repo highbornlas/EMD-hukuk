@@ -35,6 +35,8 @@ type SortKey = 'no' | 'yon' | 'tur' | 'muvekkil' | 'gonderen' | 'alici' | 'konu'
 type SortDir = 'asc' | 'desc';
 
 export default function IhtarnamePage() {
+  useEffect(() => { document.title = 'İhtarnameler | LexBase'; }, []);
+
   const { data: tumIhtarnameler, isLoading } = useIhtarnameler();
   const { data: muvekkillar } = useMuvekkillar();
   const silMut = useIhtarnameSil();

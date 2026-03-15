@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useTodolar, useTodoKaydet, type Todo } from '@/lib/hooks/useTodolar';
 import { useMuvekkillar } from '@/lib/hooks/useMuvekkillar';
 import { fmtTarih } from '@/lib/utils';
@@ -22,6 +22,8 @@ const DURUM_RENK: Record<string, string> = {
 type Grup = 'Gecikmiş' | 'Bugün' | 'Bu Hafta' | 'Diğer' | 'Tamamlandı / İptal';
 
 export default function GorevlerPage() {
+  useEffect(() => { document.title = 'Görevler | LexBase'; }, []);
+
   const { data: todolar, isLoading } = useTodolar();
   const { data: muvekkillar } = useMuvekkillar();
   const todoKaydet = useTodoKaydet();

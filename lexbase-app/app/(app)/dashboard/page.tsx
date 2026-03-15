@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useMuvekkillar } from '@/lib/hooks/useMuvekkillar';
 import { useDavalar } from '@/lib/hooks/useDavalar';
 import { useIcralar } from '@/lib/hooks/useIcra';
@@ -31,6 +31,8 @@ function getSelamlama(): string {
 }
 
 export default function DashboardPage() {
+  useEffect(() => { document.title = 'Genel Bakış | LexBase'; }, []);
+
   /* ── Veri Hook'ları ── */
   const { data: muvekkillar, isLoading: muvLoading } = useMuvekkillar();
   const { data: davalar, isLoading: davaLoading } = useDavalar();

@@ -147,6 +147,8 @@ function SortDropdown<T extends string>({
 }
 
 export default function RehberPage() {
+  useEffect(() => { document.title = 'Müvekkiller | LexBase'; }, []);
+
   /* ── Hooks ── */
   const { data: muvekkillar, isLoading: mLoading } = useMuvekkillar();
   const { data: karsiTaraflar, isLoading: ktLoading } = useKarsiTaraflar();

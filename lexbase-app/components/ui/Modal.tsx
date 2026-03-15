@@ -39,6 +39,8 @@ export function Modal({ open, onClose, title, maxWidth = 'max-w-lg', children, f
     }
   }, [open, onClose]);
 
+  const titleId = 'modal-title';
+
   if (!open) return null;
 
   return (
@@ -47,10 +49,15 @@ export function Modal({ open, onClose, title, maxWidth = 'max-w-lg', children, f
       className="modal-overlay fixed inset-0 z-[100] flex items-center justify-center animate-fade-in-up"
       onClick={(e) => { if (e.target === overlayRef.current) onClose(); }}
     >
-      <div className={`modal-box w-[95%] ${maxWidth} animate-scale-in`}>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className={`modal-box w-[95%] ${maxWidth} animate-scale-in`}
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border/50">
-          <h2 className="text-base font-semibold text-text">{title}</h2>
+          <h2 id={titleId} className="text-base font-semibold text-text">{title}</h2>
           <button
             onClick={onClose}
             className="w-8 h-8 flex items-center justify-center rounded-lg

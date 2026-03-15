@@ -81,6 +81,8 @@ function tarihTooltip(tarih?: string): string {
 // ══════════════════════════════════════════════════════════════
 
 export default function DavalarPage() {
+  useEffect(() => { document.title = 'Davalar | LexBase'; }, []);
+
   const { data: davalar, isLoading } = useDavalar();
   const { data: muvekkillar } = useMuvekkillar();
   const arsivleMut = useDavaArsivle();

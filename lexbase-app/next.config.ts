@@ -39,7 +39,6 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: [
       '@supabase/supabase-js',
-      'react-hot-toast',
       'framer-motion',
     ],
   },

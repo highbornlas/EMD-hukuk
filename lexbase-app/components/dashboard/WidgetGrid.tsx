@@ -1,22 +1,58 @@
 'use client';
 
 import { useMemo, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import { Responsive, useContainerWidth, verticalCompactor } from 'react-grid-layout';
 import type { ResponsiveLayouts, Layout } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import { WidgetWrapper } from './WidgetWrapper';
-import { KpiWidget } from './widgets/KpiWidget';
-import { PerformansWidget } from './widgets/PerformansWidget';
-import { GundemWidget } from './widgets/GundemWidget';
-import { GorevlerWidget } from './widgets/GorevlerWidget';
-import { KritikWidget } from './widgets/KritikWidget';
-import { FinansUyariWidget } from './widgets/FinansUyariWidget';
-import { MenfaatWidget } from './widgets/MenfaatWidget';
-import { HizmetlerWidget } from './widgets/HizmetlerWidget';
-import { AktiviteWidget } from './widgets/AktiviteWidget';
-import { HizliErisimWidget } from './widgets/HizliErisimWidget';
-import { VekaletnameSureWidget } from './widgets/VekaletnameSureWidget';
 import type { WidgetTanim } from '@/lib/hooks/useDashboardLayout';
+
+/* ── Lazy-loaded widget bileşenleri ── */
+const KpiWidget = dynamic(
+  () => import('./widgets/KpiWidget').then((m) => m.KpiWidget),
+  { ssr: false },
+);
+const PerformansWidget = dynamic(
+  () => import('./widgets/PerformansWidget').then((m) => m.PerformansWidget),
+  { ssr: false },
+);
+const GundemWidget = dynamic(
+  () => import('./widgets/GundemWidget').then((m) => m.GundemWidget),
+  { ssr: false },
+);
+const GorevlerWidget = dynamic(
+  () => import('./widgets/GorevlerWidget').then((m) => m.GorevlerWidget),
+  { ssr: false },
+);
+const KritikWidget = dynamic(
+  () => import('./widgets/KritikWidget').then((m) => m.KritikWidget),
+  { ssr: false },
+);
+const FinansUyariWidget = dynamic(
+  () => import('./widgets/FinansUyariWidget').then((m) => m.FinansUyariWidget),
+  { ssr: false },
+);
+const MenfaatWidget = dynamic(
+  () => import('./widgets/MenfaatWidget').then((m) => m.MenfaatWidget),
+  { ssr: false },
+);
+const HizmetlerWidget = dynamic(
+  () => import('./widgets/HizmetlerWidget').then((m) => m.HizmetlerWidget),
+  { ssr: false },
+);
+const AktiviteWidget = dynamic(
+  () => import('./widgets/AktiviteWidget').then((m) => m.AktiviteWidget),
+  { ssr: false },
+);
+const HizliErisimWidget = dynamic(
+  () => import('./widgets/HizliErisimWidget').then((m) => m.HizliErisimWidget),
+  { ssr: false },
+);
+const VekaletnameSureWidget = dynamic(
+  () => import('./widgets/VekaletnameSureWidget').then((m) => m.VekaletnameSureWidget),
+  { ssr: false },
+);
 
 /* ══════════════════════════════════════════════════════════════
    Widget Grid — react-grid-layout ile sürükle-bırak dashboard

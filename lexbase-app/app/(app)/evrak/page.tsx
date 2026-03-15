@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useMuvekkillar } from '@/lib/hooks/useMuvekkillar';
 import { useDavalar } from '@/lib/hooks/useDavalar';
 import { useIcralar } from '@/lib/hooks/useIcra';
@@ -133,6 +133,8 @@ const KATEGORI_RENK: Record<string, string> = {
 };
 
 export default function EvrakPage() {
+  useEffect(() => { document.title = 'Evrak Şablonları | LexBase'; }, []);
+
   const { data: muvekkillar } = useMuvekkillar();
   const { data: davalar } = useDavalar();
   const { data: icralar } = useIcralar();

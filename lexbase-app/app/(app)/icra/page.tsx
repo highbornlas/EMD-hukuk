@@ -93,6 +93,8 @@ function tebligRenkSinifi(tebligTarihi?: string, tur?: string): string {
 }
 
 export default function IcraPage() {
+  useEffect(() => { document.title = 'İcra Takipleri | LexBase'; }, []);
+
   const { data: icralar, isLoading } = useIcralar();
   const { data: muvekkillar } = useMuvekkillar();
   const kaydetMutation = useIcraKaydet();

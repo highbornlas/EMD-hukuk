@@ -25,6 +25,8 @@ type SortKey = 'tarih' | 'tur' | 'muvekkil' | 'konu' | 'durum' | 'ucret' | 'tahs
 type SortDir = 'asc' | 'desc';
 
 export default function DanismanlikPage() {
+  useEffect(() => { document.title = 'Danışmanlık | LexBase'; }, []);
+
   const { data: danismanliklar, isLoading } = useDanismanliklar();
   const { data: muvekkillar } = useMuvekkillar();
   const silMut = useDanismanlikSil();

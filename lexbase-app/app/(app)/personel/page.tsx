@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { usePersoneller, type Personel } from '@/lib/hooks/usePersonel';
 import { PersonelModal } from '@/components/modules/PersonelModal';
 
@@ -11,10 +11,24 @@ const ROL_RENK: Record<string, { bg: string; text: string; label: string }> = {
   sekreter: { bg: 'bg-green-dim', text: 'text-green', label: 'Sekreter' },
 };
 
+type RolFiltre = 'hepsi' | 'sahip' | 'avukat' | 'stajyer' | 'sekreter';
+
+const ROL_FILTRE_LABELS: Record<RolFiltre, string> = {
+  hepsi: 'Tüm Roller',
+  sahip: 'Büro Sahibi',
+  avukat: 'Avukat',
+  stajyer: 'Stajyer',
+  sekreter: 'Sekreter',
+};
+
 export default function PersonelPage() {
+  useEffect(() => { document.title = 'Personel | LexBase'; }, []);
+
   const { data: personeller, isLoading } = usePersoneller();
   const [modalAcik, setModalAcik] = useState(false);
   const [secili, setSecili] = useState<Personel | null>(null);
+  const [arama, setArama] = useState('');
+  const [rolFiltre, setRolFiltre] = useState<RolFiltre>('hepsi');
 
   const kpis = useMemo(() => {
     if (!personeller) return { toplam: 0, aktif: 0, avukat: 0, stajyer: 0 };
@@ -25,6 +39,33 @@ export default function PersonelPage() {
       stajyer: personeller.filter((p) => p.rol === 'stajyer').length,
     };
   }, [personeller]);
+
+  const filtrelenmis = useMemo(() => {
+    if (!personeller) return [];
+    let sonuc = [...personeller];
+
+    // Rol filtresi
+    if (rolFiltre !== 'hepsi') {
+      sonuc = sonuc.filter((p) => p.rol === rolFiltre);
+    }
+
+    // Arama filtresi
+    if (arama) {
+      const q = arama.toLocaleLowerCase('tr');
+      sonuc = sonuc.filter((p) => {
+        const ad = (p.ad || '').toLocaleLowerCase('tr');
+        const email = (p.email || '').toLocaleLowerCase('tr');
+        const tel = (p.tel || '').toLocaleLowerCase('tr');
+        const baroSicil = (p.baroSicil || '').toLocaleLowerCase('tr');
+        const rolLabel = (ROL_RENK[p.rol || '']?.label || p.rol || '').toLocaleLowerCase('tr');
+        return ad.includes(q) || email.includes(q) || tel.includes(q) || baroSicil.includes(q) || rolLabel.includes(q);
+      });
+    }
+
+    return sonuc;
+  }, [personeller, arama, rolFiltre]);
+
+  const aktifFiltre = arama || rolFiltre !== 'hepsi';
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-8rem)]">
@@ -49,6 +90,51 @@ export default function PersonelPage() {
         <MiniKpi label="Stajyer" value={kpis.stajyer} color="text-purple-400" />
       </div>
 
+      {/* Arama & Filtre */}
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Arama */}
+          <input
+            type="text"
+            value={arama}
+            onChange={(e) => setArama(e.target.value)}
+            placeholder="Ad, e-posta, telefon, rol ara..."
+            className="px-3 py-2 bg-surface2 border border-border rounded-lg text-xs text-text placeholder:text-text-dim focus:outline-none focus:border-gold transition-colors w-56"
+          />
+
+          {/* Rol Filtre */}
+          <select
+            value={rolFiltre}
+            onChange={(e) => setRolFiltre(e.target.value as RolFiltre)}
+            className="px-2.5 py-2 bg-surface2 border border-border rounded-lg text-xs text-text-muted focus:outline-none focus:border-gold transition-colors cursor-pointer"
+          >
+            {(Object.keys(ROL_FILTRE_LABELS) as RolFiltre[]).map((key) => (
+              <option key={key} value={key}>{ROL_FILTRE_LABELS[key]}</option>
+            ))}
+          </select>
+
+          {/* Filtreleri temizle */}
+          {aktifFiltre && (
+            <button
+              onClick={() => { setArama(''); setRolFiltre('hepsi'); }}
+              className="px-2.5 py-1.5 text-[11px] font-medium text-gold hover:text-gold-light transition-colors"
+            >
+              Temizle
+            </button>
+          )}
+        </div>
+
+        {/* Sonuc sayisi */}
+        {personeller && personeller.length > 0 && (
+          <div className="text-[11px] text-text-muted">
+            {aktifFiltre
+              ? <>{filtrelenmis.length} / {personeller.length} personel</>
+              : <>{personeller.length} personel</>
+            }
+          </div>
+        )}
+      </div>
+
       {/* Liste */}
       {isLoading ? (
         <div className="text-center py-12 text-text-muted text-sm">Yükleniyor...</div>
@@ -57,9 +143,20 @@ export default function PersonelPage() {
           <div className="text-4xl mb-3">👥</div>
           <div className="text-sm text-text-muted">Henüz personel eklenmemiş</div>
         </div>
+      ) : filtrelenmis.length === 0 ? (
+        <div className="text-center py-16 bg-surface border border-border rounded-lg">
+          <div className="text-4xl mb-3">🔍</div>
+          <div className="text-sm text-text-muted">Arama sonucu bulunamadı</div>
+          <button
+            onClick={() => { setArama(''); setRolFiltre('hepsi'); }}
+            className="mt-2 text-xs text-gold hover:text-gold-light transition-colors"
+          >
+            Filtreleri temizle
+          </button>
+        </div>
       ) : (
         <div className="grid grid-cols-3 gap-3 flex-1">
-          {personeller.map((p) => {
+          {filtrelenmis.map((p) => {
             const rol = ROL_RENK[p.rol || ''] || { bg: 'bg-surface2', text: 'text-text-muted', label: p.rol || '—' };
             return (
               <div key={p.id} onClick={() => { setSecili(p); setModalAcik(true); }} className="bg-surface border border-border rounded-lg p-4 hover:border-gold transition-colors cursor-pointer group">

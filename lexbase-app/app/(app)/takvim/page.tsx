@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useEtkinlikler, type Etkinlik } from '@/lib/hooks/useEtkinlikler';
 import { useDavalar } from '@/lib/hooks/useDavalar';
 import { useMuvekkillar } from '@/lib/hooks/useMuvekkillar';
@@ -20,6 +20,8 @@ const TUR_RENK: Record<string, string> = {
 };
 
 export default function TakvimPage() {
+  useEffect(() => { document.title = 'Takvim | LexBase'; }, []);
+
   const { data: etkinlikler } = useEtkinlikler();
   const { data: davalar } = useDavalar();
   const { data: muvekkillar } = useMuvekkillar();
