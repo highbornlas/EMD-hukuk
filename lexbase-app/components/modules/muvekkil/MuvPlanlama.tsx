@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useTodolar, useTodoKaydet } from '@/lib/hooks/useTodolar';
+import { useTodolar, type Todo } from '@/lib/hooks/useTodolar';
 import { GorevModal } from '@/components/modules/GorevModal';
 
 interface Props {
@@ -24,6 +24,7 @@ const ONCELIK_RENK: Record<string, string> = {
 export function MuvPlanlama({ muvId }: Props) {
   const { data: tumGorevler = [], isLoading } = useTodolar();
   const [modalOpen, setModalOpen] = useState(false);
+  const [seciliGorev, setSeciliGorev] = useState<Todo | null>(null);
 
   /* ── Müvekkile ait görevler ── */
   const gorevler = useMemo(() =>
@@ -36,6 +37,21 @@ export function MuvPlanlama({ muvId }: Props) {
   const devamEden = gorevler.filter((g: Record<string, unknown>) => g.durum === 'Devam Ediyor');
   const tamamlanan = gorevler.filter((g: Record<string, unknown>) => g.durum === 'Tamamlandı');
 
+  const yeniGorevAc = () => {
+    setSeciliGorev(null);
+    setModalOpen(true);
+  };
+
+  const gorevDuzenleAc = (gorev: Todo) => {
+    setSeciliGorev(gorev);
+    setModalOpen(true);
+  };
+
+  const modalKapat = () => {
+    setModalOpen(false);
+    setSeciliGorev(null);
+  };
+
   if (isLoading) {
     return <div className="text-center py-8 text-text-dim text-sm">Yükleniyor...</div>;
   }
@@ -46,7 +62,7 @@ export function MuvPlanlama({ muvId }: Props) {
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-text">📋 Planlama ({gorevler.length})</h3>
         <button
-          onClick={() => setModalOpen(true)}
+          onClick={yeniGorevAc}
           className="text-xs font-medium text-gold hover:text-gold-light transition-colors"
         >
           + Yeni Görev
@@ -59,7 +75,7 @@ export function MuvPlanlama({ muvId }: Props) {
           <div className="text-sm font-medium">Henüz görev tanımlanmamış</div>
           <div className="text-xs text-text-dim mt-1">Bu müvekkil için yapılacak görevleri planlayın</div>
           <button
-            onClick={() => setModalOpen(true)}
+            onClick={yeniGorevAc}
             className="mt-3 px-4 py-1.5 text-xs font-medium text-gold border border-gold/30 rounded-lg hover:bg-gold-dim transition-colors"
           >
             + İlk Görevi Ekle
@@ -69,26 +85,38 @@ export function MuvPlanlama({ muvId }: Props) {
         <div className="space-y-5">
           {/* Bekleyen */}
           {bekleyen.length > 0 && (
-            <GorevGrubu baslik="Bekleyen" sayi={bekleyen.length} gorevler={bekleyen} />
+            <GorevGrubu baslik="Bekleyen" sayi={bekleyen.length} gorevler={bekleyen} onGorevSec={gorevDuzenleAc} />
           )}
           {/* Devam Eden */}
           {devamEden.length > 0 && (
-            <GorevGrubu baslik="Devam Ediyor" sayi={devamEden.length} gorevler={devamEden} />
+            <GorevGrubu baslik="Devam Ediyor" sayi={devamEden.length} gorevler={devamEden} onGorevSec={gorevDuzenleAc} />
           )}
           {/* Tamamlanan */}
           {tamamlanan.length > 0 && (
-            <GorevGrubu baslik="Tamamlandı" sayi={tamamlanan.length} gorevler={tamamlanan} />
+            <GorevGrubu baslik="Tamamlandı" sayi={tamamlanan.length} gorevler={tamamlanan} onGorevSec={gorevDuzenleAc} />
           )}
         </div>
       )}
 
       {/* Görev Modal */}
-      <GorevModal open={modalOpen} onClose={() => setModalOpen(false)} />
+      <GorevModal
+        open={modalOpen}
+        onClose={modalKapat}
+        muvId={muvId}
+        gorev={seciliGorev}
+      />
     </div>
   );
 }
 
-function GorevGrubu({ baslik, sayi, gorevler }: { baslik: string; sayi: number; gorevler: Record<string, unknown>[] }) {
+interface GorevGrubuProps {
+  baslik: string;
+  sayi: number;
+  gorevler: Record<string, unknown>[];
+  onGorevSec: (gorev: Todo) => void;
+}
+
+function GorevGrubu({ baslik, sayi, gorevler, onGorevSec }: GorevGrubuProps) {
   const bugun = new Date().toISOString().slice(0, 10);
 
   return (
@@ -102,7 +130,8 @@ function GorevGrubu({ baslik, sayi, gorevler }: { baslik: string; sayi: number; 
           return (
             <div
               key={g.id as string}
-              className={`bg-surface border rounded-lg p-3.5 ${gecikmi ? 'border-red/40' : 'border-border'}`}
+              onClick={() => onGorevSec(g as unknown as Todo)}
+              className={`bg-surface border rounded-lg p-3.5 cursor-pointer hover:border-gold/40 transition-colors ${gecikmi ? 'border-red/40' : 'border-border'}`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1">

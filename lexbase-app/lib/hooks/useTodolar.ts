@@ -15,10 +15,16 @@ export interface Todo {
   muvId?: string;
   dosyaTur?: string;
   dosyaId?: string;
+  kategori?: string;
   olusturanId?: string;
   olusturmaTarih?: string;
   tamamlanmaTarih?: string;
   tamamlamaAciklama?: string;
+  altGorevler?: { id: string; baslik: string; tamam: boolean }[];
+  yorumlar?: { id: string; yazar: string; yazarAd: string; tarih: string; metin: string }[];
+  tekrar?: 'yok' | 'gunluk' | 'haftalik' | 'aylik' | 'yillik';
+  tekrarSonTarih?: string;
+  sablon?: boolean;
   [key: string]: unknown;
 }
 
