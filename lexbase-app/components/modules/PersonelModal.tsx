@@ -32,14 +32,17 @@ export function PersonelModal({ open, onClose, personel }: PersonelModalProps) {
   const kaydet = usePersonelKaydet();
 
   const yeniKayit = !personel;
+  // Mevcut personel daveti başarısız olmuşsa tekrar gönderebilsin
+  const davetBekliyor = !yeniKayit && personel?.durum === 'davet_gonderildi';
+  const davetGosterilebilir = (yeniKayit || davetBekliyor) && !!form.email?.trim();
 
   useEffect(() => {
     if (personel) {
       setForm({ ...personel });
-      setDavetGonder(false);
+      setDavetGonder(personel.durum === 'davet_gonderildi'); // Bekleyen davet varsa otomatik seç
     } else {
       setForm({ ...bos, id: crypto.randomUUID() });
-      setDavetGonder(true); // Yeni personel eklerken varsayılan olarak davet gönder
+      setDavetGonder(true);
     }
     setHata('');
     setBilgi('');
@@ -47,6 +50,54 @@ export function PersonelModal({ open, onClose, personel }: PersonelModalProps) {
 
   function handleChange(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  async function davetGonderFn() {
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (!session?.access_token) {
+      setHata('Davet göndermek için oturum gerekli.');
+      return false;
+    }
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const res = await fetch(`${supabaseUrl}/functions/v1/invite-user`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({
+        email: form.email!.trim(),
+        ad: form.ad!.trim(),
+        rol: form.rol || 'avukat',
+      }),
+    });
+
+    const result = await res.json();
+
+    if (!res.ok) {
+      const errorMsg = result.error || 'Bilinmeyen hata';
+      if (errorMsg.includes('zaten') && errorMsg.includes('kayıtlı')) {
+        setBilgi('Bu e-posta zaten bu büroda kayıtlı.');
+      } else {
+        setBilgi(`Davet gönderilemedi: ${errorMsg}`);
+      }
+      return false;
+    }
+
+    // Başarılı senaryolar
+    if (result.status === 'already_member') {
+      setBilgi(`${form.email} zaten bu büroda üye.`);
+    } else if (result.status === 'existing_user_added') {
+      setBilgi(result.message || 'Mevcut kullanıcı büronuza eklendi. Bildirim gönderildi.');
+    } else if (result.status === 'reactivated') {
+      setBilgi(result.message || 'Üyelik tekrar aktifleştirildi.');
+    } else {
+      setBilgi(result.message || 'Davet gönderildi!');
+    }
+    return true;
   }
 
   async function handleSubmit() {
@@ -60,66 +111,44 @@ export function PersonelModal({ open, onClose, personel }: PersonelModalProps) {
     setYukleniyor(true);
 
     try {
-      // 1. Personel tablosuna kaydet (her durumda)
+      // 1. Personel tablosuna kaydet
       const personelData = {
         ...form,
-        durum: davetGonder && yeniKayit && form.email ? 'davet_gonderildi' : form.durum,
+        durum: davetGonder && (yeniKayit || davetBekliyor) && form.email
+          ? 'davet_gonderildi'
+          : form.durum,
       } as Personel;
 
       await kaydet.mutateAsync(personelData);
 
-      // 2. E-posta varsa ve davet gönder seçiliyse → Edge Function çağır
-      if (davetGonder && form.email?.trim() && yeniKayit) {
-        const supabase = createClient();
-        const { data: { session } } = await supabase.auth.getSession();
-
-        if (!session?.access_token) {
-          setHata('Davet göndermek için oturum gerekli.');
-          setYukleniyor(false);
-          return;
-        }
-
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-        const res = await fetch(`${supabaseUrl}/functions/v1/invite-user`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({
-            email: form.email.trim(),
-            ad: form.ad.trim(),
-            rol: form.rol || 'avukat',
-          }),
-        });
-
-        const result = await res.json();
-
-        if (!res.ok) {
-          // Personel kaydı yapıldı ama davet gönderilemedi
-          if (result.error?.includes('zaten kayıtlı')) {
-            setBilgi('Personel kaydedildi. Bu e-posta zaten sistemde kayıtlı olduğundan davet gönderilmedi.');
-          } else {
-            setBilgi(`Personel kaydedildi ancak davet gönderilemedi: ${result.error || 'Bilinmeyen hata'}`);
-          }
-          setYukleniyor(false);
-          setTimeout(() => onClose(), 2500);
-          return;
-        }
-
-        setBilgi(result.message || 'Davet gönderildi!');
+      // 2. Davet gönder
+      if (davetGonder && form.email?.trim()) {
+        const basarili = await davetGonderFn();
         setYukleniyor(false);
-        setTimeout(() => onClose(), 1500);
+
+        if (basarili) {
+          // Başarılı personel durumunu güncelle
+          await kaydet.mutateAsync({ ...personelData, durum: 'aktif' });
+        }
+
+        setTimeout(() => onClose(), 2000);
         return;
       }
 
-      // Davet gönderilmeden sadece kayıt
+      // Davet gönderilmeden kayıt
       onClose();
     } catch {
       setHata('Kayıt sırasında bir hata oluştu.');
     }
     setYukleniyor(false);
   }
+
+  // Buton label
+  const butonLabel = yukleniyor
+    ? 'İşleniyor...'
+    : davetGonder && form.email?.trim()
+      ? (yeniKayit ? 'Kaydet ve Davet Gönder' : 'Kaydet ve Daveti Tekrarla')
+      : 'Kaydet';
 
   return (
     <Modal
@@ -131,7 +160,7 @@ export function PersonelModal({ open, onClose, personel }: PersonelModalProps) {
         <>
           <BtnOutline onClick={onClose}>İptal</BtnOutline>
           <BtnGold onClick={handleSubmit} disabled={yukleniyor || kaydet.isPending}>
-            {yukleniyor ? 'İşleniyor...' : personel ? 'Kaydet' : (davetGonder && form.email ? 'Kaydet ve Davet Gönder' : 'Kaydet')}
+            {butonLabel}
           </BtnGold>
         </>
       }
@@ -168,7 +197,6 @@ export function PersonelModal({ open, onClose, personel }: PersonelModalProps) {
               value={form.email || ''}
               onChange={(e) => handleChange('email', e.target.value)}
               placeholder="ornek@mail.com"
-              disabled={!yeniKayit && form.durum !== 'aktif'}
             />
           </FormGroup>
           <FormGroup label="Telefon">
@@ -176,9 +204,9 @@ export function PersonelModal({ open, onClose, personel }: PersonelModalProps) {
           </FormGroup>
         </div>
 
-        {/* Davet gönderme seçeneği — sadece yeni kayıtta ve e-posta varken */}
-        {yeniKayit && form.email?.trim() && (
-          <div className="bg-surface2 border border-border/50 rounded-lg p-3">
+        {/* Davet toggle — yeni kayıt VEYA davet bekleyen mevcut personel */}
+        {davetGosterilebilir && (
+          <div className={`border rounded-lg p-3 ${davetBekliyor ? 'bg-gold-dim/30 border-gold/30' : 'bg-surface2 border-border/50'}`}>
             <label className="flex items-center gap-3 cursor-pointer group">
               <div
                 className={`relative w-9 h-5 rounded-full transition-colors flex-shrink-0 ${
@@ -194,12 +222,15 @@ export function PersonelModal({ open, onClose, personel }: PersonelModalProps) {
               </div>
               <div className="flex-1">
                 <div className="text-xs font-medium text-text group-hover:text-gold transition-colors">
-                  Davet e-postası gönder
+                  {davetBekliyor ? 'Daveti tekrar gönder' : 'Davet e-postası gönder'}
                 </div>
                 <div className="text-[10px] text-text-dim">
-                  {davetGonder
-                    ? 'Bu kişiye sisteme giriş yapması için bir davet e-postası gönderilecek'
-                    : 'Sadece personel kaydı oluşturulacak, giriş daveti gönderilmeyecek'}
+                  {davetBekliyor
+                    ? 'Önceki davet başarısız olmuş olabilir. Tekrar göndermek için aktif bırakın.'
+                    : davetGonder
+                      ? 'Bu kişiye sisteme giriş yapması için bir davet e-postası gönderilecek'
+                      : 'Sadece personel kaydı oluşturulacak, giriş daveti gönderilmeyecek'
+                  }
                 </div>
               </div>
             </label>
@@ -219,7 +250,7 @@ export function PersonelModal({ open, onClose, personel }: PersonelModalProps) {
           <FormGroup label="Başlama Tarihi">
             <FormInput type="date" value={form.baslama || ''} onChange={(e) => handleChange('baslama', e.target.value)} />
           </FormGroup>
-          {!yeniKayit && (
+          {!yeniKayit && !davetBekliyor && (
             <FormGroup label="Durum">
               <FormSelect value={form.durum || ''} onChange={(e) => handleChange('durum', e.target.value)}>
                 <option value="aktif">Aktif</option>
