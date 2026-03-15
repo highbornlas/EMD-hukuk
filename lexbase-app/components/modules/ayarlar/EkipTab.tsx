@@ -1,14 +1,14 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { usePersoneller, usePersonelKaydet, type Personel } from '@/lib/hooks/usePersonel';
+import { usePersoneller, usePersonelKaydet, usePersonelSil, type Personel } from '@/lib/hooks/usePersonel';
 import { useYetki } from '@/lib/hooks/useRol';
 import { ROL_ETIKETLERI, type Rol } from '@/lib/hooks/useRol';
 import { PersonelModal } from '@/components/modules/PersonelModal';
 import { SectionTitle, Badge, AyarlarEmptyState, AyarInput } from './shared';
 
 /* ══════════════════════════════════════════════════════════════
-   Ekip Tab — Personel yönetimi, rol atama, filtreleme
+   Ekip Tab — Personel yönetimi, rol atama, filtreleme, silme
    ══════════════════════════════════════════════════════════════ */
 
 const DURUM_LABEL: Record<string, { label: string; color: string }> = {
@@ -21,13 +21,14 @@ export function EkipTab() {
   const { data: personeller, isLoading } = usePersoneller();
   const { yetkili } = useYetki('kullanici:yonet');
   const kaydet = usePersonelKaydet();
+  const sil = usePersonelSil();
 
   const [arama, setArama] = useState('');
   const [rolFiltre, setRolFiltre] = useState<string>('');
   const [durumFiltre, setDurumFiltre] = useState<string>('');
   const [modalAcik, setModalAcik] = useState(false);
   const [seciliPersonel, setSeciliPersonel] = useState<Personel | null>(null);
-  const [silmeOnay, setSilmeOnay] = useState<string | null>(null);
+  const [aksiyonOnay, setAksiyonOnay] = useState<{ id: string; tip: 'pasif' | 'sil' } | null>(null);
 
   const filtrelenmis = useMemo(() => {
     if (!personeller) return [];
@@ -68,7 +69,12 @@ export function EkipTab() {
   async function handlePasifYap(p: Personel) {
     const yeniDurum = p.durum === 'pasif' ? 'aktif' : 'pasif';
     await kaydet.mutateAsync({ ...p, durum: yeniDurum });
-    setSilmeOnay(null);
+    setAksiyonOnay(null);
+  }
+
+  async function handleSil(p: Personel) {
+    await sil.mutateAsync(p.id);
+    setAksiyonOnay(null);
   }
 
   if (!yetkili) {
@@ -147,6 +153,7 @@ export function EkipTab() {
           {filtrelenmis.map((p) => {
             const durumInfo = DURUM_LABEL[p.durum || 'aktif'] || DURUM_LABEL.aktif;
             const rolInfo = ROL_ETIKETLERI[(p.rol || 'avukat') as Rol] || ROL_ETIKETLERI.avukat;
+            const onayAktif = aksiyonOnay?.id === p.id;
 
             return (
               <div
@@ -175,34 +182,46 @@ export function EkipTab() {
 
                 {/* Aksiyonlar */}
                 <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={() => handleDuzenle(p)}
-                    className="px-2 py-1 text-[11px] text-gold border border-gold/20 rounded-lg hover:bg-gold-dim transition-colors"
-                  >
-                    Düzenle
-                  </button>
-                  {silmeOnay === p.id ? (
-                    <div className="flex gap-1">
+                  {onayAktif ? (
+                    <div className="flex items-center gap-1">
+                      <span className="text-[10px] text-text-dim mr-1">
+                        {aksiyonOnay.tip === 'sil' ? 'Silinsin mi?' : (p.durum === 'pasif' ? 'Aktifleştirilsin mi?' : 'Pasifleştirilsin mi?')}
+                      </span>
                       <button
-                        onClick={() => handlePasifYap(p)}
+                        onClick={() => aksiyonOnay.tip === 'sil' ? handleSil(p) : handlePasifYap(p)}
+                        disabled={sil.isPending || kaydet.isPending}
                         className="px-2 py-1 text-[11px] text-red border border-red/20 rounded-lg hover:bg-red/10 transition-colors"
                       >
-                        {p.durum === 'pasif' ? 'Aktifleştir' : 'Onayla'}
+                        {sil.isPending || kaydet.isPending ? '...' : 'Evet'}
                       </button>
                       <button
-                        onClick={() => setSilmeOnay(null)}
+                        onClick={() => setAksiyonOnay(null)}
                         className="px-2 py-1 text-[11px] text-text-muted border border-border rounded-lg hover:bg-surface2 transition-colors"
                       >
-                        İptal
+                        Hayır
                       </button>
                     </div>
                   ) : (
-                    <button
-                      onClick={() => setSilmeOnay(p.id)}
-                      className="px-2 py-1 text-[11px] text-text-muted border border-border rounded-lg hover:text-red hover:border-red/20 transition-colors"
-                    >
-                      {p.durum === 'pasif' ? 'Aktifleştir' : 'Pasifleştir'}
-                    </button>
+                    <>
+                      <button
+                        onClick={() => handleDuzenle(p)}
+                        className="px-2 py-1 text-[11px] text-gold border border-gold/20 rounded-lg hover:bg-gold-dim transition-colors"
+                      >
+                        Düzenle
+                      </button>
+                      <button
+                        onClick={() => setAksiyonOnay({ id: p.id, tip: 'pasif' })}
+                        className="px-2 py-1 text-[11px] text-text-muted border border-border rounded-lg hover:text-gold hover:border-gold/20 transition-colors"
+                      >
+                        {p.durum === 'pasif' ? 'Aktifleştir' : 'Pasifleştir'}
+                      </button>
+                      <button
+                        onClick={() => setAksiyonOnay({ id: p.id, tip: 'sil' })}
+                        className="px-2 py-1 text-[11px] text-text-muted border border-border rounded-lg hover:text-red hover:border-red/20 transition-colors"
+                      >
+                        Sil
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
