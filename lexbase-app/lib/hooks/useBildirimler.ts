@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@/lib/supabase/client';
 import { useBuroId } from './useBuro';
@@ -8,6 +8,7 @@ import { useBuroId } from './useBuro';
 export interface Bildirim {
   id: string;
   buro_id: string;
+  hedef_auth_id?: string;
   tip: string;     // 'durusma' | 'gorev' | 'dosya' | 'sure' | 'finans' | 'sistem'
   baslik: string;
   mesaj?: string;
@@ -18,10 +19,20 @@ export interface Bildirim {
 
 /**
  * Bildirimleri çeker + Supabase Realtime ile dinler
+ * Hem büro bazlı hem kişisel (hedef_auth_id) bildirimleri getirir
  */
 export function useBildirimler() {
   const buroId = useBuroId();
   const queryClient = useQueryClient();
+  const [authId, setAuthId] = useState<string | null>(null);
+
+  // Auth ID'yi al
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) setAuthId(data.user.id);
+    });
+  }, []);
 
   // Realtime subscription
   useEffect(() => {
@@ -36,11 +47,10 @@ export function useBildirimler() {
           event: '*',
           schema: 'public',
           table: 'bildirimler',
-          filter: `buro_id=eq.${buroId}`,
         },
         () => {
           // Yeni bildirim gelince query'yi invalidate et
-          queryClient.invalidateQueries({ queryKey: ['bildirimler', buroId] });
+          queryClient.invalidateQueries({ queryKey: ['bildirimler', buroId, authId] });
         }
       )
       .subscribe();
@@ -48,29 +58,47 @@ export function useBildirimler() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [buroId, queryClient]);
+  }, [buroId, authId, queryClient]);
 
   return useQuery<Bildirim[]>({
-    queryKey: ['bildirimler', buroId],
+    queryKey: ['bildirimler', buroId, authId],
     queryFn: async () => {
       if (!buroId) return [];
       const supabase = createClient();
-      const { data, error } = await supabase
+
+      // Büro bazlı bildirimler (hedef_auth_id null olanlar = tüm büroya)
+      const { data: buroBildirimler, error: err1 } = await supabase
         .from('bildirimler')
         .select('*')
         .eq('buro_id', buroId)
+        .is('hedef_auth_id', null)
         .order('olusturma', { ascending: false })
-        .limit(50);
+        .limit(30);
 
-      if (error) {
-        // Tablo yoksa boş dön (henüz migration yapılmamış olabilir)
-        if (error.code === '42P01') return [];
-        throw error;
+      // Kişisel bildirimler (bana hedeflenmiş — herhangi bürodan)
+      let kisiselBildirimler: Bildirim[] = [];
+      if (authId) {
+        const { data: kisisel } = await supabase
+          .from('bildirimler')
+          .select('*')
+          .eq('hedef_auth_id', authId)
+          .order('olusturma', { ascending: false })
+          .limit(20);
+        kisiselBildirimler = (kisisel || []) as Bildirim[];
       }
-      return (data || []) as Bildirim[];
+
+      if (err1 && err1.code === '42P01') return [];
+      if (err1) throw err1;
+
+      // Birleştir, tarihe göre sırala, tekrarları kaldır
+      const tumBildirimler = [...(buroBildirimler || []), ...kisiselBildirimler] as Bildirim[];
+      const benzersiz = Array.from(new Map(tumBildirimler.map(b => [b.id, b])).values());
+      benzersiz.sort((a, b) => new Date(b.olusturma).getTime() - new Date(a.olusturma).getTime());
+
+      return benzersiz.slice(0, 50);
     },
     enabled: !!buroId,
-    staleTime: 30000, // 30 saniye
+    staleTime: 30000,
   });
 }
 
