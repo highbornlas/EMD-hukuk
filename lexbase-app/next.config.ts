@@ -1,6 +1,6 @@
 import type { NextConfig } from 'next';
 
-// Security headers
+// Security headers (CSP hariç — Cloudflare Workers + Next.js inline scripts ile uyumsuz)
 const securityHeaders = [
   { key: 'X-Frame-Options', value: 'DENY' },
   { key: 'X-Content-Type-Options', value: 'nosniff' },
@@ -13,20 +13,6 @@ const securityHeaders = [
   {
     key: 'Permissions-Policy',
     value: 'camera=(), microphone=(), geolocation=(self)',
-  },
-  {
-    key: 'Content-Security-Policy',
-    value: [
-      "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com",
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      "img-src 'self' data: blob: https://*.supabase.co https://*.supabase.in",
-      "font-src 'self' https://fonts.gstatic.com",
-      "connect-src 'self' https://*.supabase.co https://*.supabase.in https://cloudflareinsights.com",
-      "frame-ancestors 'none'",
-      "base-uri 'self'",
-      "form-action 'self'",
-    ].join('; '),
   },
 ];
 
