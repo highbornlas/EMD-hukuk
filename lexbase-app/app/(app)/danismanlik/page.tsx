@@ -6,6 +6,7 @@ import { useMuvekkillar } from '@/lib/hooks/useMuvekkillar';
 import { fmt, fmtTarih } from '@/lib/utils';
 import { DanismanlikModal } from '@/components/modules/DanismanlikModal';
 import Link from 'next/link';
+import { SkeletonTable, SkeletonKPI } from '@/components/ui/SkeletonTable';
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const;
 const DEFAULT_PAGE_SIZE = 10;
@@ -198,7 +199,7 @@ export default function DanismanlikPage() {
 
       {/* Liste */}
       {isLoading ? (
-        <div className="text-center py-12 text-text-muted text-sm">Yükleniyor...</div>
+        <SkeletonTable rows={6} cols={9} />
       ) : filtrelenmis.length === 0 ? (
         <div className="text-center py-16 bg-surface border border-border rounded-lg">
           <div className="text-4xl mb-3">📋</div>

@@ -12,6 +12,7 @@ import { fmtTarih } from '@/lib/utils';
 import { DAVA_DURUMLARI, YARGI_TURLERI, YARGI_BIRIMLERI } from '@/lib/constants/uyap';
 import { exportDavaListeUYAPXLS } from '@/lib/export/excelExport';
 import { exportDavaListePDF } from '@/lib/export/pdfExport';
+import { SkeletonTable, SkeletonKPI } from '@/components/ui/SkeletonTable';
 
 // ── Badge renk haritaları ────────────────────────────────────
 
@@ -602,7 +603,7 @@ export default function DavalarPage() {
 
       {/* ── Tablo ────────────────────────────────────────────── */}
       {isLoading ? (
-        <div className="text-center py-12 text-text-muted text-sm">Yükleniyor...</div>
+        <SkeletonTable rows={6} cols={gorunenSutunlar.length || 7} />
       ) : sirali.length === 0 ? (
         <div className="text-center py-16 bg-surface border border-border rounded-lg">
           <div className="text-4xl mb-3">&#x2696;&#xFE0F;</div>

@@ -12,6 +12,7 @@ import { tamIcraDairesiAdi, esasNoGoster, dosyaNoOlustur, alacakliBelirle, sureH
 import { ICRA_TURLERI, ICRA_DURUMLARI, ICRA_YARGI_BIRIMLERI } from '@/lib/constants/uyap';
 import { exportIcraListeUYAPXLS } from '@/lib/export/excelExport';
 import { exportIcraListePDF } from '@/lib/export/pdfExport';
+import { SkeletonTable, SkeletonKPI } from '@/components/ui/SkeletonTable';
 
 /* ── Durum renk haritasi ── */
 const DURUM_RENK: Record<string, string> = {
@@ -522,7 +523,7 @@ export default function IcraPage() {
 
       {/* Liste */}
       {isLoading ? (
-        <div className="text-center py-12 text-text-muted text-sm">Yükleniyor...</div>
+        <SkeletonTable rows={6} cols={gorunenSutunlar.length || 7} />
       ) : filtrelenmis.length === 0 ? (
         <div className="text-center py-16 bg-surface border border-border rounded-lg">
           <div className="text-4xl mb-3">&#x1F4CB;</div>

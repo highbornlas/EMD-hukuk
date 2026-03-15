@@ -21,6 +21,7 @@ import { useMuvekkilKaydet } from '@/lib/hooks/useMuvekkillar';
 import { useKarsiTarafKaydet } from '@/lib/hooks/useKarsiTaraflar';
 import { useVekilKaydet } from '@/lib/hooks/useVekillar';
 import { createClient } from '@/lib/supabase/client';
+import { SkeletonTable } from '@/components/ui/SkeletonTable';
 
 type TabKey = 'muvekkillar' | 'karsitaraflar' | 'avukatlar';
 
@@ -586,7 +587,7 @@ export default function RehberPage() {
         {aktifTab === 'muvekkillar' && (
           <div className="p-4">
             {mLoading ? (
-              <div className="text-center py-12 text-text-muted text-sm">Yükleniyor...</div>
+              <SkeletonTable rows={6} cols={6} />
             ) : mFiltrelenmis.length === 0 ? (
               <div className="text-center py-16">
                 <div className="text-4xl mb-3">👤</div>
@@ -660,7 +661,7 @@ export default function RehberPage() {
         {aktifTab === 'karsitaraflar' && (
           <div className="p-4">
             {ktLoading ? (
-              <div className="text-center py-12 text-text-muted text-sm">Yükleniyor...</div>
+              <SkeletonTable rows={6} cols={6} />
             ) : ktFiltrelenmis.length === 0 ? (
               <div className="text-center py-16">
                 <div className="text-4xl mb-3">⚖️</div>
@@ -759,7 +760,7 @@ export default function RehberPage() {
         {aktifTab === 'avukatlar' && (
           <div className="p-4">
             {vLoading ? (
-              <div className="text-center py-12 text-text-muted text-sm">Yükleniyor...</div>
+              <SkeletonTable rows={6} cols={6} />
             ) : vFiltrelenmis.length === 0 ? (
               <div className="text-center py-16">
                 <div className="text-4xl mb-3">👔</div>
