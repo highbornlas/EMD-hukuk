@@ -2,6 +2,24 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function updateSession(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+
+  // API route'ları ve statik dosyalar için auth kontrolü gereksiz — hızlıca geç
+  if (pathname.startsWith('/api/') || pathname.startsWith('/_next/')) {
+    return NextResponse.next({ request });
+  }
+
+  // Sadece sayfa navigasyonlarında auth kontrolü yap
+  const korumalıRotalar = ['/dashboard', '/muvekkillar', '/davalar', '/icra', '/finans', '/takvim', '/gorevler', '/ayarlar', '/personel', '/danismanlik', '/arabuluculuk', '/ihtarname', '/evrak', '/destek'];
+  const korunmali = korumalıRotalar.some(r => pathname.startsWith(r));
+  const girisRotasi = pathname === '/giris' || pathname === '/kayit';
+
+  // Korumalı rota veya giriş sayfası değilse (landing, legal sayfalar vb.) — hızlıca geç
+  if (!korunmali && !girisRotasi) {
+    return NextResponse.next({ request });
+  }
+
+  // Sadece korumalı veya giriş rotalarında session kontrolü yap
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -13,7 +31,7 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
+          cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           );
           supabaseResponse = NextResponse.next({ request });
@@ -25,16 +43,12 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  // Session'ı yenile (CSRF koruması + token refresh)
+  // Session kontrolü — sadece gerekli rotalarda çağrılır
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Korumalı rotalar — giriş yapmamışsa login'e yönlendir
-  const korumalıRotalar = ['/dashboard', '/muvekkillar', '/davalar', '/icra', '/finans', '/takvim', '/gorevler', '/ayarlar', '/personel', '/danismanlik', '/arabuluculuk', '/ihtarname', '/evrak'];
-  const pathname = request.nextUrl.pathname;
-  const korunmali = korumalıRotalar.some(r => pathname.startsWith(r));
-
+  // Korumalı rota + giriş yapmamış → login'e yönlendir
   if (korunmali && !user) {
     const url = request.nextUrl.clone();
     url.pathname = '/giris';
@@ -43,7 +57,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Zaten giriş yapmış kullanıcı login/kayıt sayfasına gitmeye çalışırsa
-  if (user && (pathname === '/giris' || pathname === '/kayit')) {
+  if (user && girisRotasi) {
     const url = request.nextUrl.clone();
     url.pathname = '/dashboard';
     return NextResponse.redirect(url);
