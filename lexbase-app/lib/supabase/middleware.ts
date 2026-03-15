@@ -43,13 +43,13 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  // Session kontrolü — sadece gerekli rotalarda çağrılır
+  // Session kontrolü — getSession cookie'den okur, network call yapmaz (Workers uyumlu)
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
 
   // Korumalı rota + giriş yapmamış → login'e yönlendir
-  if (korunmali && !user) {
+  if (korunmali && !session) {
     const url = request.nextUrl.clone();
     url.pathname = '/giris';
     url.searchParams.set('redirect', pathname);
@@ -57,7 +57,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Zaten giriş yapmış kullanıcı login/kayıt sayfasına gitmeye çalışırsa
-  if (user && girisRotasi) {
+  if (session && girisRotasi) {
     const url = request.nextUrl.clone();
     url.pathname = '/dashboard';
     return NextResponse.redirect(url);
