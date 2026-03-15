@@ -39,7 +39,7 @@ export function ProfilTab() {
 
   useEffect(() => {
     if (kullanici) {
-      setAd((kullanici.ad_soyad as string) || '');
+      setAd((kullanici.ad as string) || '');
       setTel((kullanici.telefon as string) || '');
       setTc((kullanici.tc as string) || '');
       setBaroSicil((kullanici.baro_sicil as string) || '');
@@ -59,10 +59,10 @@ export function ProfilTab() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Oturum bulunamadı');
 
-      await supabase
+      const { error } = await supabase
         .from('kullanicilar')
         .update({
-          ad_soyad: ad.trim(),
+          ad: ad.trim(),
           telefon: tel.trim(),
           tc: tc.trim(),
           baro_sicil: baroSicil.trim(),
@@ -73,9 +73,10 @@ export function ProfilTab() {
         })
         .eq('auth_id', user.id);
 
+      if (error) throw error;
       setMesaj('Profil güncellendi.');
-    } catch {
-      setMesaj('Hata oluştu.');
+    } catch (err) {
+      setMesaj(`Hata: ${err instanceof Error ? err.message : 'Bilinmeyen hata'}`);
     }
     setYukleniyor(false);
   };
@@ -98,10 +99,10 @@ export function ProfilTab() {
 
         <div className="grid grid-cols-2 gap-4">
           <FieldGroup label="Ad Soyad" required>
-            <AyarInput type="text" value={ad} onChange={(e) => setAd(e.target.value)} placeholder="Ad Soyad" />
+            <AyarInput type="text" value={ad} onChange={(e) => setAd(e.target.value)} placeholder="Ad Soyad" autoComplete="name" />
           </FieldGroup>
           <FieldGroup label="Telefon">
-            <AyarInput type="tel" value={tel} onChange={(e) => setTel(e.target.value)} placeholder="0532 000 0000" />
+            <AyarInput type="tel" value={tel} onChange={(e) => setTel(e.target.value)} placeholder="0532 000 0000" autoComplete="tel" />
           </FieldGroup>
         </div>
 
@@ -124,19 +125,20 @@ export function ProfilTab() {
               onChange={(e) => setTc(e.target.value.replace(/\D/g, '').slice(0, 11))}
               placeholder="11 haneli TC"
               maxLength={11}
+              autoComplete="off"
             />
           </FieldGroup>
           <FieldGroup label="Unvan">
-            <AyarInput type="text" value={unvan} onChange={(e) => setUnvan(e.target.value)} placeholder="Av., Dr., Prof. vb." />
+            <AyarInput type="text" value={unvan} onChange={(e) => setUnvan(e.target.value)} placeholder="Av., Dr., Prof. vb." autoComplete="off" />
           </FieldGroup>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <FieldGroup label="Kayıtlı Baro">
-            <AyarInput type="text" value={baro} onChange={(e) => setBaro(e.target.value)} placeholder="İstanbul Barosu" />
+            <AyarInput type="text" value={baro} onChange={(e) => setBaro(e.target.value)} placeholder="İstanbul Barosu" autoComplete="off" />
           </FieldGroup>
           <FieldGroup label="Baro Sicil No">
-            <AyarInput type="text" value={baroSicil} onChange={(e) => setBaroSicil(e.target.value)} placeholder="Baro sicil numarası" />
+            <AyarInput type="text" value={baroSicil} onChange={(e) => setBaroSicil(e.target.value)} placeholder="Baro sicil numarası" autoComplete="off" />
           </FieldGroup>
         </div>
 

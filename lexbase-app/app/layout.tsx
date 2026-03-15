@@ -124,6 +124,12 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
+        {/* Tema ve görünüm tercihlerini sayfa yüklenmeden önce uygula (FOUC önleme) */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('hukuk_tema')||'koyu';if(t==='sistem'){if(!window.matchMedia('(prefers-color-scheme:dark)').matches)document.documentElement.setAttribute('data-theme','light');}else if(t!=='koyu'){document.documentElement.setAttribute('data-theme',t==='acik'?'light':t);}var g=localStorage.getItem('lb_gorunum_tercihleri');if(g){var p=JSON.parse(g);var fm={kucuk:'90%',normal:'100%',buyuk:'110%'};if(p.fontBoyutu)document.documentElement.style.fontSize=fm[p.fontBoyutu]||'100%';if(p.kompaktMod)document.documentElement.classList.add('compact-mode');if(p.animasyonlar===false)document.documentElement.classList.add('no-animations');}}catch(e){}})()`
+          }}
+        />
       </head>
       <body suppressHydrationWarning>
         <CapacitorInit />

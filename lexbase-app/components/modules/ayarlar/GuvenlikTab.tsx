@@ -16,6 +16,12 @@ interface GirisKaydi {
   cihaz?: string;
 }
 
+interface OturumBilgisi {
+  email?: string;
+  sonGiris?: string;
+  tarayici?: string;
+}
+
 function sifreGucuHesapla(sifre: string): { seviye: string; renk: string; barem: number } {
   if (sifre.length === 0) return { seviye: '', renk: '', barem: 0 };
   let puan = 0;
@@ -33,6 +39,27 @@ function sifreGucuHesapla(sifre: string): { seviye: string; renk: string; barem:
   return { seviye: 'Çok Zayıf', renk: 'text-red', barem: 20 };
 }
 
+function cihazParsele(userAgent: string): string {
+  if (!userAgent || userAgent === 'bilinmiyor') return 'Bilinmeyen cihaz';
+  const ua = userAgent.toLowerCase();
+
+  let tarayici = 'Tarayıcı';
+  if (ua.includes('chrome') && !ua.includes('edg')) tarayici = 'Chrome';
+  else if (ua.includes('firefox')) tarayici = 'Firefox';
+  else if (ua.includes('safari') && !ua.includes('chrome')) tarayici = 'Safari';
+  else if (ua.includes('edg')) tarayici = 'Edge';
+  else if (ua.includes('opera') || ua.includes('opr')) tarayici = 'Opera';
+
+  let os = '';
+  if (ua.includes('windows')) os = 'Windows';
+  else if (ua.includes('mac')) os = 'macOS';
+  else if (ua.includes('linux')) os = 'Linux';
+  else if (ua.includes('android')) os = 'Android';
+  else if (ua.includes('iphone') || ua.includes('ipad')) os = 'iOS';
+
+  return os ? `${tarayici} · ${os}` : tarayici;
+}
+
 export function GuvenlikTab() {
   // Şifre değiştirme
   const [mevcutSifre, setMevcutSifre] = useState('');
@@ -42,20 +69,41 @@ export function GuvenlikTab() {
   const [sifreYukleniyor, setSifreYukleniyor] = useState(false);
   const [sifreGoster, setSifreGoster] = useState(false);
 
+  // Oturum bilgisi
+  const [oturum, setOturum] = useState<OturumBilgisi | null>(null);
+
   // Giriş geçmişi
   const [girisGecmisi, setGirisGecmisi] = useState<GirisKaydi[]>([]);
   const [gecmisYukleniyor, setGecmisYukleniyor] = useState(true);
 
   const guc = sifreGucuHesapla(yeniSifre);
 
+  // Mevcut oturum bilgisini yükle
+  useEffect(() => {
+    (async () => {
+      try {
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          setOturum({
+            email: session.user.email,
+            sonGiris: session.user.last_sign_in_at,
+            tarayici: typeof navigator !== 'undefined' ? cihazParsele(navigator.userAgent) : undefined,
+          });
+        }
+      } catch {
+        // sessizce geç
+      }
+    })();
+  }, []);
+
   const girisGecmisiYukle = useCallback(async () => {
     setGecmisYukleniyor(true);
     try {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) { setGecmisYukleniyor(false); return; }
 
-      // ip_loglari tablosundan son girişleri çek
       const { data } = await supabase
         .from('ip_loglari')
         .select('*')
@@ -63,7 +111,7 @@ export function GuvenlikTab() {
         .order('created_at', { ascending: false })
         .limit(10);
 
-      if (data) {
+      if (data && data.length > 0) {
         setGirisGecmisi(
           data.map((d: Record<string, unknown>) => ({
             id: d.id as string,
@@ -85,6 +133,10 @@ export function GuvenlikTab() {
   }, [girisGecmisiYukle]);
 
   const sifreDegistir = async () => {
+    if (!mevcutSifre) {
+      setSifreMesaj('Mevcut şifrenizi girin.');
+      return;
+    }
     if (yeniSifre.length < 8) {
       setSifreMesaj('Şifre en az 8 karakter olmalıdır.');
       return;
@@ -103,19 +155,17 @@ export function GuvenlikTab() {
     try {
       const supabase = createClient();
 
-      // Mevcut şifre doğrulama — önce mevcut session'ı yenileyerek
-      if (mevcutSifre) {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user?.email) {
-          const { error: loginError } = await supabase.auth.signInWithPassword({
-            email: user.email,
-            password: mevcutSifre,
-          });
-          if (loginError) {
-            setSifreMesaj('Mevcut şifre yanlış.');
-            setSifreYukleniyor(false);
-            return;
-          }
+      // Mevcut şifre doğrulama
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email) {
+        const { error: loginError } = await supabase.auth.signInWithPassword({
+          email: user.email,
+          password: mevcutSifre,
+        });
+        if (loginError) {
+          setSifreMesaj('Mevcut şifre yanlış.');
+          setSifreYukleniyor(false);
+          return;
         }
       }
 
@@ -157,6 +207,7 @@ export function GuvenlikTab() {
               value={mevcutSifre}
               onChange={(e) => setMevcutSifre(e.target.value)}
               placeholder="Mevcut şifreniz"
+              autoComplete="current-password"
             />
           </div>
         </FieldGroup>
@@ -168,6 +219,7 @@ export function GuvenlikTab() {
               value={yeniSifre}
               onChange={(e) => setYeniSifre(e.target.value)}
               placeholder="En az 8 karakter"
+              autoComplete="new-password"
             />
             <button
               type="button"
@@ -206,6 +258,7 @@ export function GuvenlikTab() {
             value={yeniSifreTekrar}
             onChange={(e) => setYeniSifreTekrar(e.target.value)}
             placeholder="Yeni şifreyi tekrar girin"
+            autoComplete="new-password"
           />
           {yeniSifreTekrar && yeniSifre !== yeniSifreTekrar && (
             <p className="text-[10px] text-red mt-0.5">Şifreler eşleşmiyor</p>
@@ -224,18 +277,46 @@ export function GuvenlikTab() {
       <Separator />
 
       {/* Oturum Yönetimi */}
-      <SectionTitle sub="Diğer cihazlardaki oturumlarınızı yönetin">
+      <SectionTitle sub="Aktif oturumunuz ve diğer cihazları yönetin">
         Oturum Yönetimi
       </SectionTitle>
 
-      <div className="max-w-md">
+      <div className="max-w-md space-y-3">
+        {/* Mevcut oturum kartı */}
+        {oturum && (
+          <div className="bg-surface2 border border-green/30 rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="w-2 h-2 bg-green rounded-full animate-pulse" />
+              <span className="text-xs font-semibold text-green">Bu Cihaz — Aktif</span>
+            </div>
+            <div className="space-y-1 text-[11px] text-text-muted">
+              <div className="flex justify-between">
+                <span>E-posta</span>
+                <span className="text-text">{oturum.email}</span>
+              </div>
+              {oturum.tarayici && (
+                <div className="flex justify-between">
+                  <span>Tarayıcı</span>
+                  <span className="text-text">{oturum.tarayici}</span>
+                </div>
+              )}
+              {oturum.sonGiris && (
+                <div className="flex justify-between">
+                  <span>Son giriş</span>
+                  <span className="text-text">{new Date(oturum.sonGiris).toLocaleString('tr-TR')}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         <button
           onClick={tumOturumlariBitir}
           className="px-4 py-2 bg-red/10 border border-red/30 text-red font-semibold rounded-lg text-xs hover:bg-red/20 transition-colors"
         >
           Diğer Tüm Oturumları Sonlandır
         </button>
-        <p className="text-[10px] text-text-dim mt-1.5">Bu cihaz dışındaki tüm oturumlardan çıkış yapılır</p>
+        <p className="text-[10px] text-text-dim">Bu cihaz dışındaki tüm oturumlardan çıkış yapılır</p>
       </div>
 
       <Separator />
@@ -248,20 +329,21 @@ export function GuvenlikTab() {
       {gecmisYukleniyor ? (
         <div className="text-center py-4 text-text-muted text-sm">Yükleniyor...</div>
       ) : girisGecmisi.length === 0 ? (
-        <AyarlarEmptyState icon="📋" text="Giriş geçmişi bulunamadı" sub="IP loglama aktif değilse geçmiş kaydedilmez" />
+        <AyarlarEmptyState icon="📋" text="Henüz giriş geçmişi yok" sub="Bir sonraki girişinizden itibaren kayıtlar burada görünecek" />
       ) : (
         <div className="space-y-1.5 max-w-lg">
-          {girisGecmisi.map((g) => (
+          {girisGecmisi.map((g, i) => (
             <div key={g.id} className="flex items-center gap-3 bg-surface2 border border-border/50 rounded-lg px-3 py-2">
-              <span className="text-sm">🔐</span>
+              <span className="text-sm">{i === 0 ? '🟢' : '🔐'}</span>
               <div className="flex-1 min-w-0">
                 <div className="text-[11px] text-text">
                   {new Date(g.tarih).toLocaleString('tr-TR')}
+                  {i === 0 && <span className="ml-2 text-[9px] text-green font-medium">Son giriş</span>}
                 </div>
                 <div className="text-[10px] text-text-dim truncate">
-                  {g.ip && `IP: ${g.ip}`}
+                  {g.ip && g.ip !== 'bilinmiyor' && `IP: ${g.ip}`}
                   {g.konum && ` · ${g.konum}`}
-                  {g.cihaz && ` · ${g.cihaz}`}
+                  {g.cihaz && ` · ${cihazParsele(g.cihaz)}`}
                 </div>
               </div>
             </div>

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useKullanici } from '@/lib/hooks/useBuro';
-import { useYetki } from '@/lib/hooks/useRol';
+import { useRol } from '@/lib/hooks/useRol';
 import { SectionTitle, FieldGroup, AyarInput, AyarTextarea, StatusMessage, SaveButton, Separator } from './shared';
 
 /* ══════════════════════════════════════════════════════════════
@@ -12,7 +12,10 @@ import { SectionTitle, FieldGroup, AyarInput, AyarTextarea, StatusMessage, SaveB
 
 export function BuroBilgileriTab() {
   const kullanici = useKullanici();
-  const { yetkili } = useYetki('ayarlar:duzenle');
+  const { rol, loading: rolLoading } = useRol();
+
+  // sahip ve yonetici büro bilgilerini düzenleyebilir
+  const yetkili = rol === 'sahip' || rol === 'yonetici';
 
   const [buroAd, setBuroAd] = useState('');
   const [buroTel, setBuroTel] = useState('');
@@ -57,7 +60,7 @@ export function BuroBilgileriTab() {
       const buroId = kullanici?.buro_id as string;
       if (!buroId) throw new Error('Büro bulunamadı');
 
-      await supabase
+      const { error } = await supabase
         .from('burolar')
         .update({
           ad: buroAd.trim(),
@@ -72,19 +75,24 @@ export function BuroBilgileriTab() {
         })
         .eq('id', buroId);
 
+      if (error) throw error;
       setMesaj('Büro bilgileri güncellendi.');
-    } catch {
-      setMesaj('Hata oluştu.');
+    } catch (err) {
+      setMesaj(`Hata: ${err instanceof Error ? err.message : 'Bilinmeyen hata'}`);
     }
     setYukleniyor(false);
   };
+
+  if (rolLoading) {
+    return <div className="text-center py-12 text-text-muted text-sm">Yükleniyor...</div>;
+  }
 
   if (!yetkili) {
     return (
       <div className="text-center py-12">
         <div className="text-3xl mb-2">🔒</div>
         <p className="text-sm text-text-muted">Büro bilgilerini düzenleme yetkiniz yok</p>
-        <p className="text-[11px] text-text-dim mt-1">Bu sayfa yalnızca yöneticiler tarafından düzenlenebilir</p>
+        <p className="text-[11px] text-text-dim mt-1">Bu sayfa yalnızca büro sahibi ve yöneticiler tarafından düzenlenebilir</p>
       </div>
     );
   }

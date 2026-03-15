@@ -51,8 +51,9 @@
   --gradient-progress: linear-gradient(90deg, #C9A84C, #E0C068);
 }
 
-/* Light theme */
-[data-theme="light"] {
+/* ── Açık (Light) Tema ──────────────────────────────────────── */
+[data-theme="light"],
+[data-theme="acik"] {
   --bg: #f5f4f2;
   --surface: #ffffff;
   --surface2: #f0ede8;
@@ -80,6 +81,133 @@
   --gradient-gold: linear-gradient(135deg, #a07830, #8a6520);
   --gradient-gold-hover: linear-gradient(135deg, #8a6520, #a07830);
   --gradient-card: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%);
+}
+
+/* ── Gece Mavisi Tema ──────────────────────────────────────── */
+[data-theme="gece-mavisi"] {
+  --bg: #0a1628;
+  --surface: #0f1f38;
+  --surface2: #152847;
+  --border: #1e3a5f;
+  --gold: #4da6e8;
+  --gold-light: #6dbdff;
+  --gold-dim: rgba(77,166,232,0.15);
+  --text: #e0eaf5;
+  --text-muted: #7a9cbd;
+  --text-dim: #4a6d8e;
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 20px rgba(0,0,0,0.35);
+  --shadow-lg: 0 12px 36px rgba(0,0,0,0.5);
+  --shadow-gold: 0 4px 16px rgba(77,166,232,0.25);
+  --shadow-gold-lg: 0 8px 24px rgba(77,166,232,0.35);
+  --gradient-gold: linear-gradient(135deg, #4da6e8, #6dbdff);
+  --gradient-gold-hover: linear-gradient(135deg, #6dbdff, #4da6e8);
+  --gradient-card: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%);
+}
+
+/* ── Orman Tema ────────────────────────────────────────────── */
+[data-theme="orman"] {
+  --bg: #0c1a0e;
+  --surface: #122416;
+  --surface2: #1a3120;
+  --border: #2a4d30;
+  --gold: #5cb85c;
+  --gold-light: #78d478;
+  --gold-dim: rgba(92,184,92,0.15);
+  --text: #e0f0e0;
+  --text-muted: #7aad7a;
+  --text-dim: #4a7a4a;
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 20px rgba(0,0,0,0.35);
+  --shadow-lg: 0 12px 36px rgba(0,0,0,0.5);
+  --shadow-gold: 0 4px 16px rgba(92,184,92,0.25);
+  --shadow-gold-lg: 0 8px 24px rgba(92,184,92,0.35);
+  --gradient-gold: linear-gradient(135deg, #5cb85c, #78d478);
+  --gradient-gold-hover: linear-gradient(135deg, #78d478, #5cb85c);
+  --gradient-card: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%);
+}
+
+/* ── Bordo Tema ────────────────────────────────────────────── */
+[data-theme="bordo"] {
+  --bg: #1a0c0e;
+  --surface: #241216;
+  --surface2: #31181e;
+  --border: #4d2a32;
+  --gold: #c0544e;
+  --gold-light: #d46b66;
+  --gold-dim: rgba(192,84,78,0.15);
+  --text: #f0e0e0;
+  --text-muted: #ad7a7a;
+  --text-dim: #7a4a50;
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 20px rgba(0,0,0,0.35);
+  --shadow-lg: 0 12px 36px rgba(0,0,0,0.5);
+  --shadow-gold: 0 4px 16px rgba(192,84,78,0.25);
+  --shadow-gold-lg: 0 8px 24px rgba(192,84,78,0.35);
+  --gradient-gold: linear-gradient(135deg, #c0544e, #d46b66);
+  --gradient-gold-hover: linear-gradient(135deg, #d46b66, #c0544e);
+  --gradient-card: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%);
+}
+
+/* ── Gri Taş Tema ──────────────────────────────────────────── */
+[data-theme="gri-tas"] {
+  --bg: #18191a;
+  --surface: #242526;
+  --surface2: #2d2e30;
+  --border: #3e4042;
+  --gold: #a0a4a8;
+  --gold-light: #c0c4c8;
+  --gold-dim: rgba(160,164,168,0.15);
+  --text: #e4e6ea;
+  --text-muted: #8a8d91;
+  --text-dim: #5a5d61;
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 20px rgba(0,0,0,0.35);
+  --shadow-lg: 0 12px 36px rgba(0,0,0,0.5);
+  --shadow-gold: 0 4px 16px rgba(160,164,168,0.2);
+  --shadow-gold-lg: 0 8px 24px rgba(160,164,168,0.3);
+  --gradient-gold: linear-gradient(135deg, #a0a4a8, #c0c4c8);
+  --gradient-gold-hover: linear-gradient(135deg, #c0c4c8, #a0a4a8);
+  --gradient-card: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%);
+}
+
+/* ── Lacivert Tema ─────────────────────────────────────────── */
+[data-theme="lacivert"] {
+  --bg: #0c0e1a;
+  --surface: #141832;
+  --surface2: #1a2040;
+  --border: #2a3260;
+  --gold: #c9a84c;
+  --gold-light: #e0c068;
+  --gold-dim: rgba(201,168,76,0.15);
+  --text: #e0e0f0;
+  --text-muted: #7a7aad;
+  --text-dim: #4a4a7a;
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 20px rgba(0,0,0,0.35);
+  --shadow-lg: 0 12px 36px rgba(0,0,0,0.5);
+  --shadow-gold: 0 4px 16px rgba(201,168,76,0.25);
+  --shadow-gold-lg: 0 8px 24px rgba(201,168,76,0.35);
+  --gradient-gold: linear-gradient(135deg, #c9a84c, #e0c068);
+  --gradient-gold-hover: linear-gradient(135deg, #e0c068, #c9a84c);
+  --gradient-card: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%);
+}
+
+/* ── Kompakt Mod ───────────────────────────────────────────── */
+.compact-mode {
+  --spacing-scale: 0.75;
+}
+.compact-mode .p-6 { padding: 1rem; }
+.compact-mode .gap-4 { gap: 0.5rem; }
+.compact-mode .gap-6 { gap: 0.75rem; }
+.compact-mode .mb-6 { margin-bottom: 1rem; }
+.compact-mode .py-6 { padding-top: 1rem; padding-bottom: 1rem; }
+
+/* ── Animasyonlar Kapalı ───────────────────────────────────── */
+.no-animations,
+.no-animations * {
+  transition-duration: 0s !important;
+  animation-duration: 0s !important;
 }
 
 /* ── Tailwind v4 Theme Mapping ───────────────────────────── */
