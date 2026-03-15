@@ -15,6 +15,7 @@ import { useRol, yetkiVar } from '@/lib/hooks/useRol';
    Premium Sidebar — Responsive + Mobil Toggle
    - Desktop (lg+): Her zaman görünür, fixed 200px
    - Mobil (<lg): Gizli, hamburger ile açılır, backdrop overlay
+   - Tema: CSS değişkenleri ile dinamik renk desteği
    ══════════════════════════════════════════════════════════════ */
 
 type BadgeType = 'count' | 'red';
@@ -25,7 +26,7 @@ interface MenuItem {
   label: string;
   badge?: BadgeType;
   countKey?: string;
-  yetki?: string; // gerekli yetki (yoksa herkese görünür)
+  yetki?: string;
 }
 
 interface SidebarGroup {
@@ -100,7 +101,7 @@ interface SidebarProps {
 export function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname();
   const badgeCounts = useBadgeCounts();
-  const { rol, loading: rolLoading } = useRol();
+  const { rol } = useRol();
 
   const renderItem = (item: MenuItem) => {
     const isActive =
@@ -119,8 +120,8 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           flex items-center gap-2 px-3 py-[7px] mx-2 my-[1px]
           text-[13px] rounded-lg transition-all duration-200 group
           ${isActive
-            ? 'bg-[rgba(212,175,55,0.12)] text-[#D4AF37] font-bold shadow-[inset_0_0_0_1px_rgba(212,175,55,0.08)]'
-            : 'text-[#8B95A5] font-medium hover:text-white hover:bg-[rgba(212,175,55,0.06)]'
+            ? 'bg-gold-dim text-gold font-bold'
+            : 'text-text-muted font-medium hover:text-text hover:bg-gold-dim/50'
           }
         `}
       >
@@ -131,8 +132,8 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             className={`
               ml-auto rounded-full text-[9px] font-bold min-w-[18px] h-[18px] flex items-center justify-center px-1 leading-none
               ${item.badge === 'red'
-                ? 'bg-[#e74c3c] text-white shadow-[0_0_8px_rgba(231,76,60,0.3)]'
-                : 'bg-[#D4AF37] text-[#0D1117]'
+                ? 'bg-red text-white shadow-[0_0_8px_rgba(231,76,60,0.3)]'
+                : 'bg-gold text-bg'
               }
             `}
           >
@@ -156,16 +157,16 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       {/* Sidebar */}
       <aside
         className={`
-          fixed left-0 top-0 bottom-0 w-[200px] bg-[#0D1117] border-r border-white/[0.06] flex flex-col z-50
+          fixed left-0 top-0 bottom-0 w-[200px] bg-bg border-r border-border/30 flex flex-col z-50
           transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]
           lg:translate-x-0
           ${open ? 'translate-x-0' : '-translate-x-full'}
         `}
       >
         {/* Logo */}
-        <div className="h-14 flex items-center px-4 border-b border-white/[0.06]">
+        <div className="h-14 flex items-center px-4 border-b border-border/30">
           <Link href="/dashboard" onClick={onClose} className="font-[var(--font-playfair)] text-lg font-bold tracking-tight hover:opacity-90 transition-opacity">
-            <span className="text-[#D4AF37]">Lex</span><span className="text-white">Base</span>
+            <span className="text-gold">Lex</span><span className="text-text">Base</span>
           </Link>
         </div>
 
@@ -173,7 +174,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         <nav className="flex-1 pt-4 overflow-y-auto flex flex-col">
           {sidebarGroups.map((group, gi) => (
             <div key={gi}>
-              {gi > 0 && <div className="h-px bg-white/[0.04] mx-3 my-1.5" />}
+              {gi > 0 && <div className="h-px bg-border/30 mx-3 my-1.5" />}
               <div className="space-y-[1px]">
                 {group.items.filter((item) => !item.yetki || (rol && yetkiVar(rol, item.yetki))).map(renderItem)}
               </div>
@@ -186,14 +187,14 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 
         {/* Bottom Section */}
         <div className="pb-3">
-          <div className="h-px bg-white/[0.04] mx-3 mb-1.5" />
+          <div className="h-px bg-border/30 mx-3 mb-1.5" />
           <div className="space-y-[1px]">
             {bottomItems.filter((item) => !item.yetki || (rol && yetkiVar(rol, item.yetki))).map(renderItem)}
           </div>
 
           {/* Version */}
           <div className="text-center mt-2">
-            <span className="text-[9px] text-white/15 tracking-wider">v2.1.0</span>
+            <span className="text-[9px] text-text-dim/50 tracking-wider">v2.1.0</span>
           </div>
         </div>
       </aside>
